@@ -198,7 +198,7 @@ bool passHiggsCuts(std::vector<patUtils::GenericLepton> selLeptons,
 		  int lid2=lep2.pdgId();
 
 		  bool passLooseLepton1 = lid1==11?patUtils::passId(lep1.el, vtx[0], patUtils::llvvElecId::Loose) : patUtils::passId(lep1.mu, vtx[0], patUtils::llvvMuonId::Loose);
-		  bool passLooseLepton2 = lid1==11?patUtils::passId(lep2.el, vtx[0], patUtils::llvvElecId::Loose) : patUtils::passId(lep2.mu, vtx[0], patUtils::llvvMuonId::Loose);
+		  bool passLooseLepton2 = lid2==11?patUtils::passId(lep2.el, vtx[0], patUtils::llvvElecId::Loose) : patUtils::passId(lep2.mu, vtx[0], patUtils::llvvMuonId::Loose);
 
 		  if( ((lep1.pt()+lep2.pt()) >= sumPtCut.at(0))
 		      &&  ( patUtils::relIso(lep1, rho) <= ( (abs(lep1.pdgId())==11)?isoElCut.at(0):isoMuCut.at(0) ) ) 
@@ -254,8 +254,8 @@ bool passHiggsCuts(std::vector<patUtils::GenericLepton> selLeptons,
 	  int tauIdx = abs(selLeptons[higgsCandL1].pdgId())==15?higgsCandL1:higgsCandL2;
 	  LorentzVector tauT;
 	  tauT = selLeptons[tauIdx].p4();
-	  //cout << "In the MUTAU final state: passLooseId(lep)/tau.tauID("againstElectronLooseMVA5")/tau.tauID("againstMuonTight3") "<<
-	  //passLooseId( lep )<<"/"<<tau.tauID("againstElectronLooseMVA5")<<"/"<<tau.tauID("againstMuonTight3")<<endl;
+	  //cout << "In the MUTAU final state: passLooseId(lep)/tau.tauID(\"againstElectronLooseMVA5\")/tau.tauID(\"againstMuonTight3\") "<<
+	  //  passLooseId( lep )<<"/"<<tau.tauID("againstElectronLooseMVA5")<<"/"<<tau.tauID("againstMuonTight3")<<endl;
 	  
 	  float relIso1 = patUtils::relIso(lep, rho);
 	  if(requireId){
@@ -1170,9 +1170,9 @@ int main(int argc, char* argv[])
 	   NCleanedJetMain++;
 	 }
 	 
-	 bool passDPhiCut    =  (fabs(deltaPhi(zll.phi(), met.phi()))>1.5);
+	 bool passDPhiCut      =  (fabs(deltaPhi(zll.phi(), met.phi()))>1.5);
 	 bool passHiggsLoose = passHiggsCuts(selLeptons, rho, higgsCandId, higgsCandL1, higgsCandL2, 0.5, 0.5, "decayModeFinding", 0., false, vtx); 
-	 bool passHiggsMain  = passHiggsCuts(selLeptons, rho, higgsCandId, higgsCandL1, higgsCandL2, 0.3, 0.3, "byLooseCombinedIsolationDeltaBetaCorr3Hits", 20., true, vtx);
+	 bool passHiggsMain   = passHiggsCuts(selLeptons, rho, higgsCandId, higgsCandL1, higgsCandL2, 0.3, 0.3, "byLooseCombinedIsolationDeltaBetaCorr3Hits", 20., true, vtx);
 	 
 	 //SVFIT MASS
 	 LorentzVector higgsCand_SVFit = higgsCand;
@@ -1191,7 +1191,6 @@ int main(int argc, char* argv[])
          bool passBtags(nbtags==0); 
          bool passMinDphijmet( njets==0 || mindphijmet>0.5);
          bool removeDump(false);
-
 
          //VBF Control plots to understand VBF Tail in Z mass shape
          std::vector<reco::GenParticle> VisLep;
@@ -1214,9 +1213,6 @@ int main(int argc, char* argv[])
 	 //
 	 // NOW FOR THE CONTROL PLOTS
 	 //
-	 
-	 // patUtils::GenericLepton leadingLep = selLeptons[0];
-	 // patUtils::GenericLepton trailerLep = selLeptons[1];
 	   
 	 mon.fillHisto("eventflow2"       ,   tags,                 0, weight);
 	 if(selLeptons.size()>=2){
@@ -1284,10 +1280,10 @@ int main(int argc, char* argv[])
 			   
 			   mon.fillHisto("Apt"       	, tags, higgsCand.pt(),    weight);
 			   mon.fillHisto("Amass"           , tags, higgsCand.mass(),  weight);
-			   mon.fillHisto("Amasssvfit"      , tags, higgsCand_SVFit.mass(),  weight);
+			   //mon.fillHisto("Amasssvfit"      , tags, higgsCand_SVFit.mass(),  weight);
 			   mon.fillHisto("Hmass"           , tags, higgsCandH.mass(),  weight);
 			   mon.fillHisto("Hpt"             , tags, higgsCandH.pt(),  weight);
-			   // mon.fillHisto("Hmasssvfit"   , tags, higgsCandH_SVFit.mass(),  weight);
+			   //mon.fillHisto("Hmasssvfit"   , tags, higgsCandH_SVFit.mass(),  weight);
 			   
 			   mon.fillHisto("Anjets"    	, tags, NCleanedJetMain      , weight); 
 			   mon.fillHisto("Amet"      	, tags, met.pt()         , weight);
