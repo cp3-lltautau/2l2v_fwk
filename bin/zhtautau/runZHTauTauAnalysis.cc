@@ -931,7 +931,7 @@ int main(int argc, char* argv[])
           if(!(eeTrigger || mumuTrigger || emuTrigger))continue;  //ONLY RUN ON THE EVENTS THAT PASS OUR TRIGGERS
    
           //##############################################   EVENT PASSED THE TRIGGER   #######################################
-	  int metFilterValue = metFiler.passMetFilterInt( ev, isPromptReco );
+	  int metFilterValue = metFiler.passMetFilterInt( ev); //, isPromptReco );
 	  mon.fillHisto("met_eventflow", "debug", metFilterValue, weight);
 	  if( metFilterValue!=0 ) continue;	 //Note this must also be applied on MC
         
