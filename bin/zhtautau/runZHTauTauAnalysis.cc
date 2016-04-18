@@ -43,13 +43,12 @@
 #include "UserCode/llvv_fwk/interface/muresolution_run2.h"
 #include "UserCode/llvv_fwk/interface/BTagCalibrationStandalone.h"
 #include "UserCode/llvv_fwk/interface/BtagUncertaintyComputer.h"
+#include "UserCode/llvv_fwk/interface/FRWeights.h"
 
 #include "UserCode/llvv_fwk/interface/PatUtils.h"
 #include "UserCode/llvv_fwk/interface/TrigUtils.h"
 #include "UserCode/llvv_fwk/interface/EwkCorrections.h"
 #include "UserCode/llvv_fwk/interface/ZZatNNLO.h"
-
-
 
 #include "TSystem.h"
 #include "TFile.h"
@@ -452,6 +451,8 @@ int main(int argc, char* argv[])
   ElectronEnergyCalibratorRun2 ElectronEnCorrector(theEpCombinationTool, isMC, false, EGammaSmearings, EGammaScales);
   ElectronEnCorrector.initPrivateRng(new TRandom(1234));
 
+  FRWeights theFRWeightTool;
+  theFRWeightTool.init((string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/test/zhtautau/FR_Weights.root").c_str());
 
   //lepton efficiencies
   LeptonEfficiencySF lepEff;
@@ -1075,8 +1076,6 @@ int main(int argc, char* argv[])
             LorentzVector higgsCandH;
             LorentzVector higgsCandH_SVFit;
 
-
-
             //LEPTON FAKE RATE ANALYSIS Z+1jets  (no systematics taken into account here)
             if(ivar==0 && passZmass && (int)selLeptons.size()==3){  //Request exactly one Z + 1 additional lepton
                bool IdentifiedThirdLepton=false;
@@ -1093,13 +1092,11 @@ int main(int argc, char* argv[])
                     if(closestJetIndexL1>=0 && dRminL1<0.5){pTL1=selJets[closestJetIndexL1].pt(); etaL1=abs(selJets[closestJetIndexL1].eta());}
                     else{pTL1=selLeptons[i].pt(); etaL1=abs(selLeptons[i].eta());}
 
-
                     TString PartName = "FR_";
                     if     (abs(selLeptons[i].pdgId())==11)PartName += "El";
                     else if(abs(selLeptons[i].pdgId())==13)PartName += "Mu";
                     else if(abs(selLeptons[i].pdgId())==15)PartName += "Ta";
                     else PartName+= abs(selLeptons[i].pdgId());
-
 
                     std::vector<TString> TagsFR;
 
@@ -1139,8 +1136,8 @@ int main(int argc, char* argv[])
                         TagsFRLep.push_back(TagsFR[iTags] + (abs(selLeptons[i].eta())<1.4?TString("_B"):TString("_E")));
                      }
 
-                      mon.fillHisto("wrtJetPt", TagsFRJet, pTL1              , weight);
-                      mon.fillHisto("wrtLepPt", TagsFRLep, selLeptons[i].pt(), weight);
+		     mon.fillHisto("wrtJetPt", TagsFRJet, pTL1              , weight);
+		     mon.fillHisto("wrtLepPt", TagsFRLep, selLeptons[i].pt(), weight);
                   }
                 }//close loop on leptons
 
@@ -1209,7 +1206,20 @@ int main(int argc, char* argv[])
                
                passDPhiCut    =  (fabs(deltaPhi(zll.phi(), met.phi()))>1.5);
                passHiggsLoose = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, 0.5, 0.5, "decayModeFinding", 0., false, vtx); 
+
+	       /*
+	       if(passHiggsLoose){
+		 weight*=theFRWeightTool.getWeight(selLeptons[higgsCandL1]);
+	       }
+	       */
+
                passHiggsMain  = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, 0.3, 0.3, "byLooseCombinedIsolationDeltaBetaCorr3Hits", 20., true, vtx);
+
+	       /*
+	       if(passHiggsMain){
+		 weight*=theFRWeightTool.getWeight(selLeptons[higgsCandL1]);
+	       }
+	       */
                
                //SVFIT MASS
                higgsCand_SVFit = higgsCand;
@@ -1358,7 +1368,7 @@ int main(int argc, char* argv[])
   terminationCmd += TString("mv out.root ") + outUrl + ";";
   TFile *ofile=TFile::Open("out.root", "recreate");
   mon.Write();
-  if(tree){tree->SetDirectory(ofile); tree->Write();}
+  //if(tree){tree->SetDirectory(ofile); tree->Write();}
   ofile->Close();
 
   if(!isMC && debugText!=""){ 
