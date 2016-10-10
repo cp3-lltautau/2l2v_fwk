@@ -33,7 +33,8 @@
  <bin name="extractPhotonWeights_UsingBins"        file="hzz2l2v/extractPhotonWeights_UsingBins.cc"></bin> 
  <bin name="runPhotonZClosure"           file="hzz2l2v/runPhotonZClosure.cc"></bin>
 <!--  <bin name="runZHTauTauAnalysis"         file="zhtautau/runZHTauTauAnalysis.cc"></bin>-->
-  <bin name="extractFRWeights"            file="zhtautau/extractFRWeights.cc"></bin>
+  <bin name="extractFRWeights"  file="zhtautau/extractFRWeights.cc"></bin>
+<bin name="runZHllvvAnalysis"  file="zhllvv/runZHllvvAnalysis.cc"></bin>
 </environment>
 
 <flags CXXFLAGS="-g -Wno-sign-compare -Wno-unused-variable -Wno-unused-but-set-variable  -Os"/>

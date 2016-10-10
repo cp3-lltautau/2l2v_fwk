@@ -109,14 +109,14 @@ bool passHiggsCuts(std::vector<patUtils::GenericLepton> selLeptons, int higgsCan
   for(auto lepIt=HiggsLegs.begin();lepIt!=HiggsLegs.end();lepIt++){
      patUtils::GenericLepton* lep = (*lepIt);
      if(abs(lep->pdgId())==11){
-        passId  &= patUtils::passId(lep->el, vtx[0], patUtils::llvvElecId::Loose);
-        passIso &= (lep->userFloat("relIso") <= isoElCut);
+       passId  &= patUtils::passId(lep->el, vtx[0], patUtils::llvvElecId::Loose,patUtils::CutVersion::ICHEP16Cut);
+       passIso &= (lep->userFloat("relIso") <= isoElCut);
      }else if(abs(lep->pdgId())==13){
-        passId  &= patUtils::passId(lep->mu, vtx[0], patUtils::llvvMuonId::Loose);
-        passIso &= (lep->userFloat("relIso") <= isoMuCut);
+       passId  &= patUtils::passId(lep->mu, vtx[0], patUtils::llvvMuonId::Loose,patUtils::CutVersion::ICHEP16Cut);
+       passIso &= (lep->userFloat("relIso") <= isoMuCut);
      }else if(abs(lep->pdgId())==15){
-        passId  &= lep->tau.tauID("againstElectronTightMVA5") && lep->tau.tauID("againstMuonLoose3");
-        passIso &= bool(lep->tau.tauID(isoHaCut)); 
+       passId  &= lep->tau.tauID("againstElectronTightMVA5") && lep->tau.tauID("againstMuonLoose3");
+       passIso &= bool(lep->tau.tauID(isoHaCut)); 
      }
      sumpt += lep->pt();
   }
@@ -218,7 +218,10 @@ int main(int argc, char* argv[])
   bool isMC_WZ  = isMC && ( string(dtag.Data()).find("TeV_WZ")  != string::npos);
   bool isMC_QCD = (isMC && dtag.Contains("QCD"));
   bool isMC_GJet = (isMC && dtag.Contains("GJet"));
- 
+  bool is2015data = (!isMC && dtag.Contains("2015")); 
+  bool is2015MC = (isMC && dtag.Contains("2015")); 
+  bool is2016data = (!isMC && dtag.Contains("2016")); 
+  bool is2016MC = (isMC && dtag.Contains("2016"));  
 
   //tree info
   TString dirname = runProcess.getParameter<std::string>("dirName");
@@ -441,17 +444,27 @@ int main(int argc, char* argv[])
   gSystem->ExpandPathName(muscleDir);
   rochcor2015* muCor = new rochcor2015();  //replace the MuScleFitCorrector we used at run1
 
-  //photon and electron enerhy scale based on https://twiki.cern.ch/twiki/bin/viewauth/CMS/EGMSmearer    (adapted to the miniAOD/FWLite framework)
-  std::vector<double> EGammaSmearings = {0.013654,0.014142,0.020859,0.017120,0.028083,0.027289,0.031793,0.030831,0.028083, 0.027289};
-  std::vector<double> EGammaScales    = {0.99544,0.99882,0.99662,1.0065,0.98633,0.99536,0.97859,0.98567,0.98633, 0.99536};
-  PhotonEnergyCalibratorRun2 PhotonEnCorrector(isMC, false, EGammaSmearings, EGammaScales);
-  PhotonEnCorrector.initPrivateRng(new TRandom(1234));
-
+  ElectronEnergyCalibratorRun2 ElectronEnCorrector;
+  string EGammaEnergyCorrectionFile = "";
+  PhotonEnergyCalibratorRun2 PhotonEnCorrector;
   EpCombinationTool theEpCombinationTool;
-  theEpCombinationTool.init((string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/weights/GBRForest_data_25ns.root").c_str(), "gedelectron_p4combination_25ns");  //got confirmation from Matteo Sani that this works for both data and MC
-  ElectronEnergyCalibratorRun2 ElectronEnCorrector(theEpCombinationTool, isMC, false, EGammaSmearings, EGammaScales);
-  ElectronEnCorrector.initPrivateRng(new TRandom(1234));
-
+  if(is2015MC || is2015data){
+  	EGammaEnergyCorrectionFile = "EgammaAnalysis/ElectronTools/data/76X_16DecRereco_2015"; 
+  	PhotonEnCorrector = PhotonEnergyCalibratorRun2(isMC, false, EGammaEnergyCorrectionFile);
+  	PhotonEnCorrector.initPrivateRng(new TRandom(1234));
+  	theEpCombinationTool.init((string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/weights/GBRForest_data_25ns.root").c_str(), "gedelectron_p4combination_25ns");  //got confirmation from Matteo Sani that this works for both data and MC 
+  	ElectronEnCorrector = ElectronEnergyCalibratorRun2(theEpCombinationTool, isMC, false, EGammaEnergyCorrectionFile);
+  	ElectronEnCorrector.initPrivateRng(new TRandom(1234));
+  }
+  if(is2016MC || is2016data){
+  	string EleEnergyCorrectionFile = "UserCode/llvv_fwk/data/jec/80X_ichepV1_2016_ele"; 
+  	string PhoEnergyCorrectionFile = "UserCode/llvv_fwk/data/jec/80X_ichepV1_2016_pho"; 
+  	PhotonEnCorrector = PhotonEnergyCalibratorRun2(isMC, false, PhoEnergyCorrectionFile);
+  	PhotonEnCorrector.initPrivateRng(new TRandom(1234));
+  	theEpCombinationTool.init((string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/weights/GBRForest_data_25ns.root").c_str(), "gedelectron_p4combination_25ns");  //got confirmation from Matteo Sani that this works for both data and MC 
+  	ElectronEnCorrector = ElectronEnergyCalibratorRun2(theEpCombinationTool, isMC, false, EleEnergyCorrectionFile);
+  	ElectronEnCorrector.initPrivateRng(new TRandom(1234));
+  }
 
   //lepton efficiencies
   LeptonEfficiencySF lepEff;
@@ -767,13 +780,13 @@ int main(int argc, char* argv[])
              }if(overlapWithLepton)continue;
 
              //Cut based identification
-             passId           = lid==11?patUtils::passId(leptons[ilep].el, vtx[0], patUtils::llvvElecId::Tight) : patUtils::passId(leptons[ilep].mu, vtx[0], patUtils::llvvMuonId::Tight);
-             passLooseLepton &= lid==11?patUtils::passId(leptons[ilep].el, vtx[0], patUtils::llvvElecId::Loose) : patUtils::passId(leptons[ilep].mu, vtx[0], patUtils::llvvMuonId::Loose);
-             passSoftMuon &= lid==11? false : patUtils::passId(leptons[ilep].mu, vtx[0], patUtils::llvvMuonId::Soft);
+             passId           = lid==11?patUtils::passId(leptons[ilep].el, vtx[0], patUtils::llvvElecId::Tight, patUtils::CutVersion::ICHEP16Cut) : patUtils::passId(leptons[ilep].mu, vtx[0], patUtils::llvvMuonId::Tight,patUtils::CutVersion::ICHEP16Cut);
+             passLooseLepton &= lid==11?patUtils::passId(leptons[ilep].el, vtx[0], patUtils::llvvElecId::Loose,patUtils::CutVersion::ICHEP16Cut) : patUtils::passId(leptons[ilep].mu, vtx[0], patUtils::llvvMuonId::Loose,patUtils::CutVersion::ICHEP16Cut);
+             passSoftMuon &= lid==11? false : patUtils::passId(leptons[ilep].mu, vtx[0], patUtils::llvvMuonId::Soft,patUtils::CutVersion::ICHEP16Cut);
 
              //isolation
-             passIso = lid==11?patUtils::passIso(leptons[ilep].el,  patUtils::llvvElecIso::Tight) : patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::Tight);
-             passLooseLepton &= lid==11?patUtils::passIso(leptons[ilep].el,  patUtils::llvvElecIso::Loose) : patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::Loose);
+             passIso = lid==11?patUtils::passIso(leptons[ilep].el,  patUtils::llvvElecIso::Tight,patUtils::CutVersion::ICHEP16Cut,0) : patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::Tight,patUtils::CutVersion::ICHEP16Cut);
+             passLooseLepton &= lid==11?patUtils::passIso(leptons[ilep].el,  patUtils::llvvElecIso::Loose,patUtils::CutVersion::ICHEP16Cut,0) : patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::Loose,patUtils::CutVersion::ICHEP16Cut);
 
              leptons[ilep].addUserFloat("relIso",  patUtils::relIso(leptons[ilep], rho) ); //compute it once for all
 
@@ -1015,12 +1028,12 @@ int main(int argc, char* argv[])
               for(unsigned int l1=0   ;l1<selLeptons.size();l1++){
                 if(abs(selLeptons[l1].pdgId())==15)continue;
                 if( selLeptons[l1].pt()<20 ) continue;   
-                if(!(abs(selLeptons[l1].pdgId())==11?patUtils::passIso(selLeptons[l1].el,  patUtils::llvvElecIso::Tight) : patUtils::passIso(selLeptons[l1].mu,  patUtils::llvvMuonIso::Tight))) continue;
+                if(!(abs(selLeptons[l1].pdgId())==11?patUtils::passIso(selLeptons[l1].el,  patUtils::llvvElecIso::Tight,patUtils::CutVersion::ICHEP16Cut, 0) : patUtils::passIso(selLeptons[l1].mu,  patUtils::llvvMuonIso::Tight,patUtils::CutVersion::ICHEP16Cut))) continue;
                 
                 for(unsigned int l2=l1+1;l2<selLeptons.size();l2++){
                   if(abs(selLeptons[l2].pdgId())==15)continue;
                   if( selLeptons[l2].pt()<20 ) continue;   
-                  if(!(abs(selLeptons[l2].pdgId())==11?patUtils::passIso(selLeptons[l2].el,  patUtils::llvvElecIso::Tight) : patUtils::passIso(selLeptons[l2].mu,  patUtils::llvvMuonIso::Tight))) continue;
+                  if(!(abs(selLeptons[l2].pdgId())==11?patUtils::passIso(selLeptons[l2].el,  patUtils::llvvElecIso::Tight,patUtils::CutVersion::ICHEP16Cut,0) : patUtils::passIso(selLeptons[l2].mu,  patUtils::llvvMuonIso::Tight,patUtils::CutVersion::ICHEP16Cut))) continue;
                        
                   if(abs(selLeptons[l1].pdgId())!=abs(selLeptons[l2].pdgId())) continue; 				 //SAME FLAVOUR PAIR
                   if(selLeptons[l1].pdgId()*selLeptons[l2].pdgId()>=0) continue;					 //OPPOSITE SIGN
@@ -1044,10 +1057,10 @@ int main(int argc, char* argv[])
                 if( abs(dilId)==121){ chTags.push_back("ll"); chTags.push_back("ee");   isDileptonCandidate=true; }
                 if( abs(dilId)==169){ chTags.push_back("ll"); chTags.push_back("mumu"); isDileptonCandidate=true; }
 
-                weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId()),  abs(selLeptons[dilLep1].pdgId()) ==11 ? "tight"    : "tight"    ).first : 1.0; //ID 
-                weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId()),  abs(selLeptons[dilLep1].pdgId()) ==11 ? "tightiso" : "tightiso" ).first : 1.0; //ISO w.r.t ID
-                weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId()),  abs(selLeptons[dilLep2].pdgId()) ==11 ? "tight"    : "tight"    ).first : 1.0; //ID 
-                weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId()),  abs(selLeptons[dilLep2].pdgId()) ==11 ? "tightiso" : "tightiso" ).first : 1.0; //ISO w.r.t ID
+                weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId()),  abs(selLeptons[dilLep1].pdgId()) ==11 ? "tight"    : "tight"    , patUtils::CutVersion::ICHEP16Cut).first : 1.0; //ID 
+                weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId()),  abs(selLeptons[dilLep1].pdgId()) ==11 ? "tightiso" : "tightiso",patUtils::CutVersion::ICHEP16Cut).first : 1.0; //ISO w.r.t ID
+                weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId()),  abs(selLeptons[dilLep2].pdgId()) ==11 ? "tight"    : "tight",patUtils::CutVersion::ICHEP16Cut).first : 1.0; //ID 
+                weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId()),  abs(selLeptons[dilLep2].pdgId()) ==11 ? "tightiso" : "tightiso",patUtils::CutVersion::ICHEP16Cut).first : 1.0; //ISO w.r.t ID
             }
 
             std::vector<TString> tags(1,"all");
@@ -1105,8 +1118,8 @@ int main(int argc, char* argv[])
 
                     if(abs(selLeptons[i].pdgId())==11 || abs(selLeptons[i].pdgId())==13){
                        bool passId = false;
-                       if(abs(selLeptons[i].pdgId())==11) passId = patUtils::passId(selLeptons[i].el, vtx[0], patUtils::llvvElecId::Loose);
-                       if(abs(selLeptons[i].pdgId())==13) passId = patUtils::passId(selLeptons[i].mu, vtx[0], patUtils::llvvMuonId::Loose);
+                       if(abs(selLeptons[i].pdgId())==11) passId = patUtils::passId(selLeptons[i].el, vtx[0], patUtils::llvvElecId::Loose,patUtils::CutVersion::ICHEP16Cut);
+                       if(abs(selLeptons[i].pdgId())==13) passId = patUtils::passId(selLeptons[i].mu, vtx[0], patUtils::llvvMuonId::Loose,patUtils::CutVersion::ICHEP16Cut);
                        float relIso = patUtils::relIso(selLeptons[i], rho);
 
                        if(true                 )TagsFR.push_back(PartName);
@@ -1188,14 +1201,13 @@ int main(int argc, char* argv[])
 
                //reweight the event to account for lept eff.
                if(isMC && higgsCandL1>=0 && abs(selLeptons[higgsCandL1].pdgId())<15){
-                  weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(), abs(selLeptons[higgsCandL1].pdgId()), abs(selLeptons[higgsCandL1].pdgId()) ==11 ? "tight" : "tight" ).first;
-                  weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(), abs(selLeptons[higgsCandL1].pdgId()), abs(selLeptons[higgsCandL1].pdgId()) ==11 ? "tightiso" : "tightiso" ).first;
+		 weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(), abs(selLeptons[higgsCandL1].pdgId()), abs(selLeptons[higgsCandL1].pdgId()) ==11 ? "tight" : "tight",patUtils::CutVersion::ICHEP16Cut ).first;
+		 weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(), abs(selLeptons[higgsCandL1].pdgId()), abs(selLeptons[higgsCandL1].pdgId()) ==11 ? "tightiso" : "tightiso",patUtils::CutVersion::ICHEP16Cut ).first;
                }
                if(isMC && higgsCandL2>=0 && abs(selLeptons[higgsCandL2].pdgId())<15){
-                  weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(), abs(selLeptons[higgsCandL2].pdgId()), abs(selLeptons[higgsCandL2].pdgId()) ==11 ? "tight" : "tight" ).first;
-                  weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(), abs(selLeptons[higgsCandL2].pdgId()), abs(selLeptons[higgsCandL2].pdgId()) ==11 ? "tightiso" : "tightiso" ).first;
+		 weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(), abs(selLeptons[higgsCandL2].pdgId()), abs(selLeptons[higgsCandL2].pdgId()) ==11 ? "tight" : "tight",patUtils::CutVersion::ICHEP16Cut ).first;
+		 weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(), abs(selLeptons[higgsCandL2].pdgId()), abs(selLeptons[higgsCandL2].pdgId()) ==11 ? "tightiso" : "tightiso", patUtils::CutVersion::ICHEP16Cut).first;
                }
-
 
                //check how many additional light jets are present
                NCleanedJetMain = 0;
@@ -1323,7 +1335,6 @@ int main(int argc, char* argv[])
                }  
 
             }
-
 
             if(selLeptons.size()>=2 && passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain && passDPhiCut && passHiggsLoose){
                 for(unsigned int index=0; index<optim_Cuts_sumPt.size();index++){
