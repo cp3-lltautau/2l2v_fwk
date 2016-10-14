@@ -279,6 +279,18 @@ int main(int argc, char* argv[])
   h1->GetXaxis()->SetBinLabel(8,"#Delta #phi Z-MET");
   h1->GetXaxis()->SetBinLabel(9,"di-#tau Cand");
 
+  // zhllvv Event selection                                                                                                                            
+  TH1 *h1zllvv=mon.addHistogram( new TH1F ("eventflow_zhllvv", ";;Events", 10,0,10) );
+  h1zllvv->GetXaxis()->SetBinLabel(1,"InitialEv");
+  h1zllvv->GetXaxis()->SetBinLabel(2,"Nlep#geq2");
+  h1zllvv->GetXaxis()->SetBinLabel(3,"ZmassVeto");
+  h1zllvv->GetXaxis()->SetBinLabel(4,"llkin");
+  h1zllvv->GetXaxis()->SetBinLabel(5,"jetCount");
+  h1zllvv->GetXaxis()->SetBinLabel(6,"TopVeto");
+  h1zllvv->GetXaxis()->SetBinLabel(7,"EtMiss");
+  h1zllvv->GetXaxis()->SetBinLabel(8,"#Delta #phi ll-MET");
+  h1zllvv->GetXaxis()->SetBinLabel(9,"pTunbalance");
+
   TH1 *h2=mon.addHistogram( new TH1F ("yields", ";;Events", 25,0,25) );
   h2->GetXaxis()->SetBinLabel(1,"OS eeee");
   h2->GetXaxis()->SetBinLabel(2,"OS ee#mu#mu");
@@ -1336,6 +1348,52 @@ int main(int argc, char* argv[])
 
             }
 
+	    bool passZVeto = true;
+	    bool llkin=true;
+	    bool jetCount=true;
+	    bool TopVeto=true;
+	    bool EtMiss=true;
+	    bool DeltaPhillMet=true;
+	    bool pTunbalance=true;
+	    
+
+	    // h1zllvv->GetXaxis()->SetBinLabel(1,"InitialEv");
+	    // h1zllvv->GetXaxis()->SetBinLabel(2,"Nlep#geq2");
+	    // h1zllvv->GetXaxis()->SetBinLabel(3,"ZmassVeto");
+	    // h1zllvv->GetXaxis()->SetBinLabel(4,"llkin");
+	    // h1zllvv->GetXaxis()->SetBinLabel(5,"jetCount");
+	    // h1zllvv->GetXaxis()->SetBinLabel(6,"TopVeto");
+	    // h1zllvv->GetXaxis()->SetBinLabel(7,"EtMiss");
+	    // h1zllvv->GetXaxis()->SetBinLabel(8,"#Delta #phi ll-MET");
+	    // h1zllvv->GetXaxis()->SetBinLabel(9,"pTunbalance");
+
+	    if(ivar==0){//fill plots only for nominal                                                                                         
+	      mon.fillHisto("eventflow_zhllvv", chTagsMain,0, weight);
+	      if(selLeptons.size()>=2){
+		if(passZVeto){
+		  mon.fillHisto("eventflow_zhllvv",chTagsMain,1, weight);
+		  if(llkin){
+		    mon.fillHisto("eventflow_zhllvv", chTagsMain,2, weight);
+		    if(jetCount){
+		      mon.fillHisto("eventflow_zhllvv", chTagsMain,3, weight);
+		      if(TopVeto){
+			mon.fillHisto("eventflow_zhllvv", chTagsMain,4, weight);
+			if(EtMiss){
+			  mon.fillHisto("eventflow_zhllvv", chTagsMain,5, weight);
+			  if(DeltaPhillMet){
+			    mon.fillHisto("eventflow_zhllvv", chTagsMain,6, weight);
+			    if(pTunbalance){
+			      mon.fillHisto("eventflow_zhllvv", chTagsMain,7, weight);
+			    }
+			  }
+		        }
+		      }
+		    }
+		  }
+		}
+	      }
+	    }
+		  
             if(selLeptons.size()>=2 && passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain && passDPhiCut && passHiggsLoose){
                 for(unsigned int index=0; index<optim_Cuts_sumPt.size();index++){
                   bool passHiggs = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],true,vtx);
@@ -1347,11 +1405,8 @@ int main(int argc, char* argv[])
                     mon.fillHisto(TString("metsys")+varNames[ivar], chTagsMain, imet.pt(), weight);
                   }
                 }//end of the loop on cutIndex 
-            }
-
-
-
-         }//END SYSTEMATIC LOOP
+            }}
+	 //END SYSTEMATIC LOOP
 
      }
      printf("\n"); 
