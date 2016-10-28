@@ -113,7 +113,7 @@ bool passHiggsCuts(std::vector<patUtils::GenericLepton> selLeptons, int higgsCan
        passId  &= patUtils::passId(lep->mu, vtx[0], patUtils::llvvMuonId::Loose,patUtils::CutVersion::ICHEP16Cut);
        passIso &= (lep->userFloat("relIso") <= isoMuCut);
      }else if(abs(lep->pdgId())==15){
-       passId  &= lep->tau.tauID("againstElectronTightMVA5") && lep->tau.tauID("againstMuonLoose3");
+       passId  &= lep->tau.tauID("againstElectronTightMVA6") && lep->tau.tauID("againstMuonLoose3");
        passIso &= bool(lep->tau.tauID(isoHaCut)); 
      }
      sumpt += lep->pt();
@@ -876,7 +876,7 @@ int main(int argc, char* argv[])
            //	if(tau.emFraction() >=2.) continue;
 	   
 	   // we need to apply a very loose selection here (Lucia's suggestion)
-	   if(!tau.tauID("againstElectronLooseMVA5")) continue;
+	   if(!tau.tauID("againstElectronLooseMVA6")) continue;
 	   if(!tau.tauID("againstMuonLoose3")) continue;
 	   if(!tau.tauID("decayModeFinding")) continue;
 
