@@ -2,7 +2,7 @@
   "proc":[
     {
       "tag":"data",
-      "keys":["2l2v_2016", "2l2v_mcbased", "2l2v_datadriven", "2l2v_datadrivenplot", "2l2v_datadriven_SM", "2l2v_datadriven_RsGrav", "2l2v_datadriven_BulkGrav", "2l2v_datadriven_Rad", "2l2v_mcbased_SM", "2l2v_mcbased_RsGrav", "2l2v_mcbased_BulkGrav", "2l2v_mcbased_Rad"],
+      "keys":["zhllvv_2016"],
       "isdata":true,
       "color":1,
       "fill":0,
@@ -12,23 +12,23 @@
           { "dtag":"Data13TeV_MuEG2016B"                 ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/MuonEG/Run2016B-PromptReco-v2/MINIAOD"]           ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
 	  { "dtag":"Data13TeV_MuEG2016C"                 ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/MuonEG/Run2016C-PromptReco-v2/MINIAOD"]           ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
 	  { "dtag":"Data13TeV_MuEG2016D"                 ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/MuonEG/Run2016D-PromptReco-v2/MINIAOD"]           ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
-          { "dtag":"Data13TeV_SingleElectron2016B"       ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/SingleElectron/Run2016B-PromptReco-v2/MINIAOD"]   ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
-	  { "dtag":"Data13TeV_SingleElectron2016C"       ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/SingleElectron/Run2016C-PromptReco-v2/MINIAOD"]   ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
-	   { "dtag":"Data13TeV_SingleElectron2016D"       ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/SingleElectron/Run2016D-PromptReco-v2/MINIAOD"]   ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
+          { "dtag":"Data13TeV_SingleElectron2016B"     ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/SingleElectron/Run2016B-PromptReco-v2/MINIAOD"]   ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
+	  { "dtag":"Data13TeV_SingleElectron2016C"     ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/SingleElectron/Run2016C-PromptReco-v2/MINIAOD"]   ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
+	  { "dtag":"Data13TeV_SingleElectron2016D"     ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/SingleElectron/Run2016D-PromptReco-v2/MINIAOD"]   ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
           { "dtag":"Data13TeV_SingleMu2016B"             ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/SingleMuon/Run2016B-PromptReco-v2/MINIAOD"]       ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
 	  { "dtag":"Data13TeV_SingleMu2016C"             ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/SingleMuon/Run2016C-PromptReco-v2/MINIAOD"]       ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
 	  { "dtag":"Data13TeV_SingleMu2016D"             ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/SingleMuon/Run2016D-PromptReco-v2/MINIAOD"]       ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
-          { "dtag":"Data13TeV_DoubleMu2016B"             ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/DoubleMuon/Run2016B-PromptReco-v2/MINIAOD"]       ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
-	  { "dtag":"Data13TeV_DoubleMu2016C"             ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/DoubleMuon/Run2016C-PromptReco-v2/MINIAOD"]       ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
-	  { "dtag":"Data13TeV_DoubleMu2016D"             ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/DoubleMuon/Run2016D-PromptReco-v2/MINIAOD"]       ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
-          { "dtag":"Data13TeV_DoubleElectron2016B"       ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/DoubleEG/Run2016B-PromptReco-v2/MINIAOD"]         ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
-	  { "dtag":"Data13TeV_DoubleElectron2016C"       ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/DoubleEG/Run2016C-PromptReco-v2/MINIAOD"]         ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
-	  { "dtag":"Data13TeV_DoubleElectron2016D"       ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/DoubleEG/Run2016D-PromptReco-v2/MINIAOD"]         ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   }
+          { "dtag":"Data13TeV_DoubleMu2016B"            ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/DoubleMuon/Run2016B-PromptReco-v2/MINIAOD"]       ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
+	  { "dtag":"Data13TeV_DoubleMu2016C"            ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/DoubleMuon/Run2016C-PromptReco-v2/MINIAOD"]       ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
+	  { "dtag":"Data13TeV_DoubleMu2016D"            ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/DoubleMuon/Run2016D-PromptReco-v2/MINIAOD"]       ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
+          { "dtag":"Data13TeV_DoubleElectron2016B"     ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/DoubleEG/Run2016B-PromptReco-v2/MINIAOD"]         ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
+	  { "dtag":"Data13TeV_DoubleElectron2016C"     ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/DoubleEG/Run2016C-PromptReco-v2/MINIAOD"]         ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   },
+	  { "dtag":"Data13TeV_DoubleElectron2016D"     ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/DoubleEG/Run2016D-PromptReco-v2/MINIAOD"]         ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-276811_13TeV_PromptReco_Collisions16_JSON.txt"   }
       ]
     },
     {
       "tag":"ZZ#rightarrow Z#tau#tau",
-      "keys":["2l2v_2016", "2l2v_mcbased", "2l2v_datadriven", "2l2v_photoncontrol", "2l2v_datadriven_SM", "2l2v_datadriven_RsGrav", "2l2v_datadriven_BulkGrav", "2l2v_datadriven_Rad", "2l2v_mcbased_SM", "2l2v_mcbased_RsGrav", "2l2v_mcbased_BulkGrav", "2l2v_mcbased_Rad"],
+      "keys":["zhllvv_2016"],
       "isdata":false,
       "color":595,
       "mctruthmode":15,         
@@ -39,7 +39,7 @@
     },
     {
       "tag":"ZZ",
-      "keys":["2l2v_2016", "2l2v_mcbased", "2l2v_datadriven", "2l2v_datadrivenplot", "2l2v_photoncontrol", "2l2v_datadriven_SM", "2l2v_datadriven_RsGrav", "2l2v_datadriven_BulkGrav", "2l2v_datadriven_Rad", "2l2v_mcbased_SM", "2l2v_mcbased_RsGrav", "2l2v_mcbased_BulkGrav", "2l2v_mcbased_Rad"],
+      "keys":["zhllvv_2016"],
       "isdata":false,
       "color":592,
       "mctruthmode":1113,         
@@ -52,8 +52,8 @@
     },
     {
       "tag":"WW",
-	"keys":["2l2v_2016", "2l2v_mcbased", "2l2v_datadriven", "2l2v_photoncontrol", "2l2v_photonsOnly", "2l2v_datadriven_SM", "2l2v_datadriven_RsGrav", "2l2v_datadriven_BulkGrav", "2l2v_datadriven_Rad", "2l2v_mcbased_SM", "2l2v_mcbased_RsGrav", "2l2v_mcbased_BulkGrav", "2l2v_mcbased_Rad"],
-      "isdata":false,
+	"keys":["zhllvv_2016"],
+	"isdata":false,
 	"color":590,
 	"2l2v_photonsOnly":{"suffix":"reweighted"},
       "data":[
@@ -64,8 +64,8 @@
     },
     { 
       "tag":"WZ",
-	"keys":["2l2v_2016", "2l2v_mcbased", "2l2v_datadriven", "2l2v_datadrivenplot", "2l2v_photoncontrol", "2l2v_photonsOnly", "2l2v_datadriven_SM", "2l2v_datadriven_RsGrav", "2l2v_datadriven_BulkGrav", "2l2v_datadriven_Rad", "2l2v_mcbased_SM", "2l2v_mcbased_RsGrav", "2l2v_mcbased_BulkGrav", "2l2v_mcbased_Rad"],      
-      "isdata":false,
+	"keys":["zhllvv_2016"],      
+      	"isdata":false,
 	"color":594,
 	"2l2v_photonsOnly":{"suffix":"reweighted"},
       "data":[
@@ -75,7 +75,7 @@
     }, 
     { 
       "tag":"ZVV",
-      "keys":["2l2v_2016", "2l2v_mcbased", "2l2v_datadriven", "2l2v_datadrivenplot", "2l2v_photoncontrol", "2l2v_datadriven_SM", "2l2v_datadriven_RsGrav", "2l2v_datadriven_BulkGrav", "2l2v_datadriven_Rad", "2l2v_mcbased_SM", "2l2v_mcbased_RsGrav", "2l2v_mcbased_BulkGrav", "2l2v_mcbased_Rad"],
+      "keys":["zhllvv_2016"],
       "isdata":false,
       "color":869,
       "data":[
@@ -86,7 +86,7 @@
     },
     {
       "tag":"Top",
-	"keys":["2l2v_2016", "2l2v_mcbased", "2l2v_datadriven", "2l2v_photoncontrol",  "2l2v_photonsOnly", "2l2v_datadriven_SM", "2l2v_datadriven_RsGrav", "2l2v_datadriven_BulkGrav", "2l2v_datadriven_Rad", "2l2v_mcbased_SM", "2l2v_mcbased_RsGrav", "2l2v_mcbased_BulkGrav", "2l2v_mcbased_Rad"],
+	"keys":["zhllvv_2016"],
       "isdata":false,
 	"color":8,
 	"2l2v_photonsOnly":{"suffix":"reweighted"},
@@ -102,7 +102,7 @@
     },
      {
 	 "tag":"W#rightarrow l#nu",
-	 "keys":["2l2v_2016", "2l2v_mcbased","2l2v_photoncontrol", "2l2v_photonsOnly", "2l2v_datadriven", "2l2v_datadriven_SM", "2l2v_datadriven_RsGrav", "2l2v_datadriven_BulkGrav", "2l2v_datadriven_Rad", "2l2v_mcbased_SM", "2l2v_mcbased_RsGrav", "2l2v_mcbased_BulkGrav", "2l2v_mcbased_Rad"],
+	 "keys":["zhllvv_2016"],
       "isdata":false,
       "color":809,
       "2l2v_photonsOnly":{"suffix":"reweighted"},
@@ -123,7 +123,7 @@
     },
      {
       "tag":"Z#rightarrow #tau#tau",
-      "keys":["2l2v_2016", "2l2v_mcbased", "2l2v_datadriven", "2l2v_photoncontrol", "2l2v_datadriven_SM", "2l2v_datadriven_RsGrav", "2l2v_datadriven_BulkGrav", "2l2v_datadriven_Rad", "2l2v_mcbased_SM", "2l2v_mcbased_RsGrav", "2l2v_mcbased_BulkGrav", "2l2v_mcbased_Rad"],      
+      "keys":["zhllvv_2016"],      
       "mctruthmode":15,    
       "isdata":false,
       "color":833,
@@ -134,7 +134,7 @@
     },   
     {
       "tag":"Z#rightarrow ee/#mu#mu",
-      "keys":["2l2v_2016", "2l2v_mcbased", "2l2v_photoncontrol", "2l2v_mcbased_SM", "2l2v_mcbased_RsGrav", "2l2v_mcbased_BulkGrav", "2l2v_mcbased_Rad"],      
+      "keys":["zhllvv_2016"],      
       "isdata":false,
       "mctruthmode":1113,    
       "color":831,
@@ -145,7 +145,7 @@
     },
     {
     	"tag":"Z#rightarrow #nu#nu",
-      "keys":["2l2v_2016", "2l2v_photoncontrol", "2l2v_photonsOnly"],      
+      "keys":["zhllvv_2016"],      
       "isdata":false,                                                                         
       "color":7,
       "2l2v_photonsOnly":{"suffix":"reweighted"},	
@@ -162,7 +162,7 @@
     },  
     {
       "tag":"Z#gamma #rightarrow ll#gamma",                                                                                   
-      "keys":["2l2v_2016", "2l2v_photoncontrol", "2l2v_photonsOnly"],      
+      "keys":["zhllvv_2016"],      
       "isdata":false,                                                                                                           
       "color":635,                            
       "2l2v_photonsOnly":{"suffix":"reweighted"},                                                                                  
@@ -173,7 +173,7 @@
     },
     {
       "tag":"W#gamma #rightarrow l#nu#gamma",
-      "keys":["2l2v_2016", "2l2v_photoncontrol", "2l2v_photonsOnly"],      
+      "keys":["zhllvv_2016"],      
       "isdata":false,
       "color":52,
       "2l2v_photonsOnly":{"suffix":"reweighted"},	
@@ -181,9 +181,9 @@
         { "dtag":"MC13TeV_WGToLNuG_2016" , "xsec":405.271, "br":[ 1.0 ] , "dset":["/WGToLNuG_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM"]}
       ]
     },
-        {
+    {
       "tag":"QCD, HT>100",
-      "keys":["2l2v_2016", "2l2v_photoncontrol"],      
+      "keys":["zhllvv_2016"],      
       "isdata":false,
       "color":21,
       "data":[
@@ -203,7 +203,7 @@
     },
     {
       "tag":"QCD_EMEnr",
-      "keys":["2l2v_2016", "2l2v_photoncontrol"],                                                         
+      "keys":["zhllvv_2016"],                                                         
       "isdata":false,
       "color":24,
       "data":[
@@ -218,10 +218,9 @@
         { "dtag":"MC13TeV_QCD_Pt20ToInf_MEnr_2016"   ,  "xsec":720648000       , "br":[ 0.00042 ]       ,	"dset":["/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM"]} 
       ]	
     },	   
-
     {
       "tag":"Top/W/WW",
-      "keys":["2l2v_2016", "2l2v_datadrivenplot"],
+      "keys":["zhllvv_2016"],
       "isdata":false,
       "isdatadriven":true,
       "color":8,
