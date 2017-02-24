@@ -20,5 +20,11 @@ cd UserCode/llvv_fwk
 git checkout -b modified #copy the branch to a new one to host future modifications (ease pullrequest and code merging)
 cd ../..
 
+git clone
+https://github.com/cms-analysis/HiggsAnalysis-ZZMatrixElement.git
+ZZMatrixElement
+cd ZZMatrixElement
+sh setup.sh -j 12
+
 #compiling all the downloaded things
-scramv1 b -j 16
+#scramv1 b -j 16
