@@ -30,4 +30,4 @@ wget https://raw.githubusercontent.com/cms-analysis/HiggsAnalysis-CombinedLimit/
 find UserCode/llvv_fwk/ -type f -name '*.cc' -exec sed -i -e 's/HiggsAnalysis\/CombinedLimit\/interface\/th1fmorph.h/UserCode\/llvv_fwk\/interface\/th1fmorph.h/g' {} \;
 
 #compiling all the downloaded things
-#scramv1 b -j 16
+scramv1 b -j 16
