@@ -25,7 +25,7 @@ cd ZZMatrixElement
 sh setup.sh -j 12
 
 #since HiggsAnalysis is broken in 80X, copy one of the missing file to allow compilation and change some paths
-cd ../..
+cd ..
 echo $PWD
 wget https://raw.githubusercontent.com/cms-analysis/HiggsAnalysis-CombinedLimit/74x-root6/src/th1fmorph.cc -P UserCode/llvv_fwk/src/
 wget https://raw.githubusercontent.com/cms-analysis/HiggsAnalysis-CombinedLimit/74x-root6/interface/th1fmorph.h -P UserCode/llvv_fwk/interface/
