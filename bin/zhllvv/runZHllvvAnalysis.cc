@@ -598,6 +598,12 @@ int main(int argc, char* argv[])
                 }
                 if(mctruthmode==15   && abs(prodId)!=225)continue; //skip not tautau
                 if(mctruthmode==1113 && abs(prodId)==225)continue; //skip tautau
+            } else if (isMC && mctruthmode==121416 ){
+              int prodId = 1;
+              for( unsigned int k=0; k<gen.size(); ++k){        
+                if( gen[k].isHardProcess() && ( abs( gen[k].pdgId() ) == 12 || abs( gen[k].pdgId() ) == 14 || abs( gen[k].pdgId() )==16 ) ) prodId*=gen[k].pdgId(); 
+              }
+              if(abs(prodId)!=144  && abs(prodId)!=196  && abs(prodId)!=256 )continue; //skip not nunu
             }
           }
 
