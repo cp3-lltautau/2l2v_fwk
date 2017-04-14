@@ -26,6 +26,16 @@
         { "dtag":"Data13TeV_MuEG2015B"                 ,  "xsec":1.0         , "br":[ 1.0 ]      , "dset":["/MuonEG/Run2015B-27Jan2016-v2/MINIAOD"]        ,  "lumiMask":"$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_13TeV_16Dec2015ReReco_Collisions15_25ns_JSON_v2.txt"   }
       ]
     },
+    {  
+     "tag":"ZH#rightarrow #nu#nu#tau#tau",
+      "keys":["zhllvv_2015"],
+      "isdata":false,
+      "color":2,
+      "mctruthmode":121416,         
+      "data":[
+        { "dtag":"ZHToTauTau_M125_2015"               ,  "xsec":1.0           , "br":[ 0.2 ]           , "dset":[" /ZHToTauTau_M125_13TeV_powheg_pythia8/RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/MINIAODSIM"]}
+      ]
+    },   
     {
       "tag":"ZZ#rightarrow Z#tau#tau",
       "keys":["zhllvv_2015"],
