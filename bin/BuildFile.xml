@@ -15,7 +15,7 @@
   <bin name="extractLumiJSON"             file="common/extractLumiJSON.cc"></bin>
   <bin name="jsonTools"                   file="common/jsonTools.cc"></bin>
   <bin name="computeLimit"                file="common/computeLimit.cc"></bin>
-  <bin name="runPlotter"                  file="common/runPlotter.cc"></bin> 
+  <bin name="runPlotter"                  file="common/runPlotter.cc"></bin>
   <bin name="runPLRanalysis"              file="common/runPLRanalysis.cc"></bin>
   <bin name="computeLeptonEfficency"      file="common/computeLeptonEfficency.cc"></bin>
   <bin name="runEfficencyMiniAODExample"  file="common/runEfficencyMiniAODExample.cc"></bin>
@@ -23,16 +23,16 @@
 <!-- Analysis specific code (please keep that in subdirectories and refer to test/<subdir> for instructions) -->
   <!--bin name="runChHiggsAnalysis"          file="chhiggs/runAnalysis.cc"></bin-->
 <!--  <bin name="runLeptonEffStudy"           file="chhiggs/runLeptonEffStudy.cc"></bin> temporarily deactivated-->
-  <bin name="runFixedPlotter"             file="chhiggs/runFixedPlotter.cc"></bin> 
+  <bin name="runFixedPlotter"             file="chhiggs/runFixedPlotter.cc"></bin>
   <bin name="fitTTbarCrossSection"        file="chhiggs/fitTTbarCrossSection.cc"></bin>
 <!--  <bin name="runTtHMuMuAnalysis"          file="tthmumu/runAnalysis.cc"></bin>-->
 
 <bin name="runHZZ2l2vAnalysis"          file="hzz2l2v/runHZZ2l2vAnalysis.cc"></bin>
 
   <bin name="extractPhotonWeights"        file="hzz2l2v/extractPhotonWeights.cc"></bin>
- <bin name="extractPhotonWeights_UsingBins"        file="hzz2l2v/extractPhotonWeights_UsingBins.cc"></bin> 
+ <bin name="extractPhotonWeights_UsingBins"        file="hzz2l2v/extractPhotonWeights_UsingBins.cc"></bin>
  <bin name="runPhotonZClosure"           file="hzz2l2v/runPhotonZClosure.cc"></bin>
-<!--  <bin name="runZHTauTauAnalysis"         file="zhtautau/runZHTauTauAnalysis.cc"></bin>-->
+<bin name="runZHTauTauAnalysis"         file="zhtautau/runZHTauTauAnalysis.cc"></bin>
   <bin name="extractFRWeights"            file="zhtautau/extractFRWeights.cc"></bin>
 </environment>
 
