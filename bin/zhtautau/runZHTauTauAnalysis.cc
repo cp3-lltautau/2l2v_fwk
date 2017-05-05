@@ -674,6 +674,18 @@ int main(int argc, char* argv[])
           electronsHandle.getByLabel(ev, "slimmedElectrons");
           if(electronsHandle.isValid()){ electrons = *electronsHandle;}
 
+
+
+
+          EcalRecHitCollection recHitCollectionEB;
+          EcalRecHitCollection recHitCollectionEE;
+          fwlite::Handle<EcalRecHitCollection> recHitCollectionEBHandle;
+          fwlite::Handle<EcalRecHitCollection> recHitCollectionEEHandle;
+          recHitCollectionEBHandle.getByLabel(ev, "reducedEgamma","reducedEBRecHits" );
+          recHitCollectionEEHandle.getByLabel(ev, "reducedEgamma","reducedEERecHits" );
+          if(recHitCollectionEBHandle.isValid()){ recHitCollectionEB = *recHitCollectionEBHandle;}
+          if(recHitCollectionEEHandle.isValid()){ recHitCollectionEE = *recHitCollectionEEHandle;}
+
           pat::JetCollection jets;
           fwlite::Handle< pat::JetCollection > jetsHandle;
           jetsHandle.getByLabel(ev, "slimmedJets");
@@ -839,12 +851,14 @@ int main(int argc, char* argv[])
             // Comment out for the moment!!
             // Find a way to obtaion EcalRecHitCollection
 
-            //  if(abs(lid)==11  && passIso && passId){
-            //     elDiff -= leptons[ilep].p4();
-            //     ElectronEnCorrector.calibrate(leptons[ilep].el, ev.eventAuxiliary().run(), edm::StreamID::invalidStreamID());
-            //     leptons[ilep] = patUtils::GenericLepton(leptons[ilep].el); //recreate the generic lepton to be sure that the p4 is ok
-            //     elDiff += leptons[ilep].p4();
-            //  }
+             if(abs(lid)==11  && passIso && passId){
+                elDiff -= leptons[ilep].p4();
+                int eventIsMC = ev.isRealData() ? 0 : 1;
+                const EcalRecHitCollection* recHits = (leptons[ilep].el.isEB()) ? recHitCollectionEBHandle.product() : recHitCollectionEEHandle.product();
+                ElectronEnCorrector.calibrate(leptons[ilep].el, ev.eventAuxiliary().run(), recHits, edm::StreamID::invalidStreamID(), eventIsMC);
+                leptons[ilep] = patUtils::GenericLepton(leptons[ilep].el); //recreate the generic lepton to be sure that the p4 is ok
+                elDiff += leptons[ilep].p4();
+             }
 
               //kinematics
              float leta = fabs(lid==11 ?  leptons[ilep].el.superCluster()->eta() : leptons[ilep].eta());
