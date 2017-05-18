@@ -46,6 +46,12 @@ Jobs_CRABLFN = ''
 Jobs_List = []
 Jobs_LocalNJobs = 8
 
+# for slurm, set them to whatever you want to suit your job best
+Jobs_Requeue     = True
+Jobs_Memory      = '2000'
+Jobs_Time        = '3-00:00:00'
+
+
 def KillProcess(processName):
     for line in os.popen("ps"):
         fields = line.split()
@@ -116,6 +122,7 @@ def CreateTheShellFile(argv):
     global Jobs_FinalCmds
     global absoluteShellPath
     if(subTool=='crab'):return
+    LogFileName = Jobs_Index+Jobs_Name
 
     Path_Shell = Farm_Directories[1]+'job'+Jobs_Index+Jobs_Name+'.sh'
     function_argument=''
@@ -130,7 +137,21 @@ def CreateTheShellFile(argv):
     shell_file.write('#! /bin/sh\n')
     shell_file.write(CopyRights + '\n')
     shell_file.write('pwd\n')
- 
+    if subTool == 'slurm':
+        shell_file.write('#SBATCH --job-name=%s_job\n' % Path_Shell)
+        #shell_file.write('#SBATCH --output=%s.log\n' % Path_Log)
+        #shell_file.write('#SBATCH --error=%s.err\n' % Path_Log)
+        shell_file.write('#SBATCH --output=/dev/null\n')
+        shell_file.write('#SBATCH --error=/dev/null\n')
+        shell_file.write('#SBATCH --ntasks=1\n')
+        shell_file.write('#SBATCH --mem-per-cpu=%s\n' % Jobs_Memory)
+        shell_file.write('#SBATCH --time=%s\n' % Jobs_Time)
+        if Jobs_Requeue:
+            shell_file.write('#SBATCH --requeue\n')
+        #shell_file.write('\nsrun sh -c \'\n\n')
+        shell_file.write('cd "${LOCALSCRATCH}"\n')
+        shell_file.write('exec 1> %s.out 2> %s.err\n' % (LogFileName, LogFileName))
+    
     if 'purdue.edu' in hostname:
         shell_file.write('source /cvmfs/cms.cern.ch/cmsset_default.sh\n')
         shell_file.write('source /grp/cms/tools/glite/setup.sh\n')
@@ -145,6 +166,8 @@ def CreateTheShellFile(argv):
     else: 
         shell_file.write('export VO_CMS_SW_DIR='+os.getenv("VO_CMS_SW_DIR","/nfs/soft/cms")+'\n')            
     #shell_file.write('source /nfs/soft/cms/cmsset_default.sh\n')
+    
+    shell_file.write('export XRD_NETWORKSTACK=IPv4\n')
 
     shell_file.write('cd ' + os.getcwd() + '\n')
     shell_file.write('eval `scramv1 runtime -sh`\n')
@@ -205,6 +228,10 @@ def CreateTheShellFile(argv):
         outDir = Farm_Directories[3]
         #if(not os.path.isabs(Path_Shell)): outDir = os.getcwd()+'/'+outDir;
         #shell_file.write('mv '+ Jobs_Name+'* '+outDir+'\n')
+    if subTool=='slurm':
+        logsDir = Farm_Directories[2]
+        if(not os.path.isabs(logsDir)): logsDir = os.getcwd()+'/'+logsDir;
+        shell_file.write('cp %s.err %s.out %s \n' % (LogFileName, LogFileName, logsDir))
     shell_file.close()
     os.system("chmod 777 "+Path_Shell)
 
@@ -294,6 +321,9 @@ def CreateTheCmdFile():
         else:                                                                       cmd_file.write('requirements            = (Memory > 200)\n')
         cmd_file.write('should_transfer_files   = YES\n')
         cmd_file.write('when_to_transfer_output = ON_EXIT\n')
+    elif subTool=='slurm':
+	   cmd_file.write('#!/bin/bash\n')
+	   cmd_file.write(CopyRights + '\n')
     else:
         cmd_file.write(CopyRights + '\n')
     cmd_file.close()
@@ -341,6 +371,8 @@ def AddJobToCmdFile():
         absoluteShellPath = Path_Shell;
         if(not os.path.isabs(absoluteShellPath)): absoluteShellPath= os.getcwd() + "/"+absoluteShellPath
         Jobs_List.extend([absoluteShellPath])
+    elif subTool=='slurm':
+        cmd_file.write('sbatch --partition=cp3 --qos=cp3 --wckey=cms %s\n'      % Path_Shell) 
     else:
         os.system('rm -f ' +os.path.relpath(Path_Log) + '.log') #delete log file to be sure there is no overlap
         cmd_file.write('\n')
@@ -398,11 +430,13 @@ def SendCluster_Create(FarmDirectory, JobName):
 
         if(  commands.getstatusoutput("bjobs"          )[1].find("command not found")<0):   subTool = 'bsub'
         elif(commands.getstatusoutput(qbatchTestCommand)[1].find("command not found")<0):   subTool = 'qsub'
+        elif( not commands.getstatusoutput("which srun")[1].startswith("which:")):          subTool = 'slurm'
         else:                                                                               subTool = 'condor'
     if(Jobs_Queue.find('crab')>=0):                                                     subTool = 'crab'
     if(Jobs_Queue.find('criminal')>=0):                                                 subTool = 'criminal'
     Jobs_Name  = JobName
     Jobs_Count = 0
+    print "=============== the SUB TOOL IS:",subTool
 
     CreateDirectoryStructure(FarmDirectory)
     CreateTheCmdFile()
@@ -444,7 +478,7 @@ def SendCluster_Submit():
     global Jobs_List
     global Farm_Directories
 
-    if subTool=='bsub' or subTool=='qsub':
+    if subTool=='bsub' or subTool=='qsub' or subTool=='slurm':
         print Path_Cmd
         if(commands.getstatusoutput("hostname -f")[1].find("iihe.ac.be"       )>0): os.system("cat " + Path_Cmd + " >> " +Farm_Directories[1]+"/big.cmd")
         else : os.system("sh " + Path_Cmd)
