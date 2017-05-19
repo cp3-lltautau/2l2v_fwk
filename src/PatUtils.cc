@@ -11,7 +11,7 @@ namespace patUtils
   DetId seedDetId = electron.superCluster()->seed()->seed();
   EcalRecHitCollection::const_iterator seedRecHit = recHits->find(seedDetId);
   unsigned int gainSeedSC = 12;
-  if (seedRecHit != recHits->end()) { 
+  if (seedRecHit != recHits->end()) {
     if(seedRecHit->checkFlag(EcalRecHit::kHasSwitchToGain6)) gainSeedSC = 6;
     if(seedRecHit->checkFlag(EcalRecHit::kHasSwitchToGain1)) gainSeedSC = 1;
     }
@@ -24,7 +24,7 @@ namespace patUtils
   DetId seedDetId = photon.superCluster()->seed()->seed();
   EcalRecHitCollection::const_iterator seedRecHit = recHits->find(seedDetId);
   unsigned int gainSeedSC = 12;
-  if (seedRecHit != recHits->end()) { 
+  if (seedRecHit != recHits->end()) {
     if(seedRecHit->checkFlag(EcalRecHit::kHasSwitchToGain6)) gainSeedSC = 6;
     if(seedRecHit->checkFlag(EcalRecHit::kHasSwitchToGain1)) gainSeedSC = 1;
     }
@@ -245,8 +245,8 @@ namespace patUtils
             }
 	break;
 
-    case CutVersion::Moriond17Cut :
-    case CutVersion::ICHEP16Cut :
+  case CutVersion::Moriond17Cut :
+  case CutVersion::ICHEP16Cut :
 
             switch(IdLevel){
             case llvvElecId::Veto :

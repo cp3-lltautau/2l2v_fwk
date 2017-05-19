@@ -81,6 +81,13 @@ LorentzVector getSVFit(pat::MET met, std::vector<patUtils::GenericLepton> selLep
   //  covMET[1][1] = met.getSignificanceMatrix()(1,1);
   //  std::cout<<"MET MATRIX: " << covMET[0][0] << " " << covMET[0][1] << " " << covMET[1][0] << " " << covMET[1][1] << "\n";
 
+  int dlid = abs( selLeptons[higgsCandL1].pdgId() * selLeptons[higgsCandL2].pdgId() );
+
+  if ( dlid == 165 || dlid == 195){
+    higgsCandL1  = abs(selLeptons[higgsCandL1].pdgId()) != 15 ? higgsCandL1 : higgsCandL2;
+    higgsCandL2  = abs(selLeptons[higgsCandL1].pdgId()) != 15 ? higgsCandL2 : higgsCandL1;
+  }
+
   covMET[0][0] = 0.95;  covMET[0][1] = 0.05; covMET[1][0] = 0.05; covMET[1][1] = 0.95;
 
   std::vector<svFitStandalone::MeasuredTauLepton> measuredTauLeptons;
@@ -120,7 +127,7 @@ bool passHiggsCuts(std::vector<patUtils::GenericLepton> selLeptons, int higgsCan
       passId  &= patUtils::passId(lep->mu, vtx[0], patUtils::llvvMuonId::Loose, CutVersion::CutSet::ICHEP16Cut);
       passIso &= (lep->userFloat("relIso") <= isoMuCut);
     }else if(abs(lep->pdgId())==15){
-      passId  &= lep->tau.tauID("againstElectronTightMVA5") && lep->tau.tauID("againstMuonLoose3");
+      passId  &= lep->tau.tauID("againstElectronTightMVA6") && lep->tau.tauID("againstMuonLoose3");
       passIso &= bool(lep->tau.tauID(isoHaCut));
     }
     sumpt += lep->pt();
@@ -223,6 +230,8 @@ int main(int argc, char* argv[])
   bool isMC_WZ  = isMC && ( string(dtag.Data()).find("TeV_WZ")  != string::npos);
   bool isMC_QCD = (isMC && dtag.Contains("QCD"));
   bool isMC_GJet = (isMC && dtag.Contains("GJet"));
+  bool is2016data = (!isMC && dtag.Contains("2016"));
+  //bool is2016MC = (isMC && dtag.Contains("2016"));
 
 
   //tree info
@@ -307,7 +316,7 @@ int main(int argc, char* argv[])
   h2->GetXaxis()->SetBinLabel(23,"SS #mu#mu#mu#tau");
   h2->GetXaxis()->SetBinLabel(24,"SS #mu#mu#tau#tau");
 
-  TH1 *h3=mon.addHistogram( new TH1F ("yieldsOS", ";;Events", 12,0,13) );
+  TH1 *h3=mon.addHistogram( new TH1F ("yieldsOS", ";;Events", 12,0,12) );
   h3->GetXaxis()->SetBinLabel(1,"OS eeee");
   h3->GetXaxis()->SetBinLabel(2,"OS ee#mu#mu");
   h3->GetXaxis()->SetBinLabel(3,"OS eee#mu");
@@ -338,7 +347,7 @@ int main(int argc, char* argv[])
   mon.addHistogram( new TH1F( "Hpt",              ";p_{T}^{ll#tau#tau} (GeV);Events/10 GeV",50,0,500));
 
   double bins[]={5, 30,70,110,190,300,550,1800};
-  int nbins=sizeof(bins)/sizeof(double);
+  int nbins=sizeof(bins)/sizeof(double) - 1;
   mon.addHistogram( new TH1F( "Amass",            ";M_{#tau#tau} (GeV);Events",nbins,bins));
   mon.addHistogram( new TH1F( "Hmass",            ";M_{ll#tau#tau} (GeV);Events",nbins,bins));
   mon.addHistogram( new TH1F( "Amasssvfit",       ";SVFit M_{#tau#tau} (GeV);Events",nbins,bins));
@@ -383,7 +392,8 @@ int main(int argc, char* argv[])
   //
   //
 
-  std::vector<const char*> tauIDiso = {"byLooseCombinedIsolationDeltaBetaCorr3Hits"};
+  std::vector<const char*> tauIDiso = {"byLooseCombinedIsolationDeltaBetaCorr3Hits","byLooseIsolationMVArun2v1DBoldDMwLT",
+                                        "byLooseIsolationMVArun2v1DBdR03oldDMwLT"};
   std::vector<float>    optim_Cuts_sumPt;
   std::vector<int>      optim_Cuts_taIso;
   std::vector<float>    optim_Cuts_muIso;
@@ -437,6 +447,11 @@ int main(int argc, char* argv[])
   //jet energy scale and uncertainties
   TString jecDir = runProcess.getParameter<std::string>("jecDir");
   gSystem->ExpandPathName(jecDir);
+  if (is2016data) {
+      if(dtag.Contains("2016H")) jecDir+="Moriond17_80X/PromptReco_DATA/";
+      else jecDir+="Moriond17_80X/2016SeptRepro_DATA/";
+  } else jecDir+="Moriond17_80X/Summer16_re-digi-reco_MC/";
+
   FactorizedJetCorrector *jesCor        = utils::cmssw::getJetCorrector(jecDir,isMC);
   TString pf(isMC ? "MC" : "DATA");
   JetCorrectionUncertainty *totalJESUnc = new JetCorrectionUncertainty((jecDir+"/"+pf+"_Uncertainty_AK4PFchs.txt").Data());
@@ -856,19 +871,6 @@ int main(int argc, char* argv[])
       }
 
       //apply electron corrections
-      // Comment out for the moment!!
-      // Find a way to obtaion EcalRecHitCollection
-
-      //  if(abs(lid)==11  && passIso && passId){
-      //     elDiff -= leptons[ilep].p4();
-      //     int eventIsMC = ev.isRealData() ? 0 : 1;
-      //     const EcalRecHitCollection* recHits = (leptons[ilep].el.isEB()) ? recHitCollectionEBHandle.product() : recHitCollectionEEHandle.product();
-      //     std::cout<<"RecHits:  "<<recHits<<std::endl;
-      //     ElectronEnCorrector.calibrate(leptons[ilep].el, ev.eventAuxiliary().run(), recHits, edm::StreamID::invalidStreamID(), eventIsMC);
-      //     leptons[ilep] = patUtils::GenericLepton(leptons[ilep].el); //recreate the generic lepton to be sure that the p4 is ok
-      //     elDiff += leptons[ilep].p4();
-      //  }
-
       if(abs(lid)==11  && passIso && passId){
         //std::cout<<"START ---- "<<std::endl;
         elDiff -= leptons[ilep].p4();
@@ -895,7 +897,7 @@ int main(int argc, char* argv[])
           TLorentzVector p4(leptons[ilep].el.px(),leptons[ilep].el.py(),leptons[ilep].el.pz(),leptons[ilep].el.energy());
           leptons[ilep].el.setP4(LorentzVector(p4.Px()*smearValue,p4.Py()*smearValue,p4.Pz()*smearValue,p4.E()*smearValue ) );
           //std::cout<<"After  pt  ---- "<<leptons[ilep].el.p4()<<std::endl;
-          std::cout<<"\n";
+          // std::cout<<"\n";
           //leptons[ilep] = patUtils::GenericLepton(leptons[ilep].el); //recreate the generic lepton to be sure that the p4 is ok
           elDiff += leptons[ilep].p4();
         }
@@ -949,7 +951,7 @@ int main(int argc, char* argv[])
         //	if(tau.emFraction() >=2.) continue;
 
         // we need to apply a very loose selection here (Lucia's suggestion)
-        if(!tau.tauID("againstElectronLooseMVA5")) continue;
+        if(!tau.tauID("againstElectronLooseMVA6")) continue;
         if(!tau.tauID("againstMuonLoose3")) continue;
         if(!tau.tauID("decayModeFinding")) continue;
 
@@ -1029,6 +1031,7 @@ int main(int argc, char* argv[])
 
 
         for(unsigned int ivar=0;ivar<jetVarNames.size();ivar++){
+          if(!isMC && ivar>0) continue;
           pat::Jet varJet = jet;
           if(ivar!=0) varJet.setP4(jet.p4() * jet.userFloat(jetVarNames[ivar]));
           selJetsVar[jetVarNames[ivar]].push_back(varJet);
@@ -1312,12 +1315,12 @@ int main(int argc, char* argv[])
           //SVFIT MASS
           higgsCand_SVFit = higgsCand;
 
-          //FIXME gives a lot of warning currently
-          // if(passZmass && passZpt && passDPhiCut && passHiggsLoose && passLepVetoMain && passBJetVetoMain){
-          //  std::cout<<"START SVFIT\n";
-          //  higgsCand_SVFit = getSVFit(met, selLeptons, higgsCandL1, higgsCandL2);  //compute svfit mass in a smart way
-          //  std::cout<<"END SVFIT\n";
-          // }
+        //   //FIXME gives a lot of warning currently
+          if(passZmass && passZpt && passDPhiCut && passHiggsLoose && passLepVetoMain && passBJetVetoMain){
+           std::cout<<"START SVFIT\n";
+           higgsCand_SVFit = getSVFit(met, selLeptons, higgsCandL1, higgsCandL2);  //compute svfit mass in a smart way
+           std::cout<<"END SVFIT\n";
+          }
 
           //build the higgs candH
           higgsCandH = zll + higgsCand;

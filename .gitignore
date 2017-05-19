@@ -12,6 +12,8 @@ LSFJOB*
 *pyc
 # no python init file
 python/__init__.py
-
+# slurm output
+test/zhtautau/slurm* 
 # no results directories
 test/chhiggs/results_*
+test/zhtautau/results_*
