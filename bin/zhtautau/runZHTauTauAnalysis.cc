@@ -851,7 +851,7 @@ int main(int argc, char* argv[])
       passLooseLepton &= lid==11 ? patUtils::passIso(leptons[ilep].el,  patUtils::llvvElecIso::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut) :
       patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
 
-      leptons[ilep].addUserFloat("relIso",  patUtils::relIso(leptons[ilep], rho) ); //compute it once for all
+
 
 
       //apply muon corrections
@@ -902,6 +902,10 @@ int main(int argc, char* argv[])
           elDiff += leptons[ilep].p4();
         }
       }
+
+      // Compute relIso after corrections
+      leptons[ilep].addUserFloat("relIso",  patUtils::relIso(leptons[ilep], rho) ); //compute it once for all
+
         //kinematics
         float leta = fabs(lid==11 ?  leptons[ilep].el.superCluster()->eta() : leptons[ilep].eta());
         if(leta> (lid==11 ? 2.5 : 2.4) )            passKin=false;
@@ -1316,11 +1320,11 @@ int main(int argc, char* argv[])
           higgsCand_SVFit = higgsCand;
 
         //   //FIXME gives a lot of warning currently
-          if(passZmass && passZpt && passDPhiCut && passHiggsLoose && passLepVetoMain && passBJetVetoMain){
-           std::cout<<"START SVFIT\n";
-           higgsCand_SVFit = getSVFit(met, selLeptons, higgsCandL1, higgsCandL2);  //compute svfit mass in a smart way
-           std::cout<<"END SVFIT\n";
-          }
+        //  if(passZmass && passZpt && passDPhiCut && passHiggsLoose && passLepVetoMain && passBJetVetoMain){
+        //  // std::cout<<"START SVFIT\n";
+        //   higgsCand_SVFit = getSVFit(met, selLeptons, higgsCandL1, higgsCandL2);  //compute svfit mass in a smart way
+        // //  std::cout<<"END SVFIT\n";
+        //  }
 
           //build the higgs candH
           higgsCandH = zll + higgsCand;
