@@ -33,7 +33,7 @@
       "color":2,
       "mctruthmode":121416,         
       "data":[
-        { "dtag":"ZHToTauTau_M125_2015"               ,  "xsec":1.0           , "br":[ 0.2 ]           , "dset":[" /ZHToTauTau_M125_13TeV_powheg_pythia8/RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/MINIAODSIM"]}
+        { "dtag":"ZHToTauTau_M125_2015"               ,  "xsec":0.752           , "br":[ 0.2 ]           , "dset":[" /ZHToTauTau_M125_13TeV_powheg_pythia8/RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/MINIAODSIM"]}
       ]
     },   
     {
