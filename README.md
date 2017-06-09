@@ -29,7 +29,7 @@ scram b -j 8
 git clone git@github.com:veelken/SVfit_standalone.git TauAnalysis/SVfitStandalone
 git checkout HIG-16-006
 
-git clone https://github.com/cms2l2v/2l2v_fwk.git UserCode/llvv_fwk
+git clone https://github.com/cp3-lltautau/2l2v_fwk.git UserCode/llvv_fwk
 cd UserCode/llvv_fwk
 git checkout -b modified #copy the branch to a new one to host future modifications (ease pull request and code merging)
 cd ../..
