@@ -25,7 +25,7 @@ scram b -j 8
 
 git clone -b svFit_2015Apr03 https://github.com/veelken/SVfit_standalone.git TauAnalysis/SVfitStandalone
 
-git clone https://github.com/cms2l2v/2l2v_fwk.git UserCode/llvv_fwk
+git clone -b ZHllvvAnalysis_2016 https://github.com/mmusich/2l2v_fwk.git UserCode/llvv_fwk
 cd UserCode/llvv_fwk
 git checkout -b modified #copy the branch to a new one to host future modifications (ease pull request and code merging)
 cd ../..
