@@ -13,6 +13,7 @@ if [[ $# -eq 0 ]]; then
     printf "\n\t%-5s  %-40s\n"  "1"  "run 'runZHTauTauAnalysis' on samples.json"
     printf "\n\t%-5s  %-40s\n"  "1.1"  "run 'runZHTauTauAnalysis' on photon_samples.json"
     printf "\n\t%-5s  %-40s\n"  "2"  "compute integrated luminosity from processed samples"
+    printf "\n\t%-5s  %-40s\n"  "2.1"  "compute integrated luminosity from processed samples connecting to lxplus (ssh)"
     printf "\n\t%-5s  %-40s\n"  "3"  "make plots and combine root files"
     printf "\n\t%-5s  %-40s\n"  "3.1"  "make plots for photon_smaples"
 fi
@@ -26,7 +27,7 @@ if [[ $# -ge 4 ]]; then echo "Additional arguments will be considered: "$argumen
 #--------------------------------------------------
 # Global Variables
 #--------------------------------------------------
-SUFFIX=_2017_05_22
+SUFFIX=_2017_06_05
 #SUFFIX=$(date +"_%Y_%m_%d")
 MAINDIR=$CMSSW_BASE/src/UserCode/llvv_fwk/test/zhtautau
 JSON=$MAINDIR/samples.json
@@ -90,12 +91,44 @@ case $step in
 	brilcalc lumi --normtag ~lumipro/public/normtag_file/OfflineNormtagV2.json -i $RESULTSDIR/json_all.json -u /pb -o $RESULTSDIR/LUMI.txt
 	tail -n 3 $RESULTSDIR/LUMI.txt
 	;;
+    2.1)  #extract integrated luminosity of the processed lumi blocks
+	echo "MISSING LUMI WILL APPEAR AS DIFFERENCE LUMI ONLY IN in.json"
+	mergeJSON.py --output=$RESULTSDIR/json_all.json        $RESULTSDIR/Data*.json
+	mergeJSON.py --output=$RESULTSDIR/json_doubleMu.json   $RESULTSDIR/Data*_DoubleMu*.json
+	mergeJSON.py --output=$RESULTSDIR/json_doubleEl.json   $RESULTSDIR/Data*_DoubleElectron*.json
+	mergeJSON.py --output=$RESULTSDIR/json_in.json  Cert_*Collisions16*.txt
+	echo "MISSING LUMI BLOCKS IN DOUBLE MU DATASET"
+	compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_doubleMu.json
+	echo "MISSING LUMI BLOCKS IN DOUBLE ELECTRON DATASET"
+	compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_doubleEl.json
 
+	echo "COMPUTE INTEGRATED LUMINOSITY"
+	echo "Coping json file to lxplus area...."
+	LXPLUS_USERNAME=""
+	while [ "$LXPLUS_USERNAME" == "" ]; do
+		echo -n "Enter your lxplus username --> "
+		read LXPLUS_USERNAME
+	done
+	scp $RESULTSDIR/json_all.json $LXPLUS_USERNAME@lxplus.cern.ch:~/private/
+	RESULT=$?
+	if [[ $RESULT -eq 0 ]] ; then
+       		echo "Copied!"
+		ssh $LXPLUS_USERNAME@lxplus.cern.ch 'export PATH=$HOME/.local/bin:/afs/cern.ch/cms/lumi/brilconda-1.1.7/bin:$PATH; 
+					    cd /afs/cern.ch/user/'${LXPLUS_USERNAME:0:1}'/'$LXPLUS_USERNAME'/private;
+					    brilcalc lumi --normtag /afs/cern.ch/user/l/lumipro/public/normtag_file/normtag_DATACERT.json -i ./json_all.json -u /pb -o ./LUMI.txt;
+					    grep "Summary" -A 2 ./LUMI.txt' > $RESULTSDIR/LUMI.txt
+		echo -n "LUMI.txt copied in "$RESULTSDIR
+	else
+		echo "Impossible to copy json_all.json on your lxplus private area!"
+		exit
+	fi
+	
+	;;
     3)  # make plots and combined root files
         if [ -f $RESULTSDIR/LUMI.txt ]; then
            INTLUMI=`tail -n 1 $RESULTSDIR/LUMI.txt | cut -d ',' -f 6`
         else
-           INTLUMI=2268.759 #correspond to the value from DoubleMu OR DoubleEl OR MuEG without jobs failling and golden JSON
+           INTLUMI=35866.932 #correspond to the value from DoubleMu OR DoubleEl OR MuEG without jobs failling and golden JSON
            echo "WARNING: $RESULTSDIR/LUMI.txt file is missing so use fixed integrated luminosity value, this might be different than the dataset you ran on"
         fi
 	echo "MAKE PLOTS AND SUMMARY ROOT FILE, BASED ON AN INTEGRATED LUMINOSITY OF $INTLUMI"
