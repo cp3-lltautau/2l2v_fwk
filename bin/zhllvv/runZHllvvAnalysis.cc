@@ -89,7 +89,7 @@ LorentzVector getSVFit(pat::MET met, std::vector<patUtils::GenericLepton> selLep
   algo.addLogM(false);
   algo.fit();
   if(algo.isValidSolution()){
-    return algo.fittedDiTauSystem();
+ //   return algo.fittedDiTauSystem();
   }
   return LorentzVector(selLeptons[higgsCandL1].p4()+selLeptons[higgsCandL2].p4());
 }

@@ -27,7 +27,7 @@ if [[ $# -ge 4 ]]; then echo "Additional arguments will be considered: "$argumen
 #--------------------------------------------------
 # Global Variables
 #--------------------------------------------------
-SUFFIX=_2017_06_05
+SUFFIX=_2017_06_13
 #SUFFIX=$(date +"_%Y_%m_%d")
 MAINDIR=$CMSSW_BASE/src/UserCode/llvv_fwk/test/zhtautau
 JSON=$MAINDIR/samples.json
@@ -92,16 +92,48 @@ case $step in
 	tail -n 3 $RESULTSDIR/LUMI.txt
 	;;
     2.1)  #extract integrated luminosity of the processed lumi blocks
-	echo "MISSING LUMI WILL APPEAR AS DIFFERENCE LUMI ONLY IN in.json"
-	mergeJSON.py --output=$RESULTSDIR/json_all.json        $RESULTSDIR/Data*.json
-	mergeJSON.py --output=$RESULTSDIR/json_doubleMu.json   $RESULTSDIR/Data*_DoubleMu*.json
-	mergeJSON.py --output=$RESULTSDIR/json_doubleEl.json   $RESULTSDIR/Data*_DoubleElectron*.json
-	mergeJSON.py --output=$RESULTSDIR/json_in.json  Cert_*Collisions16*.txt
-	echo "MISSING LUMI BLOCKS IN DOUBLE MU DATASET"
-	compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_doubleMu.json
-	echo "MISSING LUMI BLOCKS IN DOUBLE ELECTRON DATASET"
-	compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_doubleEl.json
-
+	CACHE_ALL=$RESULTSDIR/js_all_cache.txt
+	CACHE_MU=$RESULTSDIR/js_doubleMu_cache.txt
+	CACHE_ELE=$RESULTSDIR/js_doubleEl_cache.txt
+	if [ ! -e $CACHE_ALL ] || [ ! -e $CACHE_MU ] || [ ! -e $CACHE_ELE ]
+		then
+			echo "MISSING LUMI WILL APPEAR AS DIFFERENCE LUMI ONLY IN in.json"
+			ls -l $RESULTSDIR/Data*.json                 > $CACHE_ALL 
+			ls -l $RESULTSDIR/Data*_DoubleMu*.json       > $CACHE_MU
+			ls -l $RESULTSDIR/Data*_DoubleElectron*.json > $CACHE_ELE
+			mergeJSON.py --output=$RESULTSDIR/json_all.json        $RESULTSDIR/Data*.json
+			mergeJSON.py --output=$RESULTSDIR/json_doubleMu.json   $RESULTSDIR/Data*_DoubleMu*.json
+			mergeJSON.py --output=$RESULTSDIR/json_doubleEl.json   $RESULTSDIR/Data*_DoubleElectron*.json
+			mergeJSON.py --output=$RESULTSDIR/json_in.json  Cert_*Collisions16*.txt
+			echo "MISSING LUMI BLOCKS IN DOUBLE MU DATASET"
+			compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_doubleMu.json
+			echo "MISSING LUMI BLOCKS IN DOUBLE ELECTRON DATASET"
+			compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_doubleEl.json
+		else
+			ls -l $RESULTSDIR/Data*.json                 > ${CACHE_ALL}_tmp
+                        ls -l $RESULTSDIR/Data*_DoubleMu*.json       > ${CACHE_MU}_tmp
+                        ls -l $RESULTSDIR/Data*_DoubleElectron*.json > ${CACHE_ELE}_tmp
+			if [ "`md5sum $CACHE_ALL | cut -d ' ' -f1`" == "`md5sum ${CACHE_ALL}_tmp | cut -d ' ' -f1`" ] && \
+                           [ "`md5sum $CACHE_MU | cut -d ' ' -f1`" == "`md5sum ${CACHE_MU}_tmp | cut -d ' ' -f1`" ] && \
+                           [ "`md5sum $CACHE_ELE | cut -d ' ' -f1`" == "`md5sum ${CACHE_ELE}_tmp | cut -d ' ' -f1`" ]
+				then
+					echo "JSON files aren't changed. Please use "$RESULTSDIR"/LUMI.txt"
+					exit
+				else
+					echo "JSON files are changed!!"
+					mv ${CACHE_ALL}_tmp $CACHE_ALL
+					mv ${CACHE_MU}_tmp $CACHE_MU
+					mv ${CACHE_ELE}_tmp $CACHE_ELE
+					mergeJSON.py --output=$RESULTSDIR/json_all.json        $RESULTSDIR/Data*.json
+                       			mergeJSON.py --output=$RESULTSDIR/json_doubleMu.json   $RESULTSDIR/Data*_DoubleMu*.json
+                     		        mergeJSON.py --output=$RESULTSDIR/json_doubleEl.json   $RESULTSDIR/Data*_DoubleElectron*.json
+                        		mergeJSON.py --output=$RESULTSDIR/json_in.json  Cert_*Collisions16*.txt
+                        		echo "MISSING LUMI BLOCKS IN DOUBLE MU DATASET"
+                        		compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_doubleMu.json
+                        		echo "MISSING LUMI BLOCKS IN DOUBLE ELECTRON DATASET"
+                        		compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_doubleEl.json
+			fi
+	fi
 	echo "COMPUTE INTEGRATED LUMINOSITY"
 	echo "Coping json file to lxplus area...."
 	LXPLUS_USERNAME=""
