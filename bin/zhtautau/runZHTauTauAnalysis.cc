@@ -376,6 +376,14 @@ int main(int argc, char* argv[])
   h3->GetXaxis()->SetBinLabel(10,"OS #mu#mue#tau");
   h3->GetXaxis()->SetBinLabel(11,"OS #mu#mu#mu#tau");
   h3->GetXaxis()->SetBinLabel(12,"OS #mu#mu#tau#tau");
+  
+  //Z leptons kinematics control
+  mon.addHistogram( new TH1F( "leadpt"      ,  ";p_{T}^{lead} (GeV);Events/10 GeV", 50,0,500) );      
+  mon.addHistogram( new TH1F( "leadeta"     ,  ";#eta_{lead};Events", 50,-2.6,2.6) );      
+  mon.addHistogram( new TH1F( "trailerpt"   ,  ";p_{T}^{trail} (GeV);Events/10 GeV", 50,0,500) );      
+  mon.addHistogram( new TH1F( "trailereta"  ,  ";#eta_{trail};Events", 50,-2.6,2.6) );      
+  mon.addHistogram( new TH1F( "leppt"       ,  ";p_{T}^{lepton} (GeV);Events/10 GeV", 50,0,500) );      
+  mon.addHistogram( new TH1F( "lepeta"      ,  ";#eta_{lepton};Events", 50,-2.6,2.6) ); 
 
   // zll control
   mon.addHistogram( new TH1F( "zlly",      		";y_{ll};Events", 50,-6,6) );
@@ -946,8 +954,8 @@ int main(int argc, char* argv[])
           //std::cout<<"After  pt  ---- "<<leptons[ilep].el.p4()<<std::endl;
           // std::cout<<"\n";
           //leptons[ilep] = patUtils::GenericLepton(leptons[ilep].el); //recreate the generic lepton to be sure that the p4 is ok
-          elDiff += leptons[ilep].p4();
         }
+         elDiff += leptons[ilep].p4();
       }
 
       // Compute relIso after corrections
