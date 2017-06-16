@@ -10,8 +10,8 @@ if [[ $# -eq 0 ]]; then
     printf "\n\t%-5s\n" "./submit.sh [OPTION]"
     printf "\nOPTIONS\n"
     printf "\n\t%-5s  %-40s\n"  "0"  "completely clean up the directory"
-    printf "\n\t%-5s  %-40s\n"  "1"  "run 'runZHTauTauAnalysis' on samples.json"
-    printf "\n\t%-5s  %-40s\n"  "1.1"  "run 'runZHTauTauAnalysis' on photon_samples.json"
+    printf "\n\t%-5s  %-40s\n"  "1"  "run 'runZHllvvAnalysis' on samples.json"
+    printf "\n\t%-5s  %-40s\n"  "1.1"  "run 'runZHllvvAnalysis' on photon_samples.json"
     printf "\n\t%-5s  %-40s\n"  "2"  "compute integrated luminosity from processed samples"
     printf "\n\t%-5s  %-40s\n"  "2.1"  "compute integrated luminosity from processed samples connecting to lxplus (ssh)"   
     printf "\n\t%-5s  %-40s\n"  "3"  "make plots and combine root files"
@@ -27,10 +27,10 @@ if [[ $# -ge 4 ]]; then echo "Additional arguments will be considered: "$argumen
 #--------------------------------------------------
 # Global Variables
 #--------------------------------------------------
-SUFFIX=_2017_05_22
+SUFFIX=_2017_06_15
 #SUFFIX=$(date +"_%Y_%m_%d")
-MAINDIR=$CMSSW_BASE/src/UserCode/llvv_fwk/test/zhtautau
-JSON=$MAINDIR/samples.json
+MAINDIR=$CMSSW_BASE/src/UserCode/llvv_fwk/test/zhllvv
+JSON=$MAINDIR/samples2016.json
 RESULTSDIR=$MAINDIR/results$SUFFIX
 PLOTSDIR=$MAINDIR/plots${SUFFIX}
 PLOTTER=$MAINDIR/plotter${SUFFIX}
@@ -58,7 +58,7 @@ case $step in
 	queue='8nh'
 	#IF CRAB3 is provided in argument, use crab submissiong instead of condor/lsf
 	if [[ $arguments == *"crab3"* ]]; then queue='crab3' ;fi
-	runAnalysisOverSamples.py -e runZHTauTauAnalysis -j $JSON -o $RESULTSDIR  -c $MAINDIR/../runAnalysis_cfg.py.templ -p "@useMVA=True @saveSummaryTree=True @runSystematics=True @automaticSwitch=False @is2011=False @jacknife=0 @jacks=0 @data_pileup=datapileup_latest" -s $queue --report True $arguments
+	runAnalysisOverSamples.py -e runZHllvvAnalysis -j $JSON -o $RESULTSDIR  -c $MAINDIR/../runAnalysis_cfg.py.templ -p "@useMVA=True @saveSummaryTree=True @runSystematics=True @automaticSwitch=False @is2011=False @jacknife=0 @jacks=0 @data_pileup=datapileup_latest" -s $queue --report True $arguments
 	;;
 
     1.1)  #submit jobs for 2l2v photon jet analysis
@@ -68,7 +68,7 @@ case $step in
 	echo "Input: " $JSON
 	echo "Output: " $RESULTSDIR
 	if [[ $arguments == *"crab3"* ]]; then queue='crab3' ;fi
-	runAnalysisOverSamples.py -e runZHTauTauAnalysis -j $JSON -o $RESULTSDIR -c $MAINDIR/../runAnalysis_cfg.py.templ -p "@useMVA=True @saveSummaryTree=True @runSystematics=True @automaticSwitch=False @is2011=False @jacknife=0 @jacks=0" -s $queue --report True $arguments
+	runAnalysisOverSamples.py -e runZHllvvAnalysis -j $JSON -o $RESULTSDIR -c $MAINDIR/../runAnalysis_cfg.py.templ -p "@useMVA=True @saveSummaryTree=True @runSystematics=True @automaticSwitch=False @is2011=False @jacknife=0 @jacks=0" -s $queue --report True $arguments
 	;;
 
     2)  #extract integrated luminosity of the processed lumi blocks
