@@ -39,7 +39,7 @@
 #include "UserCode/llvv_fwk/interface/TMVAUtils.h"
 #include "UserCode/llvv_fwk/interface/LeptonEfficiencySF.h"
 #include "UserCode/llvv_fwk/interface/PDFInfo.h"
-#include "UserCode/llvv_fwk/interface/rochcor2015.h"
+#include "UserCode/llvv_fwk/interface/rochcor2016.h"
 #include "UserCode/llvv_fwk/interface/muresolution_run2.h"
 #include "UserCode/llvv_fwk/interface/BTagCalibrationStandalone.h"
 #include "UserCode/llvv_fwk/interface/BtagUncertaintyComputer.h"
@@ -376,20 +376,21 @@ int main(int argc, char* argv[])
   h3->GetXaxis()->SetBinLabel(10,"OS #mu#mue#tau");
   h3->GetXaxis()->SetBinLabel(11,"OS #mu#mu#mu#tau");
   h3->GetXaxis()->SetBinLabel(12,"OS #mu#mu#tau#tau");
-  
+
   //Z leptons kinematics control
-  mon.addHistogram( new TH1F( "leadpt"      ,  ";p_{T}^{lead} (GeV);Events/10 GeV", 50,0,500) );      
-  mon.addHistogram( new TH1F( "leadeta"     ,  ";#eta_{lead};Events", 50,-2.6,2.6) );      
-  mon.addHistogram( new TH1F( "trailerpt"   ,  ";p_{T}^{trail} (GeV);Events/10 GeV", 50,0,500) );      
-  mon.addHistogram( new TH1F( "trailereta"  ,  ";#eta_{trail};Events", 50,-2.6,2.6) );      
-  mon.addHistogram( new TH1F( "leppt"       ,  ";p_{T}^{lepton} (GeV);Events/10 GeV", 50,0,500) );      
-  mon.addHistogram( new TH1F( "lepeta"      ,  ";#eta_{lepton};Events", 50,-2.6,2.6) ); 
+  mon.addHistogram( new TH1F( "leadpt"      ,  ";p_{T}^{lead} (GeV);Events/10 GeV", 50,0,500) );
+  mon.addHistogram( new TH1F( "leadeta"     ,  ";#eta_{lead};Events", 50,-2.6,2.6) );
+  mon.addHistogram( new TH1F( "trailerpt"   ,  ";p_{T}^{trail} (GeV);Events/10 GeV", 50,0,500) );
+  mon.addHistogram( new TH1F( "trailereta"  ,  ";#eta_{trail};Events", 50,-2.6,2.6) );
+  mon.addHistogram( new TH1F( "leppt"       ,  ";p_{T}^{lepton} (GeV);Events/10 GeV", 50,0,500) );
+  mon.addHistogram( new TH1F( "lepeta"      ,  ";#eta_{lepton};Events", 50,-2.6,2.6) );
 
   // zll control
   mon.addHistogram( new TH1F( "zlly",      		";y_{ll};Events", 50,-6,6) );
   mon.addHistogram( new TH1F( "zlleta",    		";#eta_{ll};Events", 50,-10,10) );
   mon.addHistogram( new TH1F( "zllpt",     		";p_{T}^{ll} (GeV) ;Events/10 GeV", 50,0,500) );
   mon.addHistogram( new TH1F( "zllmass",   		";M_{ll} (GeV);Events/2 GeV", 80,20,180) );
+  mon.addHistogram( new TH1F( "nlep",      	";Number of Leptons;Events", 10,0,10) );
 
   mon.addHistogram( new TH1F( "sumpt",            ";L_{T} (GeV);Events/10 GeV", 50,0,500) );
   mon.addHistogram( new TH1F( "dPhi_AZ",          ";#DeltaPhi(#tau#tau,ll);Events",50,-3,3));
@@ -411,6 +412,7 @@ int main(int argc, char* argv[])
   //pu control
   mon.addHistogram( new TH1F( "nvtx",";Vertices;Events",50,0,50) );
   mon.addHistogram( new TH1F( "nvtxraw",";Vertices;Events",50,0,50) );
+  mon.addHistogram( new TH1F( "nvtxpuweight",";Vertices;Events",50,0,50) );
   mon.addHistogram( new TH1F( "rho",";#rho;Events",50,0,25) );
 
   //tau control
@@ -514,7 +516,7 @@ int main(int argc, char* argv[])
   //muon energy scale and uncertainties
   TString muscleDir = runProcess.getParameter<std::string>("muscleDir");
   gSystem->ExpandPathName(muscleDir);
-  rochcor2015* muCor = new rochcor2015();  //replace the MuScleFitCorrector we used at run1
+  rochcor2016* muCor = new rochcor2016();  //replace the MuScleFitCorrector we used at run1
 
   //photon and electron enerhy scale based on https://twiki.cern.ch/twiki/bin/viewauth/CMS/EGMSmearer    (adapted to the miniAOD/FWLite framework)
   // std::vector<double> EGammaSmearings = {0.013654,0.014142,0.020859,0.017120,0.028083,0.027289,0.031793,0.030831,0.028083, 0.027289};
@@ -642,6 +644,7 @@ int main(int argc, char* argv[])
       double puWeightUp = 1.0;
       double puWeightDown = 1.0;
       float puWeight(1.0);
+      float weightNoLepSF(1.0);
 
       //##############################################   EVENT LOOP STARTS   ##############################################
       //if(!isMC && duplicatesChecker.isDuplicate( ev.run, ev.lumi, ev.event) ) { nDuplicates++; continue; }
@@ -671,7 +674,13 @@ int main(int argc, char* argv[])
         for(std::vector<PileupSummaryInfo>::const_iterator it = puInfoH->begin(); it != puInfoH->end(); it++){
           if(it->getBunchCrossing()==0)      { ngenITpu += it->getTrueNumInteractions(); } //getPU_NumInteractions();
         }
+
+        if (ngenITpu == 0) continue; // It prevents to fill vtxraw with -nan values
+
         puWeight          = LumiWeights->weight(ngenITpu) * PUNorm[0];
+        // if ( puWeight == 0 ){
+        //   std::cout<<"  Some Problem in with ngenITpu= " << ngenITpu << "vtx size= "<<vtx.size() <<std::endl;
+        // }
         puWeightUp  = PuShifters[utils::cmssw::PUUP  ]->Eval(ngenITpu) * (PUNorm[2]/PUNorm[0]);
         puWeightDown = PuShifters[utils::cmssw::PUDOWN]->Eval(ngenITpu) * (PUNorm[1]/PUNorm[0]);
         weight *= puWeight;
@@ -687,13 +696,15 @@ int main(int argc, char* argv[])
       }
     }
 
+    weightNoLepSF = weight;
+
     //apply trigger and require compatibilitiy of the event with the PD
     edm::TriggerResultsByName tr = ev.triggerResultsByName("HLT");
     if(!tr.isValid())return false;
 
     bool mumuTrigger        = utils::passTriggerPatterns(tr, "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v*", "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v*");
     bool muTrigger          = utils::passTriggerPatterns(tr, "HLT_IsoMu20_v*", "HLT_IsoTkMu20_v*", "HLT_IsoMu27_v*");
-    bool eeTrigger          = utils::passTriggerPatterns(tr, "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*","HLT_Ele17_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*");
+    bool eeTrigger          = utils::passTriggerPatterns(tr, "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*"); //,"HLT_Ele17_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*",);
     bool eTrigger           = utils::passTriggerPatterns(tr, "HLT_Ele23_WPLoose_Gsf_v*", "HLT_Ele22_eta2p1_WP75_Gsf_v*");
     bool emuTrigger         = utils::passTriggerPatterns(tr, "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_v*", "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v*");
     bool passTrigger        = mumuTrigger||muTrigger||eeTrigger||eTrigger||emuTrigger;
@@ -1204,10 +1215,26 @@ int main(int argc, char* argv[])
           if( abs(dilId)==121){ chTags.push_back("ll"); chTags.push_back("ee");   isDileptonCandidate=true; }
           if( abs(dilId)==169){ chTags.push_back("ll"); chTags.push_back("mumu"); isDileptonCandidate=true; }
 
-          weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId()),  abs(selLeptons[dilLep1].pdgId()) ==11 ? "tight"    : "tight", patUtils::CutVersion::CutSet::ICHEP16Cut).first : 1.0; //ID
-          weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId()),  abs(selLeptons[dilLep1].pdgId()) ==11 ? "tightiso" : "tightiso", patUtils::CutVersion::CutSet::ICHEP16Cut ).first : 1.0; //ISO w.r.t ID
-          weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId()),  abs(selLeptons[dilLep2].pdgId()) ==11 ? "tight"    : "tight"   , patUtils::CutVersion::CutSet::ICHEP16Cut ).first : 1.0; //ID
-          weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId()),  abs(selLeptons[dilLep2].pdgId()) ==11 ? "tightiso" : "tightiso", patUtils::CutVersion::CutSet::ICHEP16Cut ).first : 1.0; //ISO w.r.t ID
+          //if(is2016MC) {
+          if(abs(dilId)==121){
+            weight *= lepEff.getRecoEfficiency( selLeptons[dilLep1].el.superCluster()->eta(), abs(selLeptons[dilLep1].pdgId())).first; //Reconstruction eff
+            weight *= lepEff.getRecoEfficiency( selLeptons[dilLep2].el.superCluster()->eta(), abs(selLeptons[dilLep2].pdgId())).first; //Reconstruction eff
+          }
+          else if(abs(dilId)==169){
+            weight *= lepEff.getTrackingEfficiency( selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId())).first; //Tracking eff
+            weight *= lepEff.getTrackingEfficiency( selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId())).first; //Tracking eff
+
+            weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId()), "tightiso",patUtils::CutVersion::ICHEP16Cut ).first : 1.0; //ISO w.r.t ID
+            weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId()), "tightiso",patUtils::CutVersion::ICHEP16Cut ).first : 1.0;
+          }
+          weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId()),  abs(selLeptons[dilLep1].pdgId()) ==11 ? "tight"    : "tight"   ,patUtils::CutVersion::ICHEP16Cut ).first : 1.0; //ID
+          weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId()),  abs(selLeptons[dilLep2].pdgId()) ==11 ? "tight"    : "tight"   ,patUtils::CutVersion::ICHEP16Cut ).first : 1.0; //ID
+
+
+          // weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId()),  abs(selLeptons[dilLep1].pdgId()) ==11 ? "tight"    : "tight", patUtils::CutVersion::CutSet::ICHEP16Cut).first : 1.0; //ID
+          // weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId()),  abs(selLeptons[dilLep1].pdgId()) ==11 ? "tightiso" : "tightiso", patUtils::CutVersion::CutSet::ICHEP16Cut ).first : 1.0; //ISO w.r.t ID
+          // weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId()),  abs(selLeptons[dilLep2].pdgId()) ==11 ? "tight"    : "tight"   , patUtils::CutVersion::CutSet::ICHEP16Cut ).first : 1.0; //ID
+          // weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId()),  abs(selLeptons[dilLep2].pdgId()) ==11 ? "tightiso" : "tightiso", patUtils::CutVersion::CutSet::ICHEP16Cut ).first : 1.0; //ISO w.r.t ID
         }
 
         std::vector<TString> tags(1,"all");
@@ -1225,7 +1252,8 @@ int main(int argc, char* argv[])
         int higgsCandL1=-1, higgsCandL2=-1;
         LorentzVector higgsCand;
         int HiggsShortId=-1, higgsCandId;
-        std::vector<TString> chTagsMain=chTags;
+        //std::vector<TString> chTagsMain=chTags;
+        std::vector<TString> chTagsMain=tags;
 
         int NCleanedJetMain = 0;
         bool passDPhiCut    = 0;
@@ -1348,12 +1376,27 @@ int main(int argc, char* argv[])
 
           //reweight the event to account for lept eff.
           if(isMC && higgsCandL1>=0 && abs(selLeptons[higgsCandL1].pdgId())<15){
-            weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(), abs(selLeptons[higgsCandL1].pdgId()), abs(selLeptons[higgsCandL1].pdgId()) ==11 ? "tight" : "tight", patUtils::CutVersion::CutSet::ICHEP16Cut).first;
-            weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(), abs(selLeptons[higgsCandL1].pdgId()), abs(selLeptons[higgsCandL1].pdgId()) ==11 ? "tightiso" : "tightiso", patUtils::CutVersion::CutSet::ICHEP16Cut).first;
+
+            int id( abs(selLeptons[higgsCandL1].pdgId()) );
+
+            if(id==11)weight *= lepEff.getRecoEfficiency( selLeptons[higgsCandL1].el.superCluster()->eta(), id).first; //Reconstruction eff
+            else if(id==13)weight *= lepEff.getTrackingEfficiency( selLeptons[higgsCandL1].eta(), id).first; //Tracking eff
+            weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(), id,  id ==11 ? "tight"    : "tight"   ,patUtils::CutVersion::ICHEP16Cut ).first : 1.0; //ID
+			      if(id==13){ weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(), id, "tightiso",patUtils::CutVersion::ICHEP16Cut ).first : 1.0;} //ISO w.r.t ID
+            // weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(), abs(selLeptons[higgsCandL1].pdgId()), abs(selLeptons[higgsCandL1].pdgId()) ==11 ? "tight" : "tight", patUtils::CutVersion::CutSet::ICHEP16Cut).first;
+            // weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(), abs(selLeptons[higgsCandL1].pdgId()), abs(selLeptons[higgsCandL1].pdgId()) ==11 ? "tightiso" : "tightiso", patUtils::CutVersion::CutSet::ICHEP16Cut).first;
           }
+
           if(isMC && higgsCandL2>=0 && abs(selLeptons[higgsCandL2].pdgId())<15){
-            weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(), abs(selLeptons[higgsCandL2].pdgId()), abs(selLeptons[higgsCandL2].pdgId()) ==11 ? "tight" : "tight", patUtils::CutVersion::CutSet::ICHEP16Cut).first;
-            weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(), abs(selLeptons[higgsCandL2].pdgId()), abs(selLeptons[higgsCandL2].pdgId()) ==11 ? "tightiso" : "tightiso", patUtils::CutVersion::CutSet::ICHEP16Cut).first;
+
+            int id( abs(selLeptons[higgsCandL2].pdgId()) );
+
+            if(id==11)weight *= lepEff.getRecoEfficiency( selLeptons[higgsCandL2].el.superCluster()->eta(), id).first; //Reconstruction eff
+            else if(id==13)weight *= lepEff.getTrackingEfficiency( selLeptons[higgsCandL2].eta(), id).first; //Tracking eff
+            weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(), id,  id ==11 ? "tight"    : "tight"   ,patUtils::CutVersion::ICHEP16Cut ).first : 1.0; //ID
+			      if(id==13){ weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(), id, "tightiso",patUtils::CutVersion::ICHEP16Cut ).first : 1.0;} //ISO w.r.t ID
+            // weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(), abs(selLeptons[higgsCandL2].pdgId()), abs(selLeptons[higgsCandL2].pdgId()) ==11 ? "tight" : "tight", patUtils::CutVersion::CutSet::ICHEP16Cut).first;
+            // weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(), abs(selLeptons[higgsCandL2].pdgId()), abs(selLeptons[higgsCandL2].pdgId()) ==11 ? "tightiso" : "tightiso", patUtils::CutVersion::CutSet::ICHEP16Cut).first;
           }
 
 
@@ -1409,6 +1452,7 @@ int main(int argc, char* argv[])
               //pu control
               mon.fillHisto("nvtx"        ,   chTagsMain, vtx.size(),      weight);
               mon.fillHisto("nvtxraw"     ,   chTagsMain, vtx.size(),      weight/puWeight);
+              mon.fillHisto("nvtxpuweight"     ,   chTagsMain, vtx.size(),      weightNoLepSF);
               mon.fillHisto("rho"         ,   chTagsMain, rho,       weight);
 
               //Z kinematics control
