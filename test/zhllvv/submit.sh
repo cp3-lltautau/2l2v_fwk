@@ -27,10 +27,10 @@ if [[ $# -ge 4 ]]; then echo "Additional arguments will be considered: "$argumen
 #--------------------------------------------------
 # Global Variables
 #--------------------------------------------------
-SUFFIX=_2017_06_15
+SUFFIX=_2017_06_21
 #SUFFIX=$(date +"_%Y_%m_%d")
 MAINDIR=$CMSSW_BASE/src/UserCode/llvv_fwk/test/zhllvv
-JSON=$MAINDIR/samples2016.json
+JSON=$MAINDIR/samples2016_lep.json
 RESULTSDIR=$MAINDIR/results$SUFFIX
 PLOTSDIR=$MAINDIR/plots${SUFFIX}
 PLOTTER=$MAINDIR/plotter${SUFFIX}
@@ -76,6 +76,8 @@ case $step in
 	mergeJSON.py --output=$RESULTSDIR/json_all.json        $RESULTSDIR/Data*.json
 	mergeJSON.py --output=$RESULTSDIR/json_doubleMu.json   $RESULTSDIR/Data*_DoubleMu*.json
 	mergeJSON.py --output=$RESULTSDIR/json_doubleEl.json   $RESULTSDIR/Data*_DoubleElectron*.json
+        mergeJSON.py --output=$RESULTSDIR/json_singleEl.json   $RESULTSDIR/Data*_SingleElectron*.json
+        mergeJSON.py --output=$RESULTSDIR/json_singleMuon.json   $RESULTSDIR/Data*_SingleMuon*.json
 	mergeJSON.py --output=$RESULTSDIR/json_MET.json        $RESULTSDIR/Data*_MET*.json
 	mergeJSON.py --output=$RESULTSDIR/json_muEG.json   $RESULTSDIR/Data*_MuEG*.json
 	mergeJSON.py --output=$RESULTSDIR/json_in.json  Cert_*.txt
@@ -87,6 +89,12 @@ case $step in
 	compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_muEG.json
 	echo "MISSING LUMI BLOCKS IN MET DATASET"
 	compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_MET.json
+	echo "MISSING LUMI BLOCKS IN SINGLE MU DATASET"
+	compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_singleMuon.json
+	echo "MISSING LUMI BLOCKS IN SINGLE ELECTRON DATASET"
+	compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_singleEl.json
+
+
 
 	echo "COMPUTE INTEGRATED LUMINOSITY"
 	export PATH=$HOME/.local/bin:/afs/cern.ch/cms/lumi/brilconda-1.0.3/bin:$PATH
@@ -101,6 +109,10 @@ case $step in
 	mergeJSON.py --output=$RESULTSDIR/json_doubleMu.json   $RESULTSDIR/Data*_DoubleMu*.json
 	mergeJSON.py --output=$RESULTSDIR/json_doubleEl.json   $RESULTSDIR/Data*_DoubleElectron*.json
 	mergeJSON.py --output=$RESULTSDIR/json_MET.json        $RESULTSDIR/Data*_MET*.json
+        mergeJSON.py --output=$RESULTSDIR/json_singleEl.json   $RESULTSDIR/Data*_SingleElectron*.json
+        mergeJSON.py --output=$RESULTSDIR/json_singleMuon.json   $RESULTSDIR/Data*_SingleMuon*.json
+
+
 	mergeJSON.py --output=$RESULTSDIR/json_in.json  Cert_*Collisions16*.txt
 	echo "MISSING LUMI BLOCKS IN DOUBLE MU DATASET"
 	compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_doubleMu.json
@@ -108,6 +120,10 @@ case $step in
 	compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_doubleEl.json
 	echo "MISSING LUMI BLOCKS IN MET DATASET"
 	compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_MET.json
+	echo "MISSING LUMI BLOCKS IN SINGLE MU DATASET"
+	compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_singleMuon.json
+	echo "MISSING LUMI BLOCKS IN SINGLE ELECTRON DATASET"
+	compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_singleEl.json
 
 	echo "COMPUTE INTEGRATED LUMINOSITY"
 	echo "Coping json file to lxplus area...."

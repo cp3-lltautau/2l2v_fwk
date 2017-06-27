@@ -372,7 +372,7 @@ def AddJobToCmdFile():
         if(not os.path.isabs(absoluteShellPath)): absoluteShellPath= os.getcwd() + "/"+absoluteShellPath
         Jobs_List.extend([absoluteShellPath])
     elif subTool=='slurm':
-        cmd_file.write('sbatch --partition=cp3 --qos=cp3 --wckey=cms %s\n'      % Path_Shell) 
+        cmd_file.write('sbatch --partition=Def,cp3 --qos=normal --wckey=cms %s\n'      % Path_Shell) 
     else:
         os.system('rm -f ' +os.path.relpath(Path_Log) + '.log') #delete log file to be sure there is no overlap
         cmd_file.write('\n')
