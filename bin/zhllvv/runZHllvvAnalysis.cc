@@ -275,6 +275,14 @@ int main(int argc, char* argv[])
   h1zllvv->GetXaxis()->SetBinLabel(7,"#Delta #phi ll-MET");
   h1zllvv->GetXaxis()->SetBinLabel(8,"pTunbalance");
 
+  TH1 *h_tr= mon.addHistogram( new TH1F ("trigger", ";;Events", 10,0,10) );
+  h_tr->GetXaxis()->SetBinLabel(1,"#mu#mu");
+  h_tr->GetXaxis()->SetBinLabel(2,"#mu");
+  h_tr->GetXaxis()->SetBinLabel(3,"ee");
+  h_tr->GetXaxis()->SetBinLabel(4,"e");
+  h_tr->GetXaxis()->SetBinLabel(5,"e#mu");
+  h_tr->GetXaxis()->SetBinLabel(6,"#gamma");
+
   //pu control
   mon.addHistogram( new TH1F( "nvtx",";Vertices;Events",50,0,50) );
   mon.addHistogram( new TH1F( "nvtxraw",";Vertices;Events",50,0,50) );
@@ -414,14 +422,17 @@ int main(int argc, char* argv[])
 
   higgs::utils::EventCategory eventCategoryInst(higgs::utils::EventCategory::EXCLUSIVE2JETSVBF); //jet(0,>=1)+vbf binning
 
-  patUtils::MetFilter metFiler;
+  patUtils::MetFilter metFilter;
   if(!isMC) {
-	metFiler.FillBadEvents(string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/MetFilter/DoubleEG_RunD/DoubleEG_csc2015.txt");
-	metFiler.FillBadEvents(string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/MetFilter/DoubleEG_RunD/DoubleEG_ecalscn1043093.txt");
-	metFiler.FillBadEvents(string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/MetFilter/DoubleMuon_RunD/DoubleMuon_csc2015.txt");
-	metFiler.FillBadEvents(string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/MetFilter/DoubleMuon_RunD/DoubleMuon_ecalscn1043093.txt");
-	metFiler.FillBadEvents(string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/MetFilter/MuonEG_RunD/MuonEG_csc2015.txt");
-	metFiler.FillBadEvents(string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/MetFilter/MuonEG_RunD/MuonEG_ecalscn1043093.txt");
+    if(is2015data){
+      metFilter.FillBadEvents(string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/MetFilter/DoubleEG_RunD/DoubleEG_csc2015.txt");
+      metFilter.FillBadEvents(string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/MetFilter/DoubleEG_RunD/DoubleEG_ecalscn1043093.txt");
+      metFilter.FillBadEvents(string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/MetFilter/DoubleMuon_RunD/DoubleMuon_csc2015.txt");
+      metFilter.FillBadEvents(string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/MetFilter/DoubleMuon_RunD/DoubleMuon_ecalscn1043093.txt");
+      metFilter.FillBadEvents(string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/MetFilter/MuonEG_RunD/MuonEG_csc2015.txt");
+      metFilter.FillBadEvents(string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/MetFilter/MuonEG_RunD/MuonEG_ecalscn1043093.txt");
+    }
+    if(is2016data){}
   }
 
   string debugText = "";
@@ -502,43 +513,71 @@ int main(int argc, char* argv[])
           edm::TriggerResultsByName tr = ev.triggerResultsByName("HLT");
           if(!tr.isValid())return false;
 
-          bool mumuTrigger        = utils::passTriggerPatterns(tr, "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v*", "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v*");
-          bool muTrigger          = utils::passTriggerPatterns(tr, "HLT_IsoMu20_v*", "HLT_IsoTkMu20_v*", "HLT_IsoMu27_v*");
-          bool eeTrigger          = utils::passTriggerPatterns(tr, "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*","HLT_Ele17_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*");
-          bool eTrigger           = utils::passTriggerPatterns(tr, "HLT_Ele23_WPLoose_Gsf_v*", "HLT_Ele22_eta2p1_WP75_Gsf_v*");
-          bool emuTrigger         = utils::passTriggerPatterns(tr, "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_v*", "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v*");
-          bool passTrigger        = mumuTrigger||muTrigger||eeTrigger||eTrigger||emuTrigger;
+	  bool mumuTrigger(true); 
+	  bool muTrigger(true);	
+	  bool eeTrigger(true); 
+	  bool eTrigger(true); 
+	  bool emuTrigger(true);
 
-          if(  mumuTrigger)mon.fillHisto("trigger", "raw", 0 , weight);
-          if(    muTrigger)mon.fillHisto("trigger", "raw", 1 , weight);
-          if(    eeTrigger)mon.fillHisto("trigger", "raw", 2 , weight);
-          if(     eTrigger)mon.fillHisto("trigger", "raw", 3 , weight);
-          if(   emuTrigger)mon.fillHisto("trigger", "raw", 4 , weight);
+	  int metFilterValue = 0;
 
-          if(!isMC && passTrigger){ //avoid double counting of events from different PD
-             if(filterOnlyMUMU)     { passTrigger = mumuTrigger;}
-             if(filterOnlyMU)       { passTrigger = muTrigger     && !mumuTrigger;}
-             if(filterOnlyEE)       { passTrigger = eeTrigger     && !muTrigger  && !mumuTrigger;}
-             if(filterOnlyE)        { passTrigger = eTrigger      && !eeTrigger  && !muTrigger && !mumuTrigger; }
-             if(filterOnlyEMU)      { passTrigger = emuTrigger    && !eTrigger   && !eeTrigger && !muTrigger && !mumuTrigger; }
-          }
+	  bool filterbadPFMuon = true;
+	  bool filterbadChCandidate = true;
+	  bool filterbadMuonHIP = true;
+	  bool filterduplicateMuonHIP = true;
+	  std::unique_ptr<std::vector<reco::Muon*>> outbadMuon(new std::vector<reco::Muon*>());
+	  std::unique_ptr<std::vector<reco::Muon*>> outduplicateMuon(new std::vector<reco::Muon*>());
+	  
+	  if(is2016data || is2016MC){
 
-          if(passTrigger){
-             if(  mumuTrigger)mon.fillHisto("trigger", "cleaned", 0 , weight);
-             if(    muTrigger)mon.fillHisto("trigger", "cleaned", 1 , weight);
-             if(    eeTrigger)mon.fillHisto("trigger", "cleaned", 2 , weight);
-             if(     eTrigger)mon.fillHisto("trigger", "cleaned", 3 , weight);
-             if(   emuTrigger)mon.fillHisto("trigger", "cleaned", 4 , weight);
-          }
+	    mumuTrigger        = utils::passTriggerPatterns(tr, "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v*", "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v*");
+	    muTrigger          = utils::passTriggerPatterns(tr, "HLT_IsoMu22_v*","HLT_IsoTkMu22_v*", "HLT_IsoMu24_v*", "HLT_IsoTkMu24_v*");
+	    eeTrigger          = utils::passTriggerPatterns(tr, "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*"); //,"HLT_Ele17_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*",);
+	    eTrigger           = utils::passTriggerPatterns(tr, "HLT_Ele27_eta2p1_WPLoose_Gsf_v*","HLT_Ele27_WPTight_Gsf_v*");
+	    emuTrigger         = utils::passTriggerPatterns(tr, "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_v*", "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v*");
+	    
+	    metFilterValue = metFilter.passMetFilterInt( ev, is2016data );
+	    
+	    // Apply Bad Charged Hadron and Bad Muon Filters from MiniAOD (for Run II 2016 only )
+	    filterbadChCandidate = metFilter.passBadChargedCandidateFilter(ev); if (!filterbadChCandidate) {  metFilterValue=9; }
+	    filterbadPFMuon = metFilter.passBadPFMuonFilter(ev); if (!filterbadPFMuon) { metFilterValue=8; }
+	    filterbadMuonHIP = metFilter.BadGlobalMuonTaggerFilter(ev,outbadMuon,false); if (!filterbadMuonHIP) { metFilterValue=10; }
+	    filterduplicateMuonHIP = metFilter.BadGlobalMuonTaggerFilter(ev,outduplicateMuon,true); if (!filterduplicateMuonHIP) { metFilterValue=11; }
+	  }
+	  
+	  bool passTrigger        = mumuTrigger||muTrigger||eeTrigger||eTrigger;//||emuTrigger;
 
-          //ONLY RUN ON THE EVENTS THAT PASS OUR TRIGGERS
-           if(!passTrigger)continue;
-
-
+	  if(  mumuTrigger)mon.fillHisto("trigger", "raw", 0 , weight);
+	  if(    muTrigger)mon.fillHisto("trigger", "raw", 1 , weight);
+	  if(    eeTrigger)mon.fillHisto("trigger", "raw", 2 , weight);
+	  if(     eTrigger)mon.fillHisto("trigger", "raw", 3 , weight);
+	  if(   emuTrigger)mon.fillHisto("trigger", "raw", 4 , weight);
+	  
+	  if(!isMC && passTrigger){ //avoid double counting of events from different PD
+	    if(filterOnlyMUMU)     { passTrigger = mumuTrigger;}
+	    if(filterOnlyMU)       { passTrigger = muTrigger     && !mumuTrigger;}
+	    if(filterOnlyEE)       { passTrigger = eeTrigger     && !muTrigger  && !mumuTrigger;}
+	    if(filterOnlyE)        { passTrigger = eTrigger      && !eeTrigger  && !muTrigger && !mumuTrigger; }
+	    if(filterOnlyEMU)      { passTrigger = emuTrigger    && !eTrigger   && !eeTrigger && !muTrigger && !mumuTrigger; }
+	  }
+	  
+	  if(passTrigger){
+	    if(  mumuTrigger)mon.fillHisto("trigger", "cleaned", 0 , weight);
+	    if(    muTrigger)mon.fillHisto("trigger", "cleaned", 1 , weight);
+	    if(    eeTrigger)mon.fillHisto("trigger", "cleaned", 2 , weight);
+	    if(     eTrigger)mon.fillHisto("trigger", "cleaned", 3 , weight);
+	    if(   emuTrigger)mon.fillHisto("trigger", "cleaned", 4 , weight);
+	  }
+	  
+	  //ONLY RUN ON THE EVENTS THAT PASS OUR TRIGGERS
+	  if(!passTrigger)continue;
+	  
          //##############################################   EVENT PASSED THE TRIGGER   ######################################
-          int metFilterValue = metFiler.passMetFilterInt( ev );
-          mon.fillHisto("metFilter_eventflow", "", metFilterValue, weight);
+	  if (metFilterValue==10 || metFilterValue==11) { metFilterValue=0; }
           if( metFilterValue!=0 ) continue;	 //Note this must also be applied on MC
+	  
+	  // Apply Bad Charged Hadron and Bad Muon Filters from MiniAOD (for Run II 2016 only )
+	  //	  if (!filterbadPFMuon || !filterbadChCandidate) continue;
           //##############################################   EVENT PASSED MET FILTER   #######################################
 
 
