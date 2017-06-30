@@ -136,7 +136,8 @@ def CreateTheShellFile(argv):
     shell_file=open(Path_Shell,'w')
     shell_file.write('#! /bin/sh\n')
     shell_file.write(CopyRights + '\n')
-    shell_file.write('pwd\n')
+    if subTool != 'slurm':
+        shell_file.write('pwd\n')
     if subTool == 'slurm':
         shell_file.write('#SBATCH --job-name=%s_job\n' % Path_Shell)
         #shell_file.write('#SBATCH --output=%s.log\n' % Path_Log)
@@ -149,6 +150,7 @@ def CreateTheShellFile(argv):
         if Jobs_Requeue:
             shell_file.write('#SBATCH --requeue\n')
         #shell_file.write('\nsrun sh -c \'\n\n')
+        shell_file.write('pwd\n')
         shell_file.write('cd "${LOCALSCRATCH}"\n')
         shell_file.write('exec 1> %s.out 2> %s.err\n' % (LogFileName, LogFileName))
     
