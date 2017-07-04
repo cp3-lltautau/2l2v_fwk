@@ -532,7 +532,7 @@ int main(int argc, char* argv[])
   TString muscleDir = runProcess.getParameter<std::string>("muscleDir");
   gSystem->ExpandPathName(muscleDir);
   rochcor2016* muCor2016 = new rochcor2016();  //replace the MuScleFitCorrector we used at run1
-
+  
   //photon and electron enerhy scale based on https://twiki.cern.ch/twiki/bin/viewauth/CMS/EGMSmearer    (adapted to the miniAOD/FWLite framework)
   // std::vector<double> EGammaSmearings = {0.013654,0.014142,0.020859,0.017120,0.028083,0.027289,0.031793,0.030831,0.028083, 0.027289};
   // std::vector<double> EGammaScales    = {0.99544,0.99882,0.99662,1.0065,0.98633,0.99536,0.97859,0.98567,0.98633, 0.99536};
@@ -684,7 +684,17 @@ int main(int argc, char* argv[])
 
       //Skip bad lumi
       if(!isMC && !goodLumiFilter.isGoodLumi(ev.eventAuxiliary().run(),ev.eventAuxiliary().luminosityBlock()))continue;
-
+      // Muon SF 2016 Era dependent
+      patUtils::CutVersion::CutSet muonSFs;
+      if ( is2016data ) muonSFs = (dtag.Contains("2016H") || dtag.Contains("2016G")) ? patUtils::CutVersion::Moriond17Cut_GH : patUtils::CutVersion::Moriond17Cut_BCDEF;
+      if ( !is2016data && is2016MC ) {
+         TRandom3 *rgen = new TRandom3(0);
+         int uniformValue = (int) rgen->Uniform(0, 100);
+         //std::cout<<" Random:  "<<uniformValue<<std::endl;
+         if ( uniformValue < 65 ) muonSFs = patUtils::CutVersion::Moriond17Cut_BCDEF;
+	 else muonSFs = patUtils::CutVersion::Moriond17Cut_GH;  
+      }
+      
       reco::GenParticleCollection gen;
       GenEventInfoProduct eventInfo;
       if(isMC){
@@ -976,7 +986,7 @@ int main(int argc, char* argv[])
       patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::Tight, patUtils::CutVersion::CutSet::Moriond17Cut);
       // passLooseLepton
       passLooseLepton &= lid==11 ? patUtils::passIso(leptons[ilep].el,  patUtils::llvvElecIso::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut) :
-      patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
+      patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::Loose, patUtils::CutVersion::CutSet::Moriond17Cut);
 
 
 
@@ -996,7 +1006,8 @@ int main(int argc, char* argv[])
 
 
                      muDiff -= leptons[ilep].p4();
-                     leptons[ilep].setP4(LorentzVector(p4.Px(),p4.Py(),p4.Pz(),p4.E() ) );
+                     leptons[ilep].mu.setP4(LorentzVector(p4.Px(),p4.Py(),p4.Pz(),p4.E() ) );
+          	     leptons[ilep] = patUtils::GenericLepton(leptons[ilep].mu); //recreate the generic lepton to be sure that the p4 is ok
                      muDiff += leptons[ilep].p4();
                    }
           }
@@ -1319,11 +1330,11 @@ int main(int argc, char* argv[])
               weight *= lepEff.getTrackingEfficiency( selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId())).first; //Tracking eff
               weight *= lepEff.getTrackingEfficiency( selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId())).first; //Tracking eff
 
-              weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId()), "tightiso",patUtils::CutVersion::ICHEP16Cut ).first : 1.0; //ISO w.r.t ID
-              weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId()), "tightiso",patUtils::CutVersion::ICHEP16Cut ).first : 1.0;
+              weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId()), "tightiso_tightid",patUtils::CutVersion::Moriond17Cut ).first : 1.0; //ISO w.r.t ID
+              weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId()), "tightiso_tightid",patUtils::CutVersion::Moriond17Cut ).first : 1.0;
             }
-              weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId()),  abs(selLeptons[dilLep1].pdgId()) ==11 ? "tight"    : "tight"   ,patUtils::CutVersion::ICHEP16Cut ).first : 1.0; //ID
-              weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId()),  abs(selLeptons[dilLep2].pdgId()) ==11 ? "tight"    : "tight"   ,patUtils::CutVersion::ICHEP16Cut ).first : 1.0; //ID
+              weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId()),  abs(selLeptons[dilLep1].pdgId()) ==11 ? "tight"    : "tight"   ,patUtils::CutVersion::Moriond17Cut ).first : 1.0; //ID
+              weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId()),  abs(selLeptons[dilLep2].pdgId()) ==11 ? "tight"    : "tight"   ,patUtils::CutVersion::Moriond17Cut ).first : 1.0; //ID
 
          }
 
@@ -1473,10 +1484,8 @@ int main(int argc, char* argv[])
 
             if(id==11)weight *= lepEff.getRecoEfficiency( selLeptons[higgsCandL1].el.superCluster()->eta(), id).first; //Reconstruction eff
             else if(id==13)weight *= lepEff.getTrackingEfficiency( selLeptons[higgsCandL1].eta(), id).first; //Tracking eff
-            weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(), id,  id ==11 ? "loose"    : "loose"   ,patUtils::CutVersion::ICHEP16Cut ).first : 1.0; //ID
-			      if(id==13){ weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(), id, "looseiso",patUtils::CutVersion::ICHEP16Cut ).first : 1.0;} //ISO w.r.t ID
-            // weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(), abs(selLeptons[higgsCandL1].pdgId()), abs(selLeptons[higgsCandL1].pdgId()) ==11 ? "tight" : "tight", patUtils::CutVersion::CutSet::ICHEP16Cut).first;
-            // weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(), abs(selLeptons[higgsCandL1].pdgId()), abs(selLeptons[higgsCandL1].pdgId()) ==11 ? "tightiso" : "tightiso", patUtils::CutVersion::CutSet::ICHEP16Cut).first;
+            weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(), id,  id ==11 ? "loose"    : "loose"   ,patUtils::CutVersion::Moriond17Cut).first : 1.0; //ID
+			      if(id==13){ weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(), id, "looseiso_looseid",patUtils::CutVersion::Moriond17Cut ).first : 1.0;} //ISO w.r.t ID
           }
 
           if(isMC && higgsCandL2>=0 && abs(selLeptons[higgsCandL2].pdgId())<15){
@@ -1485,10 +1494,8 @@ int main(int argc, char* argv[])
 
             if(id==11)weight *= lepEff.getRecoEfficiency( selLeptons[higgsCandL2].el.superCluster()->eta(), id).first; //Reconstruction eff
             else if(id==13)weight *= lepEff.getTrackingEfficiency( selLeptons[higgsCandL2].eta(), id).first; //Tracking eff
-            weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(), id,  id ==11 ? "loose"    : "loose"   ,patUtils::CutVersion::ICHEP16Cut ).first : 1.0; //ID
-			      if(id==13){ weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(), id, "looseiso",patUtils::CutVersion::ICHEP16Cut ).first : 1.0;} //ISO w.r.t ID
-            // weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(), abs(selLeptons[higgsCandL2].pdgId()), abs(selLeptons[higgsCandL2].pdgId()) ==11 ? "tight" : "tight", patUtils::CutVersion::CutSet::ICHEP16Cut).first;
-            // weight *= lepEff.getLeptonEfficiency( selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(), abs(selLeptons[higgsCandL2].pdgId()), abs(selLeptons[higgsCandL2].pdgId()) ==11 ? "tightiso" : "tightiso", patUtils::CutVersion::CutSet::ICHEP16Cut).first;
+            weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(), id,  id ==11 ? "loose"    : "loose"   ,patUtils::CutVersion::Moriond17Cut ).first : 1.0; //ID
+			      if(id==13){ weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(), id, "looseiso_looseid",patUtils::CutVersion::Moriond17Cut ).first : 1.0;} //ISO w.r.t ID
           }
 
 

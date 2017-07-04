@@ -27,7 +27,7 @@ if [[ $# -ge 4 ]]; then echo "Additional arguments will be considered: "$argumen
 #--------------------------------------------------
 # Global Variables
 #--------------------------------------------------
-SUFFIX=_2017_06_25
+SUFFIX=_2017_06_29
 #SUFFIX=$(date +"_%Y_%m_%d")
 MAINDIR=$CMSSW_BASE/src/UserCode/llvv_fwk/test/zhtautau
 JSON=$MAINDIR/samples.json
@@ -93,45 +93,68 @@ case $step in
 	;;
     2.1)  #extract integrated luminosity of the processed lumi blocks
 	CACHE_ALL=$RESULTSDIR/js_all_cache.txt
-	CACHE_MU=$RESULTSDIR/js_doubleMu_cache.txt
-	CACHE_ELE=$RESULTSDIR/js_doubleEl_cache.txt
-	if [ ! -e $CACHE_ALL ] || [ ! -e $CACHE_MU ] || [ ! -e $CACHE_ELE ]
+	CACHE_DMU=$RESULTSDIR/js_doubleMu_cache.txt
+	CACHE_SMU=$RESULTSDIR/js_singleMu_cache.txt
+	CACHE_DELE=$RESULTSDIR/js_doubleEl_cache.txt
+	CACHE_SELE=$RESULTSDIR/js_singleEl_cache.txt
+	if [ ! -e $CACHE_ALL ] || [ ! -e $CACHE_DMU ] || [ ! -e $CACHE_DELE ] || [ ! -e $CACHE_SMU ] || [ ! -e $CACHE_SELE ]
 		then
 			echo "MISSING LUMI WILL APPEAR AS DIFFERENCE LUMI ONLY IN in.json"
 			ls -l $RESULTSDIR/Data*.json                 > $CACHE_ALL 
-			ls -l $RESULTSDIR/Data*_DoubleMu*.json       > $CACHE_MU
-			ls -l $RESULTSDIR/Data*_DoubleElectron*.json > $CACHE_ELE
+			ls -l $RESULTSDIR/Data*_DoubleMu*.json       > $CACHE_DMU
+			ls -l $RESULTSDIR/Data*_SingleMu*.json       > $CACHE_SMU
+			ls -l $RESULTSDIR/Data*_DoubleElectron*.json > $CACHE_DELE
+			ls -l $RESULTSDIR/Data*_SingleElectron*.json > $CACHE_SELE
 			mergeJSON.py --output=$RESULTSDIR/json_all.json        $RESULTSDIR/Data*.json
 			mergeJSON.py --output=$RESULTSDIR/json_doubleMu.json   $RESULTSDIR/Data*_DoubleMu*.json
+			mergeJSON.py --output=$RESULTSDIR/json_singleMu.json   $RESULTSDIR/Data*_SingleMu*.json
 			mergeJSON.py --output=$RESULTSDIR/json_doubleEl.json   $RESULTSDIR/Data*_DoubleElectron*.json
+			mergeJSON.py --output=$RESULTSDIR/json_singleEl.json   $RESULTSDIR/Data*_SingleElectron*.json
 			mergeJSON.py --output=$RESULTSDIR/json_in.json  Cert_*Collisions16*.txt
 			echo "MISSING LUMI BLOCKS IN DOUBLE MU DATASET"
 			compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_doubleMu.json
+			echo "MISSING LUMI BLOCKS IN SINGLE MU DATASET"
+			compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_singleMu.json
 			echo "MISSING LUMI BLOCKS IN DOUBLE ELECTRON DATASET"
 			compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_doubleEl.json
+			echo "MISSING LUMI BLOCKS IN SINGLE ELECTRON DATASET"
+			compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_singleEl.json
 		else
 			ls -l $RESULTSDIR/Data*.json                 > ${CACHE_ALL}_tmp
-                        ls -l $RESULTSDIR/Data*_DoubleMu*.json       > ${CACHE_MU}_tmp
-                        ls -l $RESULTSDIR/Data*_DoubleElectron*.json > ${CACHE_ELE}_tmp
+        		ls -l $RESULTSDIR/Data*_DoubleMu*.json       > ${CACHE_DMU}_tmp
+			ls -l $RESULTSDIR/Data*_SingleMu*.json       > ${CACHE_SMU}_tmp
+			ls -l $RESULTSDIR/Data*_DoubleElectron*.json > ${CACHE_DELE}_tmp
+			ls -l $RESULTSDIR/Data*_SingleElectron*.json > ${CACHE_SELE}_tmp
 			if [ "`md5sum $CACHE_ALL | cut -d ' ' -f1`" == "`md5sum ${CACHE_ALL}_tmp | cut -d ' ' -f1`" ] && \
-                           [ "`md5sum $CACHE_MU | cut -d ' ' -f1`" == "`md5sum ${CACHE_MU}_tmp | cut -d ' ' -f1`" ] && \
-                           [ "`md5sum $CACHE_ELE | cut -d ' ' -f1`" == "`md5sum ${CACHE_ELE}_tmp | cut -d ' ' -f1`" ]
+                           [ "`md5sum $CACHE_DMU | cut -d ' ' -f1`" == "`md5sum ${CACHE_DMU}_tmp | cut -d ' ' -f1`" ] && \
+                           [ "`md5sum $CACHE_SMU | cut -d ' ' -f1`" == "`md5sum ${CACHE_SMU}_tmp | cut -d ' ' -f1`" ] && \
+                           [ "`md5sum $CACHE_DELE | cut -d ' ' -f1`" == "`md5sum ${CACHE_DELE}_tmp | cut -d ' ' -f1`" ] && \
+                           [ "`md5sum $CACHE_SELE | cut -d ' ' -f1`" == "`md5sum ${CACHE_SELE}_tmp | cut -d ' ' -f1`" ]
 				then
 					echo "JSON files aren't changed. Please use "$RESULTSDIR"/LUMI.txt"
 					exit
 				else
 					echo "JSON files are changed!!"
 					mv ${CACHE_ALL}_tmp $CACHE_ALL
-					mv ${CACHE_MU}_tmp $CACHE_MU
-					mv ${CACHE_ELE}_tmp $CACHE_ELE
+					mv ${CACHE_DMU}_tmp $CACHE_DMU
+					mv ${CACHE_SMU}_tmp $CACHE_SMU
+					mv ${CACHE_DELE}_tmp $CACHE_DELE
+					mv ${CACHE_SELE}_tmp $CACHE_SELE
 					mergeJSON.py --output=$RESULTSDIR/json_all.json        $RESULTSDIR/Data*.json
-                       			mergeJSON.py --output=$RESULTSDIR/json_doubleMu.json   $RESULTSDIR/Data*_DoubleMu*.json
-                     		        mergeJSON.py --output=$RESULTSDIR/json_doubleEl.json   $RESULTSDIR/Data*_DoubleElectron*.json
-                        		mergeJSON.py --output=$RESULTSDIR/json_in.json  Cert_*Collisions16*.txt
-                        		echo "MISSING LUMI BLOCKS IN DOUBLE MU DATASET"
-                        		compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_doubleMu.json
-                        		echo "MISSING LUMI BLOCKS IN DOUBLE ELECTRON DATASET"
-                        		compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_doubleEl.json
+					mergeJSON.py --output=$RESULTSDIR/json_doubleMu.json   $RESULTSDIR/Data*_DoubleMu*.json
+					mergeJSON.py --output=$RESULTSDIR/json_singleMu.json   $RESULTSDIR/Data*_SingleMu*.json
+					mergeJSON.py --output=$RESULTSDIR/json_doubleEl.json   $RESULTSDIR/Data*_DoubleElectron*.json
+					mergeJSON.py --output=$RESULTSDIR/json_singleEl.json   $RESULTSDIR/Data*_SingleElectron*.json
+					mergeJSON.py --output=$RESULTSDIR/json_in.json  Cert_*Collisions16*.txt
+					echo "MISSING LUMI BLOCKS IN DOUBLE MU DATASET"
+					compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_doubleMu.json
+					echo "MISSING LUMI BLOCKS IN SINGLE MU DATASET"
+					compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_singleMu.json
+					echo "MISSING LUMI BLOCKS IN DOUBLE ELECTRON DATASET"
+					compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_doubleEl.json
+					echo "MISSING LUMI BLOCKS IN SINGLE ELECTRON DATASET"
+					compareJSON.py --diff $RESULTSDIR/json_in.json $RESULTSDIR/json_singleEl.json
+					mergeJSON.py --output=$RESULTSDIR/json_all.json        $RESULTSDIR/Data*.json
 			fi
 	fi
 	echo "COMPUTE INTEGRATED LUMINOSITY"
