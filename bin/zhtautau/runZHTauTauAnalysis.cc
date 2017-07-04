@@ -184,7 +184,7 @@ CRTypes checkBkgCR(std::vector<patUtils::GenericLepton> selLeptons, int higgsCan
       passIso.push_back((lep->userFloat("relIso") <= isoMuCut));
     }else if(abs(lep->pdgId())==15){
       passId.push_back(lep->tau.tauID("againstElectronTightMVA6") && lep->tau.tauID("againstMuonLoose3"));
-      passIso.push_back(bool(lep->tau.tauID(isoHaCut)));
+      passIso.push_back(bool(lep->tau.tauID(isoHaCut))); 
     }
   }
 
