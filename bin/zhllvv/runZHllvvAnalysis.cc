@@ -305,10 +305,15 @@ int main(int argc, char* argv[])
   mon.addHistogram( new TH1F( "taupt",  	";p_{T}^{#tau} (GeV);Events/10 GeV", 50,0,500) );
   mon.addHistogram( new TH1F( "taueta", 	";#eta_{#tau};Events", 50,-2.6,2.6) );
 
+  // met control
+  mon.addHistogram( new TH1F( "met",             ";#slash{E}_{T} (GeV);Events/10 GeV",50,0,500));
+  mon.addHistogram( new TH1F( "dPhi_llMET",      ";#DeltaPhi(MET,ll);Events",50,-3,3));
+  mon.addHistogram( new TH1F( "llMETUnbalance",  "|E_T^{miss} - p_{T}(ll)| / p_{T}(ll);Events",50,0,1));
+
   //extra leptons in the event
 
   TH1 *hbtags=mon.addHistogram( new TH1F("nbtags",   ";b-tag multiplicity;Events",5,0,5) );
-  TH1 *hjets=mon.addHistogram( new TH1F("njets",  ";Jet multiplicity;Events",5,0,5) );
+  TH1 *hjets=mon.addHistogram( new TH1F("njets",     ";Jet multiplicity;Events",5,0,5) );
   for(int ibin=1; ibin<=hjets->GetXaxis()->GetNbins(); ibin++){
       TString label("");
       if(ibin==hjets->GetXaxis()->GetNbins()) label +="#geq";
@@ -1225,10 +1230,10 @@ int main(int argc, char* argv[])
 		mon.fillHisto("lepeta"      ,   chTagsMain, trailerLep.eta(), weight);
 		if(passZVeto){
 		  mon.fillHisto("eventflow_zhllvv",chTagsMain,2, weight);
-		  mon.fillHisto("njets"     , chTags, njets,   weight);
-		  mon.fillHisto("nvtx"        ,   chTagsMain, vtx.size(),      weight);
-		  mon.fillHisto("nvtxraw"     ,   chTagsMain, vtx.size(),      weight/puWeight);
-		  mon.fillHisto("rho"         ,   chTagsMain, rho,       weight);
+		  mon.fillHisto("njets"           , chTags, njets,   weight);
+		  mon.fillHisto("nvtx"            , chTagsMain, vtx.size(),      weight);
+		  mon.fillHisto("nvtxraw"         , chTagsMain, vtx.size(),      weight/puWeight);
+		  mon.fillHisto("rho"             , chTagsMain, rho,       weight);
 		  if(jetCount){
 		    mon.fillHisto("eventflow_zhllvv", chTagsMain,3, weight);
 		    mon.fillHisto("nbtags"    , chTags, nbtags,  weight);
