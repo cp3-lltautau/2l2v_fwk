@@ -27,7 +27,9 @@ scram b -j 8
 
 # SVFit for 2016/2017 analyses
 git clone git@github.com:veelken/SVfit_standalone.git TauAnalysis/SVfitStandalone
+cd TauAnalysis/SVfitStandalone   # checkout needs to be done here, since it's a different repo
 git checkout HIG-16-006
+cd ../..
 
 git clone https://github.com/cp3-lltautau/2l2v_fwk.git UserCode/llvv_fwk
 cd UserCode/llvv_fwk
