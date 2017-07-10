@@ -73,63 +73,63 @@
           "lumiMask": "$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
         },
         {
-          "dtag": "Data13TeV_SingleMu2016B_ver1",
+          "dtag": "Data13TeV_SingleMuon2016B_ver1",
           "xsec": 1.0,
           "br": [1.0],
           "dset": ["/SingleMuon/Run2016B-03Feb2017_ver1-v1/MINIAOD"],
           "lumiMask": "$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
         },
         {
-          "dtag": "Data13TeV_SingleMu2016B_ver2",
+          "dtag": "Data13TeV_SingleMuon2016B_ver2",
           "xsec": 1.0,
           "br": [1.0],
           "dset": ["/SingleMuon/Run2016B-03Feb2017_ver2-v2/MINIAOD"],
           "lumiMask": "$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
         },       
         {
-          "dtag": "Data13TeV_SingleMu2016C",
+          "dtag": "Data13TeV_SingleMuon2016C",
           "xsec": 1.0,
           "br": [1.0],
           "dset": ["/SingleMuon/Run2016C-03Feb2017-v1/MINIAOD"],
           "lumiMask": "$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
         },
         {
-          "dtag": "Data13TeV_SingleMu2016D",
+          "dtag": "Data13TeV_SingleMuon2016D",
           "xsec": 1.0,
           "br": [1.0],
           "dset": ["/SingleMuon/Run2016D-03Feb2017-v1/MINIAOD"],
           "lumiMask": "$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
         },
         {
-          "dtag": "Data13TeV_SingleMu2016E",
+          "dtag": "Data13TeV_SingleMuon2016E",
           "xsec": 1.0,
           "br": [1.0],
           "dset": ["/SingleMuon/Run2016E-03Feb2017-v1/MINIAOD"],
           "lumiMask": "$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
         },
         {
-          "dtag": "Data13TeV_SingleMu2016F",
+          "dtag": "Data13TeV_SingleMuon2016F",
           "xsec": 1.0,
           "br": [1.0],
           "dset": ["/SingleMuon/Run2016F-03Feb2017-v1/MINIAOD"],
           "lumiMask": "$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
         },
         {
-          "dtag": "Data13TeV_SingleMu2016G",
+          "dtag": "Data13TeV_SingleMuon2016G",
           "xsec": 1.0,
           "br": [1.0],
           "dset": ["/SingleMuon/Run2016G-03Feb2017-v1/MINIAOD"],
           "lumiMask": "$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
         },       
         {
-          "dtag": "Data13TeV_SingleMu2016H_ver2",
+          "dtag": "Data13TeV_SingleMuon2016H_ver2",
           "xsec": 1.0,
           "br": [1.0],
           "dset": ["/SingleMuon/Run2016H-03Feb2017_ver2-v1/MINIAOD"],
           "lumiMask": "$CMSSW_BASE/src/UserCode/llvv_fwk/data/json/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
         },
         {
-          "dtag": "Data13TeV_SingleMu2016H_ver3",
+          "dtag": "Data13TeV_SingleMuon2016H_ver3",
           "xsec": 1.0,
           "br": [1.0],
           "dset": ["/SingleMuon/Run2016H-03Feb2017_ver3-v1/MINIAOD"],
