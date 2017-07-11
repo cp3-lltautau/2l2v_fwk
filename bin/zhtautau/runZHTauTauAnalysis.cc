@@ -700,7 +700,7 @@ int main(int argc, char* argv[])
   // ElectronEnergyCalibratorRun2 ElectronEnCorrector(theEpCombinationTool, isMC, false, electronESC);
   // ElectronEnCorrector.initPrivateRng(new TRandom(1234));
 
-  EnergyScaleCorrection_class eScaler("EgammaAnalysis/ElectronTools/data/ScalesSmearings//Moriond17_23Jan_ele");
+  EnergyScaleCorrection_class eScaler("EgammaAnalysis/ElectronTools/data/ScalesSmearings/Moriond17_23Jan_ele");
   eScaler.doScale=true;
   eScaler.doSmearings=true;
 
@@ -1105,7 +1105,8 @@ int main(int argc, char* argv[])
       // passLooseLepton
       passLooseLepton &= lid==11 ? patUtils::passId(leptons[ilep].el, vtx[0], patUtils::llvvElecId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut, true) :
       patUtils::passId(leptons[ilep].mu, vtx[0], patUtils::llvvMuonId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
-      // passSoftMuon
+      passVeryLooseLepton &= passLooseLepton;
+    // passSoftMuon
       passSoftMuon &= lid==11 ? false : patUtils::passId(leptons[ilep].mu, vtx[0], patUtils::llvvMuonId::Soft, patUtils::CutVersion::CutSet::ICHEP16Cut);
 
       //isolation
@@ -1119,7 +1120,7 @@ int main(int argc, char* argv[])
       // passVeryLooseLepton
       passVeryLooseLepton &= lid==11 ?  patUtils::passIso(leptons[ilep].el,  patUtils::llvvElecIso::VeryLoose, patUtils::CutVersion::CutSet::ICHEP16Cut) :
       patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::VeryLoose, patUtils::CutVersion::CutSet::ICHEP16Cut);
-      
+
 
       //apply muon corrections
       //if(abs(lid)==13 && passIso && passId)
@@ -1179,13 +1180,13 @@ int main(int argc, char* argv[])
 
       // Compute relIso after corrections
       leptons[ilep].addUserFloat("relIso",  patUtils::relIso(leptons[ilep], rho) ); //compute it once for all
-      
+
       mon.fillHisto( lid == 11 ? "eleiso" : "muiso" ,  "controlPlots" , leptons[ilep].userFloat("relIso"), 1);
         //kinematics
         float leta = fabs(lid==11 ?  leptons[ilep].el.superCluster()->eta() : leptons[ilep].eta());
         if(leta> (lid==11 ? 2.5 : 2.4) )            passKin=false;
         if(lid==11 && (leta>1.4442 && leta<1.5660)) passKin=false;
-        passVeryLooseLepton &= passKin;
+	passVeryLooseLepton &= passKin;
         passSoftMuon    &= passKin;
         if(lid==13){
           if(leptons[ilep].pt()<10) passVeryLooseLepton=false;
@@ -1476,7 +1477,9 @@ int main(int argc, char* argv[])
         }
 
         if(!isDileptonCandidate) continue;
-        bool passZmass = (fabs(zll.mass()-91.2)<15);
+        mon.fillHisto("zllmass","controlPlots",zll.mass(),weight);
+
+  	bool passZmass = (fabs(zll.mass()-91.2)<15);
         bool passZpt   = (zll.pt()>20);
         bool passMass = passZmass;
         bool passBJetVetoMain = (nbtags ==0);
@@ -1515,7 +1518,7 @@ int main(int argc, char* argv[])
               else{pTL1=selLeptons[i].pt(); etaL1=abs(selLeptons[i].eta());}
 
 
-              TString PartName = "FR_";
+              TString PartName = "FR_"+chTags.at(1)+"_";
               if     (abs(selLeptons[i].pdgId())==11)PartName += "El";
               else if(abs(selLeptons[i].pdgId())==13)PartName += "Mu";
               else if(abs(selLeptons[i].pdgId())==15)PartName += "Ta";
@@ -1757,7 +1760,7 @@ int main(int argc, char* argv[])
         } // end filling plots for nominal
 
 
-        if(selLeptons.size()>=2 && passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain && passDPhiCut && passHiggsLoose){
+        if( isMC && selLeptons.size()>=2 && passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain && passDPhiCut && passHiggsLoose){
           for(unsigned int index=0; index<optim_Cuts_sumPt.size();index++){
             bool passHiggs = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],true,vtx);
             if(passHiggs){
@@ -1766,43 +1769,38 @@ int main(int argc, char* argv[])
             } else {
 
 	      // Control regions
-
+	      
 	      CRTypes theCR =  checkBkgCR(selLeptons, higgsCandL1, higgsCandL2, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],vtx);
-
+	      
 	      float theFRWeight=1;
-
+	      
 	      if(theCR==CRTypes::CR10){
 		// CR10
 		theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR10");
 		
 		mon.fillHisto(TString("Hsvfit_shapes_CR10")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
-		mon.fillHisto(TString("Asvfit_shapes_CR10")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
-		
+                  mon.fillHisto(TString("Asvfit_shapes_CR10")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
+		  
 	      } else if (theCR==CRTypes::CR01) {
 		// CR01
 		theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR01");
 		
 		mon.fillHisto(TString("Hsvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
 		mon.fillHisto(TString("Asvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
-		
 	      } else {
 		// CR11
 		theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR11");
-		
 		mon.fillHisto(TString("Hsvfit_shapes_CR11")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
 		mon.fillHisto(TString("Asvfit_shapes_CR11")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
-		
 	      }
 	    }
-
-
-            if(index==0 && selLeptons.size()>=2 && passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain ){
-              mon.fillHisto(TString("metsys")+varNames[ivar], chTagsMain, imet.pt(), weight);
-            }
-          }//end of the loop on cutIndex
-        }
+	    
+	    if(index==0 && selLeptons.size()>=2 && passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain ){
+	      mon.fillHisto(TString("metsys")+varNames[ivar], chTagsMain, imet.pt(), weight);
+	    }
+	  }//end of the loop on cutIndex
+	}
       }//END SYSTEMATIC LOOP
-
     }
     printf("\n");
     delete file;
