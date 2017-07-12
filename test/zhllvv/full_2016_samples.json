@@ -273,7 +273,7 @@
         {
           "dtag": "ZHToTauTau_M125_2016",
           "xsec": 0.00265,
-          "br": [1.0],
+          "br": [0.2],
           "dset": [" /ZHToTauTau_M125_13TeV_powheg_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM"]
         }
       ]
