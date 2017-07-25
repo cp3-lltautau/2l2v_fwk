@@ -27,7 +27,7 @@ if [[ $# -ge 4 ]]; then echo "Additional arguments will be considered: "$argumen
 #--------------------------------------------------
 # Global Variables
 #--------------------------------------------------
-SUFFIX=_2017_07_09
+SUFFIX=_2017_07_20
 #SUFFIX=$(date +"_%Y_%m_%d")
 MAINDIR=$CMSSW_BASE/src/UserCode/llvv_fwk/test/zhtautau
 JSON=$MAINDIR/samples.json
@@ -100,7 +100,7 @@ case $step in
 	if [ ! -e $CACHE_ALL ] || [ ! -e $CACHE_DMU ] || [ ! -e $CACHE_DELE ] || [ ! -e $CACHE_SMU ] || [ ! -e $CACHE_SELE ]
 		then
 			echo "MISSING LUMI WILL APPEAR AS DIFFERENCE LUMI ONLY IN in.json"
-			ls -l $RESULTSDIR/Data*.json                 > $CACHE_ALL 
+			ls -l $RESULTSDIR/Data*.json                 > $CACHE_ALL
 			ls -l $RESULTSDIR/Data*_DoubleMu*.json       > $CACHE_DMU
 			ls -l $RESULTSDIR/Data*_SingleMu*.json       > $CACHE_SMU
 			ls -l $RESULTSDIR/Data*_DoubleElectron*.json > $CACHE_DELE
@@ -168,7 +168,7 @@ case $step in
 	RESULT=$?
 	if [[ $RESULT -eq 0 ]] ; then
        		echo "Copied!"
-		ssh $LXPLUS_USERNAME@lxplus.cern.ch 'export PATH=$HOME/.local/bin:/afs/cern.ch/cms/lumi/brilconda-1.1.7/bin:$PATH; 
+		ssh $LXPLUS_USERNAME@lxplus.cern.ch 'export PATH=$HOME/.local/bin:/afs/cern.ch/cms/lumi/brilconda-1.1.7/bin:$PATH;
 					    cd /afs/cern.ch/user/'${LXPLUS_USERNAME:0:1}'/'$LXPLUS_USERNAME'/private;
 					    brilcalc lumi --normtag /afs/cern.ch/user/l/lumipro/public/normtag_file/normtag_DATACERT.json -i ./json_all.json -u /pb -o ./LUMI.txt;
 					    grep "Summary" -A 2 ./LUMI.txt' > $RESULTSDIR/LUMI.txt
@@ -177,7 +177,7 @@ case $step in
 		echo "Impossible to copy json_all.json on your lxplus private area!"
 		exit
 	fi
-	
+
 	;;
     3)  # make plots and combined root files
         if [ -f $RESULTSDIR/LUMI.txt ]; then

@@ -214,6 +214,56 @@ int main(int argc, char* argv[])
   mon.addHistogram( new TH1F( "wrtJetPt",  ";Jet p_{T} (GeV);Events",sizeof(ptbinsJets)/sizeof(float)-1,ptbinsJets));
   mon.addHistogram( new TH1F( "wrtLepPt",  ";Lep p_{T} (GeV);Events",sizeof(ptbinsJets)/sizeof(float)-1,ptbinsJets));
 
+  double bins[]={5, 30,70,110,190,300,550,1800};
+  int nbins=sizeof(bins)/sizeof(double) - 1;
+
+  mon.addHistogram( new TH1F( "Amass_fine",            ";M_{#tau#tau} (GeV);Events",200,0,1000));
+  mon.addHistogram( new TH1F( "Hmass_fine",            ";M_{ll#tau#tau} (GeV);Events",200,0,1000));
+  mon.addHistogram( new TH1F( "Amass",            ";M_{#tau#tau} (GeV);Events",nbins,bins));
+  mon.addHistogram( new TH1F( "Hmass",            ";M_{ll#tau#tau} (GeV);Events",nbins,bins));
+
+  //
+  // HISTOGRAMS FOR OPTIMIZATION and STATISTICAL ANALYSIS
+  //
+  //
+
+  std::vector<const char*> tauIDiso = {"byLooseCombinedIsolationDeltaBetaCorr3Hits","byLooseIsolationMVArun2v1DBoldDMwLT",
+                                        "byLooseIsolationMVArun2v1DBdR03oldDMwLT"};
+  std::vector<float>    optim_Cuts_sumPt;
+  std::vector<int>      optim_Cuts_taIso;
+  std::vector<float>    optim_Cuts_muIso;
+  std::vector<float>    optim_Cuts_elIso;
+
+  for(float elIso=0.3;elIso>=0.1;elIso-=0.1){
+    for(float muIso=0.3;muIso>=0.1;muIso-=0.1){
+      for(int taIso=0;taIso<tauIDiso.size();taIso++){
+        for(float sumPt=0;sumPt<=200;sumPt+=20){
+          optim_Cuts_elIso.push_back(elIso);
+          optim_Cuts_muIso.push_back(muIso);
+          optim_Cuts_taIso.push_back(taIso);
+          optim_Cuts_sumPt.push_back(sumPt);
+        }
+      }
+    }
+  }
+
+  TH2F* Hoptim_cuts  =(TH2F*)mon.addHistogram(new TProfile2D("optim_cut",      ";cut index;variable",       optim_Cuts_sumPt.size(),0,optim_Cuts_sumPt.size(), 4, 0, 4)) ;
+  Hoptim_cuts->GetYaxis()->SetBinLabel(1, "eIso<");
+  Hoptim_cuts->GetYaxis()->SetBinLabel(2, "muIso<");
+  Hoptim_cuts->GetYaxis()->SetBinLabel(3, "tauIso<");
+  Hoptim_cuts->GetYaxis()->SetBinLabel(4, "sumPt>");
+
+  for(unsigned int index=0;index<optim_Cuts_sumPt.size();index++){
+    Hoptim_cuts->Fill(index,0.0,optim_Cuts_elIso[index]); // mon.fillHisto("optim_cut","",)
+    Hoptim_cuts->Fill(index,1.0,optim_Cuts_muIso[index]); // mon.fillHisto("optim_cut","",)
+    Hoptim_cuts->Fill(index,2.0,optim_Cuts_taIso[index]); // mon.fillHisto("optim_cut","",)
+    Hoptim_cuts->Fill(index,3.0,optim_Cuts_sumPt[index]); // mon.fillHisto("optim_cut","",)
+  }
+
+  mon.addHistogram( new TH2F (TString("Hsvfit_shapes"),";cut index;M_{ll#tau#tau};Events",optim_Cuts_sumPt.size(),0,optim_Cuts_sumPt.size(),nbins,bins) );
+  mon.addHistogram( new TH2F (TString("Asvfit_shapes"),";cut index;M_{ll#tau#tau};Events",optim_Cuts_sumPt.size(),0,optim_Cuts_sumPt.size(),nbins,bins) );
+
+
   //##############################################
   //######## GET READY FOR THE EVENT LOOP ########
   //##############################################
@@ -534,12 +584,17 @@ int main(int argc, char* argv[])
        }
      }
      //get the Z candiate (end)
+     //The "all" tags considered all cases, also events without a Z
+     chTags.push_back("all");
 
      bool isDileptonCandidate = false;
      if(dilId!=-1){
        //check the channel
        if( abs(dilId)==121){ chTags.push_back("ll"); chTags.push_back("ee");   isDileptonCandidate=true; }
        if( abs(dilId)==169){ chTags.push_back("ll"); chTags.push_back("mumu"); isDileptonCandidate=true; }
+
+       if(isMC && abs(dilId)==169)weight *= lepEff.getTriggerEfficiencySF(selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), dilId,is2016MC).first;
+		   if(isMC && abs(dilId)==121)weight *= lepEff.getTriggerEfficiencySF(selLeptons[dilLep1].pt(), selLeptons[dilLep1].el.superCluster()->eta(), selLeptons[dilLep2].pt(), selLeptons[dilLep2].el.superCluster()->eta(), dilId,is2016MC).first;
      }
 
      if(!isDileptonCandidate) continue;
@@ -572,14 +627,14 @@ int main(int argc, char* argv[])
        higgsCandId=0;
 
        for(int l=0   ;l<(int)selLeptons.size();l++){
-         std::cout << "SelLep num. "<<l<<":  "<< selLeptons[l].pdgId() << " - Momentum: "<< selLeptons[l].p4() << std::endl;
+         //std::cout << "SelLep num. "<<l<<":  "<< selLeptons[l].pdgId() << " - Momentum: "<< selLeptons[l].p4() << std::endl;
          if(l==dilLep1 || l==dilLep2)continue;
          if(higgsCandL1<0){higgsCandL1=l;continue;}
          if(higgsCandL2<0){higgsCandL2=l;break;}//ordered in pT, so all done
        }
 
-       std::cout << "---  Leading Higgs Lep: "<< selLeptons[higgsCandL1].pdgId() << " - Momentum: "<< selLeptons[higgsCandL1].p4() << std::endl;
-       std::cout << "--- Trailing Higgs Lep: "<< selLeptons[higgsCandL2].pdgId() << " - Momentum: "<< selLeptons[higgsCandL2].p4() << std::endl;
+       //std::cout << "---  Leading Higgs Lep: "<< selLeptons[higgsCandL1].pdgId() << " - Momentum: "<< selLeptons[higgsCandL1].p4() << std::endl;
+       //std::cout << "--- Trailing Higgs Lep: "<< selLeptons[higgsCandL2].pdgId() << " - Momentum: "<< selLeptons[higgsCandL2].p4() << std::endl;
 
        string ChannelName = "none";   string signName = "";
        if(higgsCandL1>=0 && higgsCandL2>=0){
@@ -598,7 +653,7 @@ int main(int argc, char* argv[])
            default:     ChannelName  = "none";  HiggsShortId =-1; break;
          }
        }
-       std::cout << " ---------- Higgs flavour:  "<< signName + ChannelName << std::endl;
+       //std::cout << " ---------- Higgs flavour:  "<< signName + ChannelName << std::endl;
        chTagsMain.push_back(chTagsMain[chTagsMain.size()-1] + signName + ChannelName);
        //Get the Higgs candidate (end)
 
@@ -612,7 +667,7 @@ int main(int argc, char* argv[])
 
 
        // passDPhiCut    =  (fabs(deltaPhi(zll.phi(), met.phi()))>1.5);
-       // passHiggsLoose = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, 0.5, 0.5, "decayModeFinding", 0., false, vtx);
+       passHiggsLoose = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, 0.3, 0.3, "decayModeFinding", 0., false, vtx);
        // passHiggsMain  = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, 0.3, 0.15, "byLooseCombinedIsolationDeltaBetaCorr3Hits", 20., true, vtx);
 
        //SVFIT MASS
@@ -659,6 +714,30 @@ int main(int argc, char* argv[])
 
          if(passZpt){
            mon.fillHisto("eventflow",   chTagsMain,                 3, weight);
+           if(selLeptons.size()>=4){
+             mon.fillHisto("eventflow",   chTagsMain,                 4, weight);
+             if(passHiggsLoose){
+               mon.fillHisto("Amass"           , chTagsMain, higgsCand.mass(),  weight);
+               mon.fillHisto("Hmass"           , chTagsMain, higgsCandH.mass(),  weight);
+               mon.fillHisto("Amass_fine"           , chTagsMain, higgsCand.mass(),  weight);
+               mon.fillHisto("Hmass_fine"           , chTagsMain, higgsCandH.mass(),  weight);
+             }
+           }
+         }
+       }
+     }
+
+     if( selLeptons.size()>=2 && passZmass && passZpt && selLeptons.size()>=4 && passHiggsLoose){
+       for(unsigned int index=0; index<optim_Cuts_sumPt.size();index++){
+         bool passHiggs = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],true,vtx);
+         std::cout<<" Leptons cut used for higgs selection optimization:\n"
+                  <<" IsoEle = "<<optim_Cuts_elIso[index]<<" IsoMu = "<<optim_Cuts_muIso[index]
+                  <<" IsoTau = "<<tauIDiso[optim_Cuts_taIso[index]] <<" SumPt = "<<optim_Cuts_sumPt[index]<<std::endl;
+         std::cout<<" Higgs cut status: "<< (passHiggs ? "PASSED" : "NOT PASSED") << std::endl;
+         std::cout<<" Masses values:   A = "<<higgsCand_SVFit.mass()<<" GeV --  H = "<<higgsCandH_SVFit.mass()<<" GeV"<<std::endl;
+         if(passHiggs){
+           mon.fillHisto(TString("Hsvfit_shapes"),chTagsMain,index,higgsCandH_SVFit.mass(),weight);
+           mon.fillHisto(TString("Asvfit_shapes"),chTagsMain,index,higgsCand_SVFit.mass(),weight);
          }
        }
      }

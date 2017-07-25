@@ -46,7 +46,8 @@ for procBlock in procList :
     #run over processes
     for proc in procBlock[1] :
         data = proc['data']
-        #run over samples
+        if(getByLabel(proc,'nosample'      , '')!=''):continue
+	#run over samples
         for procData in data :
             origdtag = getByLabel(procData,'dtag','')
             if(origdtag=='') : continue
