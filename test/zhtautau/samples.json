@@ -167,7 +167,6 @@
     {
       "tag":"Z#rightarrow ll (LO)",
       "keys": ["zhtautau_2016MC"],
-      "nosample": true,
       "isdata":false,
       "color":831,
       "lcolor":1,

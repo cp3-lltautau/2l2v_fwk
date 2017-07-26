@@ -208,6 +208,17 @@ int main(int argc, char* argv[])
   mon.addHistogram( new TH1F( "nvtxpuweight",";Vertices;Events",50,0,50) );
   mon.addHistogram( new TH1F( "rho",";#rho;Events",50,0,25) );
 
+  //Higgs leptons control
+  mon.addHistogram( new TH1F( "higgsMuonpt"      ,  ";p_{T}^{#mu} (GeV);Events/10 GeV", 50,0,500) );
+  mon.addHistogram( new TH1F( "higgsMuoneta"     ,  ";#eta_{#mu};Events", 50,-2.6,2.6) );
+  mon.addHistogram( new TH1F( "higgsMuoniso"     ,  ";I_{#mu};Events", 50,0.,1.) );
+  mon.addHistogram( new TH1F( "higgsMuonDeltaRLep"     ,  ";#Delta R(#mu,lepton);Events", 40,0.,2.) );
+
+  mon.addHistogram( new TH1F( "higgsElept"      ,  ";p_{T}^{e} (GeV);Events/10 GeV", 50,0,500) );
+  mon.addHistogram( new TH1F( "higgsEleeta"     ,  ";#eta_{e};Events", 50,-2.6,2.6) );
+  mon.addHistogram( new TH1F( "higgsEleiso"     ,  ";I_{e};Events", 50,0.,1.) );
+  mon.addHistogram( new TH1F( "higgsEleDeltaRLep"     ,  ";#Delta R(e,lepton);Events", 40,0.,2.) );
+
   //fake rate histograms
   float ptbinsJets[] = {10, 20, 30, 40, 60, 80, 100, 125, 150, 175,250};
   int ptbinsJetsN = sizeof(ptbinsJets)/sizeof(float)-1;
@@ -615,6 +626,8 @@ int main(int argc, char* argv[])
      LorentzVector higgsCandH;
      LorentzVector higgsCandH_SVFit;
 
+     int higgsMuonCand = -1;
+     int higgsEleCand  = -1;
      //SIGNAL ANALYSIS Z+2Leptons  (no systematics taken into account here)
      if(passZmass && passZpt && (int)selLeptons.size()>=4){  //Request at least 4 leptons
        //printf("%30s %2i --> ", "BEFORE", -1); for(int l=0   ;l<(int)selLeptons.size();l++){ printf("%i ", selLeptons[l].pdgId());}printf("\n");
@@ -652,6 +665,11 @@ int main(int argc, char* argv[])
            case 15*15:  ChannelName  = "haha";  HiggsShortId+= 5; break;
            default:     ChannelName  = "none";  HiggsShortId =-1; break;
          }
+         if(selLeptons[higgsCandL2].pdgId() == 13) higgsMuonCand =  higgsCandL2;
+         if(selLeptons[higgsCandL1].pdgId() == 13) higgsMuonCand =  higgsCandL1;
+
+         if(selLeptons[higgsCandL2].pdgId() == 11) higgsEleCand =  higgsCandL2;
+         if(selLeptons[higgsCandL1].pdgId() == 11) higgsEleCand =  higgsCandL1;
        }
        //std::cout << " ---------- Higgs flavour:  "<< signName + ChannelName << std::endl;
        chTagsMain.push_back(chTagsMain[chTagsMain.size()-1] + signName + ChannelName);
@@ -716,6 +734,28 @@ int main(int argc, char* argv[])
            mon.fillHisto("eventflow",   chTagsMain,                 3, weight);
            if(selLeptons.size()>=4){
              mon.fillHisto("eventflow",   chTagsMain,                 4, weight);
+             if (higgsMuonCand > -1)
+               {
+                 mon.fillHisto("higgsMuonpt",        chTagsMain, selLeptons[higgsMuonCand].pt(), weight);
+                 mon.fillHisto("higgsMuoneta",       chTagsMain, selLeptons[higgsMuonCand].eta(),weight);
+                 mon.fillHisto("higgsMuoniso",       chTagsMain, selLeptons[higgsMuonCand].userFloat("relIso"),weight);
+
+               for(int l1=0;l1<(int)selLeptons.size();l1++){
+                 mon.fillHisto("higgsMuonDeltaRLep", chTagsMain,deltaR(selLeptons[l1], selLeptons[higgsMuonCand]),weight);
+               }
+             }
+
+             if (higgsEleCand > -1)
+               {
+                 mon.fillHisto("higgsElept",        chTagsMain, selLeptons[higgsMuonCand].pt(), weight);
+                 mon.fillHisto("higgsEleeta",       chTagsMain, selLeptons[higgsMuonCand].eta(),weight);
+                 mon.fillHisto("higgsEleiso",       chTagsMain, selLeptons[higgsMuonCand].userFloat("relIso"),weight);
+
+               for(int l1=0;l1<(int)selLeptons.size();l1++){
+                 mon.fillHisto("higgsEleDeltaRLep", chTagsMain,deltaR(selLeptons[l1], selLeptons[higgsMuonCand]),weight);
+               }
+             }
+
              if(passHiggsLoose){
                mon.fillHisto("Amass"           , chTagsMain, higgsCand.mass(),  weight);
                mon.fillHisto("Hmass"           , chTagsMain, higgsCandH.mass(),  weight);
@@ -730,12 +770,14 @@ int main(int argc, char* argv[])
      if( selLeptons.size()>=2 && passZmass && passZpt && selLeptons.size()>=4 && passHiggsLoose){
        for(unsigned int index=0; index<optim_Cuts_sumPt.size();index++){
          bool passHiggs = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],true,vtx);
-         std::cout<<" Leptons cut used for higgs selection optimization:\n"
-                  <<" IsoEle = "<<optim_Cuts_elIso[index]<<" IsoMu = "<<optim_Cuts_muIso[index]
-                  <<" IsoTau = "<<tauIDiso[optim_Cuts_taIso[index]] <<" SumPt = "<<optim_Cuts_sumPt[index]<<std::endl;
-         std::cout<<" Higgs cut status: "<< (passHiggs ? "PASSED" : "NOT PASSED") << std::endl;
-         std::cout<<" Masses values:   A = "<<higgsCand_SVFit.mass()<<" GeV --  H = "<<higgsCandH_SVFit.mass()<<" GeV"<<std::endl;
+
          if(passHiggs){
+           std::cout<<" Leptons cut used for higgs selection optimization:\n"
+                    <<" IsoEle = "<<optim_Cuts_elIso[index]<<" IsoMu = "<<optim_Cuts_muIso[index]
+                    <<" IsoTau = "<<tauIDiso[optim_Cuts_taIso[index]] <<" SumPt = "<<optim_Cuts_sumPt[index]<<std::endl;
+           std::cout<<" Higgs cut status: "<< (passHiggs ? "PASSED" : "NOT PASSED") << std::endl;
+           std::cout<<" Masses values:   A = "<<higgsCand_SVFit.mass()<<" GeV --  H = "<<higgsCandH_SVFit.mass()<<" GeV"<<std::endl;
+
            mon.fillHisto(TString("Hsvfit_shapes"),chTagsMain,index,higgsCandH_SVFit.mass(),weight);
            mon.fillHisto(TString("Asvfit_shapes"),chTagsMain,index,higgsCand_SVFit.mass(),weight);
          }

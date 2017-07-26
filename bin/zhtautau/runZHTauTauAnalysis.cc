@@ -40,6 +40,7 @@
 #include "UserCode/llvv_fwk/interface/LeptonEfficiencySF.h"
 #include "UserCode/llvv_fwk/interface/PDFInfo.h"
 #include "UserCode/llvv_fwk/interface/rochcor2016.h"
+#include "UserCode/llvv_fwk/interface/RoccoR_Moriond17.h"
 #include "UserCode/llvv_fwk/interface/muresolution_run2.h"
 #include "UserCode/llvv_fwk/interface/BTagCalibrationStandalone.h"
 #include "UserCode/llvv_fwk/interface/BtagUncertaintyComputer.h"
@@ -672,6 +673,8 @@ int main(int argc, char* argv[])
   TString muscleDir = runProcess.getParameter<std::string>("muscleDir");
   gSystem->ExpandPathName(muscleDir);
   rochcor2016* muCor2016 = new rochcor2016();  //replace the MuScleFitCorrector we used at run1
+  std::string roccorPath = string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/rcdata.2016.v3";
+  RoccoR_Moriond17  *muCorMoriond17 = new RoccoR_Moriond17(roccorPath);
 
   //photon and electron enerhy scale based on https://twiki.cern.ch/twiki/bin/viewauth/CMS/EGMSmearer    (adapted to the miniAOD/FWLite framework)
   // std::vector<double> EGammaSmearings = {0.013654,0.014142,0.020859,0.017120,0.028083,0.027289,0.031793,0.030831,0.028083, 0.027289};
@@ -1141,24 +1144,48 @@ int main(int argc, char* argv[])
       //if(abs(lid)==13 && passIso && passId)
       if(abs(lid)==13 && passVeryLooseLepton){
         passSoftMuon=false;
+
 	if(is2016MC || is2016data){
-	  if(muCor2016){
-	    float qter =1.0;
-	    TLorentzVector p4(leptons[ilep].px(),leptons[ilep].py(),leptons[ilep].pz(),leptons[ilep].energy());
-	    int ntrk = leptons[ilep].mu.innerTrack()->hitPattern().trackerLayersWithMeasurement();
-	    if(is2016MC){
-	      muCor2016->momcor_mc  (p4, lid<0 ? -1 :1, ntrk, qter);
-	    } else if (is2016data){   
-	      muCor2016->momcor_data(p4, lid<0 ? -1 :1, 0, qter);
-	    }
+	  if(muCorMoriond17){
 	    
 	    muDiff -= leptons[ilep].p4();
-	    leptons[ilep].setP4(LorentzVector(p4.Px(),p4.Py(),p4.Pz(),p4.E() ) );
+	    
+	    float qter =1.0;
+	    double pt  = leptons[ilep].pt();
+	    double eta = leptons[ilep].eta();
+	    double phi = leptons[ilep].phi();
+	    int charge = leptons[ilep].charge();
+	    TLorentzVector p4(leptons[ilep].px(),leptons[ilep].py(),leptons[ilep].pz(),leptons[ilep].energy());
+	    // cout<<"PT Befor Correction: "<< p4.Pt() << endl;
+	    int ntrk = leptons[ilep].mu.innerTrack()->hitPattern().trackerLayersWithMeasurement();
+	    if(is2016MC){
+	      //muCor2016->momcor_mc  (p4, lid<0 ? -1 :1, ntrk, qter);
+	      TRandom3 *rgen_ = new TRandom3(0);
+	      double u1 = rgen_->Uniform();
+	      double u2 = rgen_->Uniform();
+	      
+	      double mcSF = muCorMoriond17->kScaleAndSmearMC(charge, pt, eta, phi, ntrk, u1, u2, 0, 0);
+	      
+	      leptons[ilep].mu.setP4(LorentzVector(p4.Px()*mcSF,p4.Py()*mcSF,p4.Pz()*mcSF,p4.E()*mcSF ) );
+	      leptons[ilep] = patUtils::GenericLepton(leptons[ilep].mu);
+	      
+	      //cout<<"\t PT After Correction (2016): "<< p4.Pt() << " -- (Moriond17): "<< p4_2.Pt()<< endl;
+	    }else if (is2016data){
+	      // muCor2016->momcor_data(p4, lid<0 ? -1 :1, 0, qter);
+	      double dataSF = muCorMoriond17->kScaleDT(charge, pt, eta, phi, 0, 0);
+
+	      leptons[ilep].mu.setP4(LorentzVector(p4.Px()*dataSF,p4.Py()*dataSF,p4.Pz()*dataSF,p4.E()*dataSF ) );
+	      leptons[ilep] = patUtils::GenericLepton(leptons[ilep].mu);
+	      // cout<<"\t PT After Correction: "<< leptons[ilep].pt() << endl;
+	    }
+	    
+	    //  leptons[ilep].mu.setP4(LorentzVector(p4.Px(),p4.Py(),p4.Pz(),p4.E() ) );
+	    //  leptons[ilep] = patUtils::GenericLepton(leptons[ilep].mu); //recreate the generic lepton to be sure that the p4 is ok
 	    muDiff += leptons[ilep].p4();
 	  }
 	}
       }
-
+      
       //apply electron corrections
       //if(abs(lid)==11  && passIso && passId)
       if(abs(lid)==11  && passVeryLooseLepton){
@@ -1630,8 +1657,8 @@ int main(int argc, char* argv[])
               default:     ChannelName  = "none";  HiggsShortId =-1; break;
             }
             // if (abs(higgsCandId) == 195) {
+            if(selLeptons[higgsCandL2].pdgId() == 13) higgsMuonCand =  higgsCandL2;
 		        if(selLeptons[higgsCandL1].pdgId() == 13) higgsMuonCand =  higgsCandL1;
-		        if(selLeptons[higgsCandL2].pdgId() == 13) higgsMuonCand =  higgsCandL2;
             // }
 	  }
           chTagsMain.push_back(chTagsMain[chTagsMain.size()-1] + signName + ChannelName);
@@ -1808,7 +1835,7 @@ int main(int argc, char* argv[])
               mon.fillHisto(TString("Hsvfit_shapes")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight);
               mon.fillHisto(TString("Asvfit_shapes")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight);
             } else if (isMC){
-
+	      	      
 	      // Control regions
 	      
 	      CRTypes theCR =  checkBkgCR(selLeptons, higgsCandL1, higgsCandL2, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],vtx);
@@ -1821,24 +1848,23 @@ int main(int argc, char* argv[])
 		
 		mon.fillHisto(TString("Hsvfit_shapes_CR10")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
 		mon.fillHisto(TString("Asvfit_shapes_CR10")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
+		// cout<<" CRTypes::CR10 - FR weight value = "<<theFRWeight<<endl;
 		
-		cout<<" CRTypes::CR10 - FR weight value = "<<theFRWeight<<endl;
+	      } else if (theCR==CRTypes::CR01) {
+		// CR01
+		theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR01");
 		
-                } else if (theCR==CRTypes::CR01) {
-                  // CR01
-                  theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR01");
-
-                  mon.fillHisto(TString("Hsvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
-                  mon.fillHisto(TString("Asvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
-                  cout<<" CRTypes::CR01 - FR weight value = "<<theFRWeight<<endl;
-                } else {
+		mon.fillHisto(TString("Hsvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
+		mon.fillHisto(TString("Asvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
+		// cout<<" CRTypes::CR01 - FR weight value = "<<theFRWeight<<endl;
+	      } else {
                   // CR11
-                  theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR11");
-                  mon.fillHisto(TString("Hsvfit_shapes_CR11")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
-                  mon.fillHisto(TString("Asvfit_shapes_CR11")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
-                  cout<<" CRTypes::CR11 - FR weight value = "<<theFRWeight<<endl;
-	      }
-                // cout<<" FR weight value = "<<theFRWeight<<endl;
+		theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR11");
+		mon.fillHisto(TString("Hsvfit_shapes_CR11")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
+		mon.fillHisto(TString("Asvfit_shapes_CR11")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
+		// cout<<" CRTypes::CR11 - FR weight value = "<<theFRWeight<<endl;
+	      }  
+	      // cout<<" FR weight value = "<<theFRWeight<<endl;
 	    }
 	    
 	    if(index==0 && selLeptons.size()>=2 && passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain ){
