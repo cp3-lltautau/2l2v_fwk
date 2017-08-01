@@ -72,29 +72,94 @@ LorentzVector getSVFit(pat::MET met, std::vector<patUtils::GenericLepton> selLep
   if(higgsCandL1<0 || higgsCandL2<0) return LorentzVector(0,0,0,0);
 
   TMatrixD covMET(2, 2); // PFMET significance matrix
-// FIXME in MINIAODv2 74X, covariance is always 0000
-//  covMET[0][0] = met.getSignificanceMatrix()(0,0);
-//  covMET[0][1] = met.getSignificanceMatrix()(0,1);
-//  covMET[1][0] = met.getSignificanceMatrix()(1,0);
-//  covMET[1][1] = met.getSignificanceMatrix()(1,1);
-//  std::cout<<"MET MATRIX: " << covMET[0][0] << " " << covMET[0][1] << " " << covMET[1][0] << " " << covMET[1][1] << "\n";
+ //FIXME in MINIAODv2 74X, covariance is always 0000
 
-  covMET[0][0] = 0.95;  covMET[0][1] = 0.05; covMET[1][0] = 0.05; covMET[1][1] = 0.95;
+ covMET[0][0] = met.getSignificanceMatrix()(0,0);
+ covMET[0][1] = met.getSignificanceMatrix()(0,1);
+ covMET[1][0] = met.getSignificanceMatrix()(1,0);
+ covMET[1][1] = met.getSignificanceMatrix()(1,1);
 
+  // std::cout<<"MET MATRIX: " << covMET[0][0] << " " << covMET[0][1] << " " << covMET[1][0] << " " << covMET[1][1] << "\n";
+
+  // covMET[0][0] = 0.95;  covMET[0][1] = 0.05; covMET[1][0] = 0.05; covMET[1][1] = 0.95;
+
+ int dlid = abs( selLeptons[higgsCandL1].pdgId() * selLeptons[higgsCandL2].pdgId() );
+
+  std::cout<<"\n"<<selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << " Di-Tau ID ------------> " << dlid << std::endl;
+
+  if ( dlid == 165 || dlid == 195){
+    if (abs(selLeptons[higgsCandL1].pdgId()) == 15) {
+      // Switching leptons in semileptonic pairs:
+      // e and mu should be passed as first MesuredTauLepton
+                    int temp = higgsCandL1;
+                    higgsCandL1  = higgsCandL2;
+                    higgsCandL2  = temp;                             
+                    }
+               }
+                                     
   std::vector<svFitStandalone::MeasuredTauLepton> measuredTauLeptons;
-  measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(abs(selLeptons[higgsCandL1].pdgId())==15?svFitStandalone::kTauToHadDecay:abs(selLeptons[higgsCandL1].pdgId())==11?svFitStandalone::kTauToElecDecay:svFitStandalone::kTauToMuDecay,selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(), selLeptons[higgsCandL1].phi(), selLeptons[higgsCandL1].mass() ));
-  measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(abs(selLeptons[higgsCandL2].pdgId())==15?svFitStandalone::kTauToHadDecay:abs(selLeptons[higgsCandL2].pdgId())==11?svFitStandalone::kTauToElecDecay:svFitStandalone::kTauToMuDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(), selLeptons[higgsCandL2].phi(), selLeptons[higgsCandL2].mass() ));
 
-  SVfitStandaloneAlgorithm algo(measuredTauLeptons, met.px(), met.py() , covMET, 0);
+  if ( dlid == 165 ){
+        //std::cout<< " ETau Pair --- > "<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
+        measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToElecDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
+                                   selLeptons[higgsCandL1].phi(), svFitStandalone::electronMass) );
+        measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToHadDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
+                                   selLeptons[higgsCandL2].phi(), selLeptons[higgsCandL2].mass(), selLeptons[higgsCandL2].tau.decayMode()) );
+      }
+  else if( dlid == 195 ){
+      //std::cout<< " MuTau Pair --- > "<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
+      measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToMuDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
+                                   selLeptons[higgsCandL1].phi(), svFitStandalone::muonMass) );
+      measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToHadDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
+                                   selLeptons[higgsCandL2].phi(), selLeptons[higgsCandL2].mass(), selLeptons[higgsCandL2].tau.decayMode()) );
+    }
+  else if ( dlid == 225 ){
+      //std::cout<< " TauTau Pair --- > "<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
+      measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToHadDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
+                                 selLeptons[higgsCandL1].phi(), selLeptons[higgsCandL1].mass(), selLeptons[higgsCandL1].tau.decayMode()) );
+       measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToHadDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
+                                 selLeptons[higgsCandL2].phi(), selLeptons[higgsCandL2].mass(), selLeptons[higgsCandL2].tau.decayMode()) );
+    }
+    else return LorentzVector(selLeptons[higgsCandL1].p4()+selLeptons[higgsCandL2].p4());
+
+
+  SVfitStandaloneAlgorithm algo(measuredTauLeptons, met.px(), met.py() , covMET, 2);
   algo.addLogM(false);
-  algo.fit();
-  if(algo.isValidSolution()){
- //   return algo.fittedDiTauSystem();
-  }
+ // edm::FileInPath inputFileName_visPtResolution("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root");
+ // TH1::AddDirectory(false);
+ // TFile* inputFile_visPtResolution = new TFile(inputFileName_visPtResolution.fullPath().data());
+ // algo.shiftVisPt(true, inputFile_visPtResolution);
+ 
+
+  algo.integrateMarkovChain();
+ 
+  double mass = static_cast<svFitStandalone::MCPtEtaPhiMassAdapter*>(algo.getMCQuantitiesAdapter())->getMass(); // full mass of tau lepton pair in units of GeV
+
+
+  //double mass = algo.getMass(); // Full SVFit mass - return value is in units of GeV
+ // double transverse_mass = algo.getTransverseMass(); // Transverse SVFit mass
+
+
+if ( algo.isValidSolution() ) {
+    std::cout << "found mass = " << mass << std::endl;
+  } else {
+    std::cout << "sorry -- status of NLL is not valid [" << algo.fitStatus() << "]" << std::endl;
+  
+ }
   return LorentzVector(selLeptons[higgsCandL1].p4()+selLeptons[higgsCandL2].p4());
 }
 
-//**********************************************************************************************//
+
+//  measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(abs(selLeptons[higgsCandL1].pdgId())==15?svFitStandalone::kTauToHadDecay:abs(selLeptons[higgsCandL1].pdgId())==11?svFitStandalone::kTauToElecDecay:svFitStandalone::kTauToMuDecay,selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(), selLeptons[higgsCandL1].phi(), selLeptons[higgsCandL1].mass() ));
+ // measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(abs(selLeptons[higgsCandL2].pdgId())==15?svFitStandalone::kTauToHadDecay:abs(selLeptons[higgsCandL2].pdgId())==11?svFitStandalone::kTauToElecDecay:svFitStandalone::kTauToMuDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(), selLeptons[higgsCandL2].phi(), selLeptons[higgsCandL2].mass() ));
+
+  //SVfitStandaloneAlgorithm algo(measuredTauLeptons, met.px(), met.py() , covMET, 0);
+  //algo.addLogM(false);
+ // algo.fit();
+ // if(algo.isValidSolution()){
+ //   return algo.fittedDiTauSystem();
+
+ //**********************************************************************************************//
 bool passHiggsCuts(std::vector<patUtils::GenericLepton> selLeptons, int higgsCandL1, int higgsCandL2, float isoElCut, float isoMuCut, const char* isoHaCut, float sumPtCut, bool requireId, reco::VertexCollection vtx)
 //**********************************************************************************************//
 {
@@ -163,10 +228,12 @@ std::vector<patUtils::GenericLepton> getTauVariations( std::vector<patUtils::Gen
       patUtils::GenericLepton selLeptonNew = selLeptons[ilep];
       selLeptonNew.setP4(selLeptons[ilep].p4() * factor);
       selLeptonsNew.push_back(selLeptonNew);
-    }else{
+    }
+     else{
       selLeptonsNew.push_back(selLeptons[ilep]);
     }
   }
+
   std::sort(selLeptonsNew.begin(), selLeptonsNew.end(), utils::sort_CandidatesByPt);
   return selLeptonsNew;
 }
@@ -219,7 +286,7 @@ int main(int argc, char* argv[])
   bool is2015data = (!isMC && dtag.Contains("2015"));
   bool is2015MC = (isMC && dtag.Contains("2015"));
   bool is2016data = (!isMC && dtag.Contains("2016"));
-  bool is2016MC = (isMC && dtag.Contains("2016"));
+  bool is2016MC = (isMC);
 
   //tree info
   TString dirname = runProcess.getParameter<std::string>("dirName");
@@ -264,6 +331,19 @@ int main(int argc, char* argv[])
   SmartSelectionMonitor mon;
   printf("Definition of plots");
 
+ //event selection 
+  
+   TH1 *h1=mon.addHistogram( new TH1F ("eventflow", ";;Events", 10,0,10) );
+   h1->GetXaxis()->SetBinLabel(1,"InitialEv");
+   h1->GetXaxis()->SetBinLabel(2,"Nlep#geq2");
+   h1->GetXaxis()->SetBinLabel(3,"Zmass");
+   h1->GetXaxis()->SetBinLabel(4,"Zkin");
+   h1->GetXaxis()->SetBinLabel(5,"Nlep+Ntau#geq4"); 
+   h1->GetXaxis()->SetBinLabel(6,"Lep Veto");
+   h1->GetXaxis()->SetBinLabel(7,"Btag Veto");
+   h1->GetXaxis()->SetBinLabel(8,"#Delta #phi Z-MET");
+   h1->GetXaxis()->SetBinLabel(9,"di-#tau Cand"); 
+
   // zhllvv Event selection
   TH1 *h1zllvv=mon.addHistogram( new TH1F ("eventflow_zhllvv", ";;Events", 10,0,10) );
   h1zllvv->GetXaxis()->SetBinLabel(1,"InitialEv");
@@ -274,7 +354,7 @@ int main(int argc, char* argv[])
   h1zllvv->GetXaxis()->SetBinLabel(6,"EtMiss");
   h1zllvv->GetXaxis()->SetBinLabel(7,"#Delta #phi ll-MET");
   h1zllvv->GetXaxis()->SetBinLabel(8,"pTunbalance");
-
+  //
   TH1 *h_tr= mon.addHistogram( new TH1F ("trigger", ";;Events", 10,0,10) );
   h_tr->GetXaxis()->SetBinLabel(1,"#mu#mu");
   h_tr->GetXaxis()->SetBinLabel(2,"#mu");
@@ -283,6 +363,60 @@ int main(int argc, char* argv[])
   h_tr->GetXaxis()->SetBinLabel(5,"e#mu");
   h_tr->GetXaxis()->SetBinLabel(6,"#gamma");
 
+  TH1 *h2=mon.addHistogram( new TH1F ("yields", ";;Events", 25,0,25) );
+  h2->GetXaxis()->SetBinLabel(1,"OS eeee");
+  h2->GetXaxis()->SetBinLabel(2,"OS ee#mu#mu");
+  h2->GetXaxis()->SetBinLabel(3,"OS eee#mu");
+  h2->GetXaxis()->SetBinLabel(4,"OS eee#tau");
+  h2->GetXaxis()->SetBinLabel(5,"OS ee#mu#tau");
+  h2->GetXaxis()->SetBinLabel(6,"OS ee#tau#tau");
+  h2->GetXaxis()->SetBinLabel(7,"OS #mu#muee");
+  h2->GetXaxis()->SetBinLabel(8,"OS #mu#mu#mu#mu");
+  h2->GetXaxis()->SetBinLabel(9,"OS #mu#mue#mu");
+  h2->GetXaxis()->SetBinLabel(10,"OS #mu#mue#tau");
+  h2->GetXaxis()->SetBinLabel(11,"OS #mu#mu#mu#tau");
+  h2->GetXaxis()->SetBinLabel(12,"OS #mu#mu#tau#tau");
+  h2->GetXaxis()->SetBinLabel(13,"SS eeee");
+  h2->GetXaxis()->SetBinLabel(14,"SS ee#mu#mu");
+   h2->GetXaxis()->SetBinLabel(15,"SS eee#mu");
+   h2->GetXaxis()->SetBinLabel(16,"SS eee#tau");
+   h2->GetXaxis()->SetBinLabel(17,"SS ee#mu#tau");
+   h2->GetXaxis()->SetBinLabel(18,"SS ee#tau#tau");
+   h2->GetXaxis()->SetBinLabel(19,"SS #mu#muee");
+   h2->GetXaxis()->SetBinLabel(20,"SS #mu#mu#mu#mu");
+   h2->GetXaxis()->SetBinLabel(21,"SS #mu#mue#mu");
+   h2->GetXaxis()->SetBinLabel(22,"SS #mu#mue#tau");
+   h2->GetXaxis()->SetBinLabel(23,"SS #mu#mu#mu#tau");
+   h2->GetXaxis()->SetBinLabel(24,"SS #mu#mu#tau#tau");
+   
+  
+   // zll control
+   mon.addHistogram( new TH1F( "zlly",      		";y_{ll};Events", 50,-3,3) );
+   mon.addHistogram( new TH1F( "zlleta",    		";#eta_{ll};Events", 50,-10,10) ); 
+//   mon.addHistogram( new TH1F( "zllpt",     		";p_{T}^{ll} (GeV) ;Events/10 GeV", 50,0,500) );
+   mon.addHistogram( new TH1F( "zllpt",     		";p_{T}^{ll} (GeV) ;Events/10 GeV", 50,0,500) );
+   mon.addHistogram( new TH1F( "zllmass",   		";M_{ll} (GeV);Events/2 GeV", 80,20,180) );
+ 
+   mon.addHistogram( new TH1F( "sumpt",            ";L_{T} (GeV);Events/10 GeV", 50,0,500) );
+   mon.addHistogram( new TH1F( "dPhi_AZ",          ";#DeltaPhi(#tau#tau,ll);Events",50,-3,3));
+//   mon.addHistogram( new TH1F( "dPhi_llMET",          ";#DeltaPhi(MET,ll);Events",50,-3,3));
+   mon.addHistogram( new TH1F( "llMETUnbalance", "|E_T^{miss} - p_{T}(ll)| / p_{T}(ll);Events",50,0,1));
+ 
+   mon.addHistogram( new TH1F( "dPhi_AMet",        ";#Delta#phi(#tau#tau,#slash{E}_{T});Events",50,-3,3));
+   mon.addHistogram( new TH1F( "met",             ";#slash{E}_{T} (GeV);Events/10 GeV",50,0,500));
+   
+   mon.addHistogram( new TH1F( "Amet",             ";#slash{E}_{T} (GeV);Events/10 GeV",50,0,500));
+   mon.addHistogram( new TH1F( "Anjets",           ";Number of Jets;Events",10,-0.5,9.5));
+   mon.addHistogram( new TH1F( "Apt",              ";p_{T}^{#tau#tau} (GeV);Events/10 GeV",50,0,500));
+   mon.addHistogram( new TH1F( "Hpt",              ";p_{T}^{ll#tau#tau} (GeV);Events/10 GeV",50,0,500));
+   
+   double bins[]={5, 30,70,110,190,300,550,1800};
+   int nbins=sizeof(bins)/sizeof(double);
+   mon.addHistogram( new TH1F( "Amass",            ";M_{#tau#tau} (GeV);Events",nbins,bins));
+   mon.addHistogram( new TH1F( "Hmass",            ";M_{ll#tau#tau} (GeV);Events",nbins,bins));
+   mon.addHistogram( new TH1F( "Amasssvfit",       ";SVFit M_{#tau#tau} (GeV);Events",nbins,bins));
+   mon.addHistogram( new TH1F( "Hmasssvfit",       ";SVFit M_{ll#tau#tau} (GeV);Events",nbins,bins));
+   
   //pu control
   mon.addHistogram( new TH1F( "nvtx",";Vertices;Events",50,0,50) );
   mon.addHistogram( new TH1F( "nvtxraw",";Vertices;Events",50,0,50) );
@@ -306,9 +440,9 @@ int main(int argc, char* argv[])
   mon.addHistogram( new TH1F( "taueta", 	";#eta_{#tau};Events", 50,-2.6,2.6) );
 
   // met control
-  mon.addHistogram( new TH1F( "met",             ";#slash{E}_{T} (GeV);Events/10 GeV",50,0,500));
+  // mon.addHistogram( new TH1F( "met",             ";#slash{E}_{T} (GeV);Events/10 GeV",50,0,500));
   mon.addHistogram( new TH1F( "dPhi_llMET",      ";#DeltaPhi(MET,ll);Events",50,-3,3));
-  mon.addHistogram( new TH1F( "llMETUnbalance",  "|E_T^{miss} - p_{T}(ll)| / p_{T}(ll);Events",50,0,1));
+ // mon.addHistogram( new TH1F( "llMETUnbalance",  "|E_T^{miss} - p_{T}(ll)| / p_{T}(ll);Events",50,0,1));
 
   //extra leptons in the event
 
@@ -328,6 +462,52 @@ int main(int argc, char* argv[])
   int ptbinsJetsN = sizeof(ptbinsJets)/sizeof(float)-1;
   mon.addHistogram( new TH1F( "wrtJetPt",  ";Jet p_{T} (GeV);Events",sizeof(ptbinsJets)/sizeof(float)-1,ptbinsJets));
   mon.addHistogram( new TH1F( "wrtLepPt",  ";Lep p_{T} (GeV);Events",sizeof(ptbinsJets)/sizeof(float)-1,ptbinsJets));
+
+//
+// HISTOGRAMS FOR OPTIMIZATION and STATISTICAL ANALYSIS
+//
+
+   std::vector<const char*> tauIDiso = {"byLooseCombinedIsolationDeltaBetaCorr3Hits"};
+   std::vector<float>    optim_Cuts_sumPt;
+   std::vector<int>      optim_Cuts_taIso;
+   std::vector<float>    optim_Cuts_muIso;
+   std::vector<float>    optim_Cuts_elIso;
+   
+   for(float elIso=0.30;elIso>=0.30;elIso-=0.1){
+     for(float muIso=0.3;muIso>=0.30;muIso-=0.1){
+ 	for(int taIso=0;taIso<tauIDiso.size();taIso++){
+ 	    for(float sumPt=0;sumPt<=200;sumPt+=20){
+ 		optim_Cuts_elIso.push_back(elIso);
+ 		optim_Cuts_muIso.push_back(muIso);
+ 		optim_Cuts_taIso.push_back(taIso);
+ 		optim_Cuts_sumPt.push_back(sumPt);
+ 	      }
+ 	  }
+       }
+   }
+   
+   TH2F* Hoptim_cuts  =(TH2F*)mon.addHistogram(new TProfile2D("optim_cut",      ";cut index;variable",       optim_Cuts_sumPt.size(),0,optim_Cuts_sumPt.size(), 4, 0, 4)) ;
+   Hoptim_cuts->GetYaxis()->SetBinLabel(1, "eIso<"); 
+   Hoptim_cuts->GetYaxis()->SetBinLabel(2, "muIso<");
+   Hoptim_cuts->GetYaxis()->SetBinLabel(3, "tauIso<"); 
+   Hoptim_cuts->GetYaxis()->SetBinLabel(4, "sumPt>"); 
+   
+   for(unsigned int index=0;index<optim_Cuts_sumPt.size();index++){
+     Hoptim_cuts->Fill(index,0.0,optim_Cuts_elIso[index]); 
+     Hoptim_cuts->Fill(index,1.0,optim_Cuts_muIso[index]); 
+     Hoptim_cuts->Fill(index,2.0,optim_Cuts_taIso[index]); 
+     Hoptim_cuts->Fill(index,3.0,optim_Cuts_sumPt[index]); 
+   }
+   
+   TH1F* Hoptim_systs     =  (TH1F*) mon.addHistogram( new TH1F ("optim_systs"    , ";syst;", nvarsToInclude,0,nvarsToInclude) ) ;
+   for(size_t ivar=0; ivar<nvarsToInclude; ivar++){
+     Hoptim_systs->GetXaxis()->SetBinLabel(ivar+1, varNames[ivar]);
+     mon.addHistogram( new TH2F (TString("Hsvfit_shapes")+varNames[ivar],";cut index;M_{ll#tau#tau};Events",optim_Cuts_sumPt.size(),0,optim_Cuts_sumPt.size(),nbins,bins) );
+     mon.addHistogram( new TH2F (TString("Asvfit_shapes")+varNames[ivar],";cut index;M_{#tau#tau};Events",optim_Cuts_sumPt.size(),0,optim_Cuts_sumPt.size(),nbins,bins) );
+     mon.addHistogram( new TH1F(TString("metsys")+varNames[ivar],                   ";#slash{E}_{T} (GeV);Events/10 GeV",50,0,500));
+   }
+
+
 
 
   //##############################################
@@ -1035,16 +1215,16 @@ int main(int argc, char* argv[])
             bool passZmass = (fabs(zll.mass()-91.2)<15);
 	    bool passZpt   = (zll.pt()>20);
 
-	    bool passZVeto  = (fabs(zll.mass()-91.2)>15);
-	    bool EtMiss = (met.corP4(metcor).E()>120);
-	    bool jetCount = (njets<2);
+	   // bool passZVeto  = (fabs(zll.mass()-91.2)>15);
+	   // bool EtMiss = (met.corP4(metcor).E()>120);
+	   // bool jetCount = (njets<2);
 
-	    LorentzVector diLept = (selLeptons[0].p4()+selLeptons[1].p4());
-	    float dphillmet=fabs(deltaPhi(met.corP4(metcor).phi(),diLept.phi()));
-	    float pTU = fabs( met.corP4(metcor).E() -  diLept.pt() ) / diLept.pt();
+	   // LorentzVector diLept = (selLeptons[0].p4()+selLeptons[1].p4());
+	   // float dphillmet=fabs(deltaPhi(met.corP4(metcor).phi(),diLept.phi()));
+	  //  float pTU = fabs( met.corP4(metcor).E() -  diLept.pt() ) / diLept.pt();
 
-	    bool DeltaPhillMet  = (dphillmet > 2.7);
-	    bool pTunbalance = (pTU < 0.25);
+	   // bool DeltaPhillMet  = (dphillmet > 2.7);
+	   // bool pTunbalance = (pTU < 0.25);
 
             //bool passLLpt   = (zll.pt()>50);
 
@@ -1199,7 +1379,17 @@ int main(int argc, char* argv[])
                passHiggsMain  = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, 0.3, 0.3, "byLooseCombinedIsolationDeltaBetaCorr3Hits", 20., true, vtx);
 
                //SVFIT MASS
-               higgsCand_SVFit = higgsCand;
+               
+              higgsCand_SVFit = higgsCand;
+
+                 //FIXME gives a lot of warning currently
+                                 if(passZmass && passZpt && passDPhiCut && passHiggsLoose && passLepVetoMain && passBJetVetoMain){
+                                 std::cout<<"START SVFIT\n";
+                                 higgsCand_SVFit = getSVFit(met, selLeptons, higgsCandL1, higgsCandL2);  //compute svfit mass in a smart way
+                                 std::cout<<"END SVFIT\n";
+                                  }            
+
+
 
                //build the higgs candH
                higgsCandH = zll + higgsCand;
@@ -1215,51 +1405,159 @@ int main(int argc, char* argv[])
             //
             // NOW FOR THE CONTROL PLOTS
             //
+               if(ivar==0){
+               mon.fillHisto("eventflow"       , chTagsMain,                 0, weight);
+                if(selLeptons.size()>=2){
+                   mon.fillHisto("nlep"           ,   chTags, selLeptons.size(), weight);
+                   mon.fillHisto("eventflow"     ,   chTagsMain,                 1, weight);
+                   mon.fillHisto("zllmass"          ,   chTagsMain, zll.mass(),    weight);
+                   if(passZmass){
+                     mon.fillHisto("eventflow"   ,   chTagsMain,                 2, weight);
+                    //pu control
+                     mon.fillHisto("nvtx"        ,   chTagsMain, vtx.size(),      weight);
+                     mon.fillHisto("nvtxraw"     ,   chTagsMain, vtx.size(),      weight/puWeight);
+                     mon.fillHisto("rho"         ,   chTagsMain, rho,       weight);
+                    
+                    //Z kinematics control
+                    mon.fillHisto("leadpt"      ,   chTagsMain, leadingLep.pt(), weight);      
+                    mon.fillHisto("leadeta"     ,   chTagsMain, leadingLep.eta(), weight);      
+                     mon.fillHisto("trailerpt"   ,   chTagsMain, trailerLep.pt(), weight);      
+                     mon.fillHisto("trailereta"  ,   chTagsMain, trailerLep.eta(), weight);      
+                     mon.fillHisto("leppt"       ,   chTagsMain, leadingLep.pt(), weight);      
+                    mon.fillHisto("leppt"       ,   chTagsMain, trailerLep.pt(), weight);      
+                     mon.fillHisto("lepeta"      ,   chTagsMain, leadingLep.eta(), weight);      
+                    mon.fillHisto("lepeta"      ,   chTagsMain, trailerLep.eta(), weight);  
+                   //analyze dilepton kinematics
+                    mon.fillHisto("zllpt"         ,   chTagsMain, zll.pt(),      weight);      
+                     mon.fillHisto("zlleta"        ,   chTagsMain, zll.eta(),     weight);
+                    mon.fillHisto("zlly"          ,   chTagsMain, zll.Rapidity(),weight);
+                    if(passZpt){
+                      mon.fillHisto("eventflow",   chTagsMain,                 3, weight);
+                      
+                      mon.fillHisto("ntaus"           ,  chTags, selTaus.size(), weight);
+                       mon.fillHisto("tauleadpt"       ,  chTagsMain,   selTaus.size()>0?selTaus[0].pt():-1,  weight);
+                       mon.fillHisto("tauleadeta"      ,  chTagsMain,   selTaus.size()>0?selTaus[0].eta():-10, weight);
+                       mon.fillHisto("tautrailerpt"    ,  chTagsMain,   selTaus.size()>1?selTaus[1].pt():-1,  weight);
+                      mon.fillHisto("tautrailereta"   ,  chTagsMain,   selTaus.size()>1?selTaus[1].eta():-10, weight);
+                       mon.fillHisto("taupt"           ,  chTags, selTaus.size()>0?selTaus[0].pt():-1, weight);
+                       mon.fillHisto("taupt"           ,  chTags, selTaus.size()>0?selTaus[1].pt():-1, weight);
+                       mon.fillHisto("taueta"          ,  chTagsMain,   selTaus.size()>0?selTaus[0].eta():-10, weight);
+                       mon.fillHisto("taueta"          ,  chTagsMain,   selTaus.size()>0?selTaus[0].eta():-10, weight);
+                      
+                      if(selLeptons.size()>=4){
+                         mon.fillHisto("eventflow",   chTagsMain,                 4, weight);
+                         if(passLepVetoMain){
+                           mon.fillHisto("eventflow", chTagsMain,                 5, weight);
+                           mon.fillHisto("nbtags"    , chTags, nbtags,  weight);
+                           mon.fillHisto("njets"     , chTags, njets,   weight);
+                          
+                           if(passBJetVetoMain){
+                             mon.fillHisto("eventflow"	,   chTagsMain,                 6, weight);
+                            
+                             mon.fillHisto("dPhi_AZ"    , chTagsMain, deltaPhi(higgsCand.phi(), zll.phi()),    weight);
+                             mon.fillHisto("dPhi_AMet"  , chTagsMain, deltaPhi(higgsCand.phi(), met.phi()),    weight);
+                             mon.fillHisto("dPhi_ZMet"  , chTagsMain, deltaPhi(zll.phi(), met.phi()),    weight);
+                             mon.fillHisto("met"      	, chTagsMain, met.pt()         , weight);
+                            
+                             if(passDPhiCut){
+                               mon.fillHisto("eventflow",   chTagsMain,                 7, weight);
+                               if(passHiggsLoose){
+                                 mon.fillHisto("sumpt",   chTagsMain, selLeptons[higgsCandL1].pt()+selLeptons[higgsCandL2].pt(), weight);
+                                 if(passHiggsMain){
+                                   mon.fillHisto("eventflow"   ,chTagsMain,                 8, weight);
+                                   mon.fillHisto("yields"          ,chTagsMain,                HiggsShortId, weight);
 
-	    if(ivar==0){//fill plots only for nominal
-	      mon.fillHisto("eventflow_zhllvv", chTagsMain,0, weight);
-	      if(selLeptons.size()>=2){
-		mon.fillHisto("eventflow_zhllvv",chTagsMain,1, weight);
-		mon.fillHisto("leadpt"      ,   chTagsMain, leadingLep.pt(), weight);
-		mon.fillHisto("leadeta"     ,   chTagsMain, leadingLep.eta(), weight);
-		mon.fillHisto("trailerpt"   ,   chTagsMain, trailerLep.pt(), weight);
-		mon.fillHisto("trailereta"  ,   chTagsMain, trailerLep.eta(), weight);
-		mon.fillHisto("leppt"       ,   chTagsMain, leadingLep.pt(), weight);
-		mon.fillHisto("leppt"       ,   chTagsMain, trailerLep.pt(), weight);
-		mon.fillHisto("lepeta"      ,   chTagsMain, leadingLep.eta(), weight);
-		mon.fillHisto("lepeta"      ,   chTagsMain, trailerLep.eta(), weight);
-		if(passZVeto){
-		  mon.fillHisto("eventflow_zhllvv",chTagsMain,2, weight);
-		  mon.fillHisto("njets"           , chTags, njets,   weight);
-		  mon.fillHisto("nvtx"            , chTagsMain, vtx.size(),      weight);
-		  mon.fillHisto("nvtxraw"         , chTagsMain, vtx.size(),      weight/puWeight);
-		  mon.fillHisto("rho"             , chTagsMain, rho,       weight);
-		  if(jetCount){
-		    mon.fillHisto("eventflow_zhllvv", chTagsMain,3, weight);
-		    mon.fillHisto("nbtags"    , chTags, nbtags,  weight);
-		    if(passBJetVetoMain){
-		      mon.fillHisto("eventflow_zhllvv", chTagsMain,4, weight);
-		      mon.fillHisto("met"      	, chTagsMain, met.pt()         , weight);
-		      if(EtMiss){
-			mon.fillHisto("eventflow_zhllvv", chTagsMain,5, weight);
-			mon.fillHisto("dPhi_llMET", chTagsMain, DeltaPhillMet,  weight);
-			if(DeltaPhillMet){
-			  mon.fillHisto("eventflow_zhllvv", chTagsMain,6, weight);
-			  mon.fillHisto("llMETUnbalance", chTagsMain, pTU,  weight);
-			  if(pTunbalance){
-			    mon.fillHisto("eventflow_zhllvv", chTagsMain,7, weight);
-			  }
-			}
-		      }
-		    }
-		  }
-		}
-	      }
-	    }
+                                   mon.fillHisto("Apt"       	, chTagsMain, higgsCand.pt(),    weight);
+                                   mon.fillHisto("Amass"           , chTagsMain, higgsCand.mass(),  weight);
+                                   mon.fillHisto("Amasssvfit"      , chTagsMain, higgsCand_SVFit.mass(),  weight);
+                                   mon.fillHisto("Hmass"           , chTagsMain, higgsCandH.mass(),  weight);
+                                   mon.fillHisto("Hpt"             , chTagsMain, higgsCandH.pt(),  weight);
+                                   mon.fillHisto("Hmasssvfit"   , chTagsMain, higgsCandH_SVFit.mass(),  weight);
+                                  
+                                  mon.fillHisto("Anjets"    	, chTagsMain, NCleanedJetMain      , weight); 
+                                 mon.fillHisto("Amet"      	, chTagsMain, met.pt()         , weight);
+                                } 
+                              }
+                             }
+                           }
+                         }
+                       }
+                     }
+                   }  
+                 }  
+ 
+              }
+ 
+ 	   // bool passZVeto = true;
+ 	   // bool llkin=true;
+ 	   // bool jetCount=true;
+ 	   // bool TopVeto=true;
+ 	   // bool EtMiss=true;
+ 	   // bool DeltaPhillMet=true;
+ 	    // bool pTunbalance=true;
 
-	 }
+
+//	    if(ivar==0){//fill plots only for nominal
+//	      mon.fillHisto("eventflow_zhllvv", chTagsMain,0, weight);
+//	      if(selLeptons.size()>=2){
+//		mon.fillHisto("eventflow_zhllvv",chTagsMain,1, weight);
+//		mon.fillHisto("leadpt"      ,   chTagsMain, leadingLep.pt(), weight);
+//		mon.fillHisto("leadeta"     ,   chTagsMain, leadingLep.eta(), weight);
+//		mon.fillHisto("trailerpt"   ,   chTagsMain, trailerLep.pt(), weight);
+//		mon.fillHisto("trailereta"  ,   chTagsMain, trailerLep.eta(), weight);
+//		mon.fillHisto("leppt"       ,   chTagsMain, leadingLep.pt(), weight);
+//		mon.fillHisto("leppt"       ,   chTagsMain, trailerLep.pt(), weight);
+//		mon.fillHisto("lepeta"      ,   chTagsMain, leadingLep.eta(), weight);
+//		mon.fillHisto("lepeta"      ,   chTagsMain, trailerLep.eta(), weight);
+//		if(passZVeto){
+//		  mon.fillHisto("eventflow_zhllvv",chTagsMain,2, weight);
+//		  mon.fillHisto("njets"           , chTags, njets,   weight);
+//		  mon.fillHisto("nvtx"            , chTagsMain, vtx.size(),      weight);
+//		  mon.fillHisto("nvtxraw"         , chTagsMain, vtx.size(),      weight/puWeight);
+//		  mon.fillHisto("rho"             , chTagsMain, rho,       weight);
+//		  if(jetCount){
+//		    mon.fillHisto("eventflow_zhllvv", chTagsMain,3, weight);
+//		    mon.fillHisto("nbtags"    , chTags, nbtags,  weight);
+//		    if(passBJetVetoMain){
+//		      mon.fillHisto("eventflow_zhllvv", chTagsMain,4, weight);
+//		      mon.fillHisto("met"      	, chTagsMain, met.pt()         , weight);
+//		      if(EtMiss){
+//			mon.fillHisto("eventflow_zhllvv", chTagsMain,5, weight);
+//			mon.fillHisto("dPhi_llMET", chTagsMain, DeltaPhillMet,  weight);
+//			if(DeltaPhillMet){
+//			  mon.fillHisto("eventflow_zhllvv", chTagsMain,6, weight);
+//			  mon.fillHisto("llMETUnbalance", chTagsMain, pTU,  weight);
+//			  if(pTunbalance){
+//			    mon.fillHisto("eventflow_zhllvv", chTagsMain,7, weight);
+//			  }
+//			}
+//		      }
+//		    }
+//		  }
+//		}
+//	      }
+//	    }
+
+if(selLeptons.size()>=2 && passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain && passDPhiCut && passHiggsLoose){
+          for(unsigned int index=0; index<optim_Cuts_sumPt.size();index++){
+            bool passHiggs = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],true,vtx);
+            if(passHiggs){
+              mon.fillHisto(TString("Hsvfit_shapes")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight);
+              mon.fillHisto(TString("Asvfit_shapes")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight);
+            }
+            if(index==0 && selLeptons.size()>=2 && passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain ){
+              mon.fillHisto(TString("metsys")+varNames[ivar], chTagsMain, imet.pt(), weight);
+            }
+
+
+
+
+            
+                }//end of the loop on cutIndex 
+             }
+
 	 //END SYSTEMATIC LOOP
-
+       }
      }
      printf("\n");
      delete file;
