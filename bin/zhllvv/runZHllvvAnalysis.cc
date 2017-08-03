@@ -1233,7 +1233,7 @@ int main(int argc, char* argv[])
 
 	   // LorentzVector diLept = (selLeptons[0].p4()+selLeptons[1].p4());
 	   // float dphillmet=fabs(deltaPhi(met.corP4(metcor).phi(),diLept.phi()));
-	  //  float pTU = fabs( met.corP4(metcor).E() -  diLept.pt() ) / diLept.pt();
+	   // float pTU = fabs( met.corP4(metcor).E() -  diLept.pt() ) / diLept.pt();
 
 	   // bool DeltaPhillMet  = (dphillmet > 2.7);
 	   // bool pTunbalance = (pTU < 0.25);
@@ -1257,82 +1257,188 @@ int main(int argc, char* argv[])
             LorentzVector higgsCandH;
             LorentzVector higgsCandH_SVFit;
 
-            //LEPTON FAKE RATE ANALYSIS Z+1jets  (no systematics taken into account here)
-            if(ivar==0 && passZmass && (int)selLeptons.size()==3){  //Request exactly one Z + 1 additional lepton
-               bool IdentifiedThirdLepton=false;
-               double tmass=-999;
-                for(int i=0   ;i<(int)selLeptons.size() && !IdentifiedThirdLepton;i++){
-                  if((i==dilLep1) || (i==dilLep2)) continue;
-                  if(deltaR(selLeptons[i],  selLeptons[dilLep1])<0.1 || deltaR(selLeptons[i],  selLeptons[dilLep2])<0.1)continue;
-                  if(abs(selLeptons[i].pdgId())==11||abs(selLeptons[i].pdgId())==13||abs(selLeptons[i].pdgId())==15){
-                    tmass = TMath::Sqrt(2*selLeptons[i].pt()*met.pt()*(1-TMath::Cos(deltaPhi(met.phi(), selLeptons[i].phi()))));
-                  }
-                  if(abs(selLeptons[i].pdgId())==11 || abs(selLeptons[i].pdgId())==13 || abs(selLeptons[i].pdgId())==15){
-                    int closestJetIndexL1=-1; double pTL1=-1; double etaL1=-1;
-                    double dRminL1 = closestJet(selLeptons[i].p4(), selJets, closestJetIndexL1);
-                    if(closestJetIndexL1>=0 && dRminL1<0.5){pTL1=selJets[closestJetIndexL1].pt(); etaL1=abs(selJets[closestJetIndexL1].eta());}
-                    else{pTL1=selLeptons[i].pt(); etaL1=abs(selLeptons[i].eta());}
+	    // LEPTON FAKE RATE ANALYSIS Z+2 leptons
+	    if(ivar==0 && passZmass && (int)selLeptons.size()==4){  //Request exactly one Z + 2 additional lepton
+	      int thirdL  = -1;
+	      int fourthL = -1;
 
+	      for(int i=0   ;i<(int)selLeptons.size();i++){
+		if((i==dilLep1) || (i==dilLep2)) continue;
+		if(thirdL<0){thirdL=i;continue;}
+		if(fourthL<0){fourthL=i;break;}
+	      }
 
-                    TString PartName = "FR_";
-                    if     (abs(selLeptons[i].pdgId())==11)PartName += "El";
-                    else if(abs(selLeptons[i].pdgId())==13)PartName += "Mu";
-                    else if(abs(selLeptons[i].pdgId())==15)PartName += "Ta";
-                    else PartName+= abs(selLeptons[i].pdgId());
+	      if(deltaR(selLeptons[thirdL],  selLeptons[dilLep1])>0.1 && deltaR(selLeptons[fourthL],  selLeptons[dilLep1])>0.1 && 
+		 deltaR(selLeptons[fourthL], selLeptons[dilLep2])>0.1 && deltaR(selLeptons[fourthL],  selLeptons[dilLep2])>0.1) { 
 
+		TString PartName = "FR_";
+		std::vector<TString> TagsFR;
+	      
+		if(abs(selLeptons[thirdL].pdgId())==15 && abs(selLeptons[fourthL].pdgId()==15)){
+		  if( selLeptons[thirdL].pdgId()*selLeptons[fourthL].pdgId() >0 ){
+		    
+		    PartName += "Ta";
+		    
+		    std::vector<int> taus = {thirdL, fourthL};
+		    for (const auto & i : taus){
+		      
+		      int closestJetIndexL1=-1; double pTL1=-1; double etaL1=-1;
+		      double dRminL1 = closestJet(selLeptons[i].p4(), selJets, closestJetIndexL1);
+		      if(closestJetIndexL1>=0 && dRminL1<0.5){pTL1=selJets[closestJetIndexL1].pt(); etaL1=abs(selJets[closestJetIndexL1].eta());}
+		      else{pTL1=selLeptons[i].pt(); etaL1=abs(selLeptons[i].eta());}
 
-                    std::vector<TString> TagsFR;
+		      bool IdL         = selLeptons[i].tau.tauID("byLooseCombinedIsolationDeltaBetaCorr3Hits");
+		      bool IdM         = selLeptons[i].tau.tauID("byMediumCombinedIsolationDeltaBetaCorr3Hits");
+		      bool IdL_MVA     = selLeptons[i].tau.tauID("byLooseIsolationMVArun2v1DBoldDMwLT");
+		      bool IdM_MVA     = selLeptons[i].tau.tauID("byMediumIsolationMVArun2v1DBoldDMwLT");
+		      bool IdL_MVA_R03 = selLeptons[i].tau.tauID("byLooseIsolationMVArun2v1DBdR03oldDMwLT");
+		      bool IdM_MVA_R03 = selLeptons[i].tau.tauID("byMediumIsolationMVArun2v1DBdR03oldDMwLT");
+		      
+		      
+		      if(true                 )TagsFR.push_back(PartName);
+		      if(IdL                  )TagsFR.push_back(PartName+("_Id_IsoLo"));
+		      if(IdM                  )TagsFR.push_back(PartName+("_Id_IsoMe"));
+		      if(IdL_MVA              )TagsFR.push_back(PartName+("_Id_IsoLo_MVA"));
+		      if(IdM_MVA              )TagsFR.push_back(PartName+("_Id_IsoMe_MVA"));
+		      if(IdL_MVA_R03          )TagsFR.push_back(PartName+("_Id_IsoLo_MVAR03"));
+		      if(IdM_MVA_R03          )TagsFR.push_back(PartName+("_Id_IsoMe_MVAR03"));
 
-                    if(abs(selLeptons[i].pdgId())==11 || abs(selLeptons[i].pdgId())==13){
-                       bool passId = false;
-                       if(abs(selLeptons[i].pdgId())==11) passId = patUtils::passId(selLeptons[i].el, vtx[0], patUtils::llvvElecId::Loose,patUtils::CutVersion::ICHEP16Cut);
-                       if(abs(selLeptons[i].pdgId())==13) passId = patUtils::passId(selLeptons[i].mu, vtx[0], patUtils::llvvMuonId::Loose,patUtils::CutVersion::ICHEP16Cut);
-                       float relIso = patUtils::relIso(selLeptons[i], rho);
+		      auto TagsFRJet = TagsFR;
+		      auto TagsFRLep = TagsFR;
 
-                       if(true                 )TagsFR.push_back(PartName);
-                       if(passId && relIso<=0.1)TagsFR.push_back(PartName+("_Id_Iso01"));
-                       if(passId && relIso<=0.2)TagsFR.push_back(PartName+("_Id_Iso02"));
-                       if(passId && relIso<=0.3)TagsFR.push_back(PartName+("_Id_Iso03"));
-
-                        if(passId && relIso<=0.3)IdentifiedThirdLepton=true;
-                    }else{
-		       bool IdL         = selLeptons[i].tau.tauID("byLooseCombinedIsolationDeltaBetaCorr3Hits");
-		       bool IdM         = selLeptons[i].tau.tauID("byMediumCombinedIsolationDeltaBetaCorr3Hits");
-		       bool IdL_MVA     = selLeptons[i].tau.tauID("byLooseIsolationMVArun2v1DBoldDMwLT");
-		       bool IdM_MVA     = selLeptons[i].tau.tauID("byMediumIsolationMVArun2v1DBoldDMwLT");
-		       bool IdL_MVA_R03 = selLeptons[i].tau.tauID("byLooseIsolationMVArun2v1DBdR03oldDMwLT");
-		       bool IdM_MVA_R03 = selLeptons[i].tau.tauID("byMediumIsolationMVArun2v1DBdR03oldDMwLT");
-
-                       if(true                 )TagsFR.push_back(PartName);
-                       if(IdL                  )TagsFR.push_back(PartName+("_Id_IsoLo"));
-                       if(IdM                  )TagsFR.push_back(PartName+("_Id_IsoMe"));
-		       if(IdL_MVA              )TagsFR.push_back(PartName+("_Id_IsoLo_MVA"));
-		       if(IdM_MVA              )TagsFR.push_back(PartName+("_Id_IsoMe_MVA"));
-		       if(IdL_MVA_R03          )TagsFR.push_back(PartName+("_Id_IsoLo_MVAR03"));
-		       if(IdM_MVA_R03          )TagsFR.push_back(PartName+("_Id_IsoMe_MVAR03"));
-                    }
-
-                     if(tmass<30){
-                        int NTags = TagsFR.size();
-                        for(unsigned int iTags=0;iTags<NTags;iTags++){
-                           TagsFR.push_back(TagsFR[iTags] + TString("_TMCut"));
-                        }
-                     }
-
-                     auto TagsFRJet = TagsFR;
-                     auto TagsFRLep = TagsFR;
-
-                     for(unsigned int iTags=0;iTags<TagsFR.size();iTags++){
+		      for(unsigned int iTags=0;iTags<TagsFR.size();iTags++){
                         TagsFRJet.push_back(TagsFR[iTags] + (etaL1<1.4                   ?TString("_B"):TString("_E")));
                         TagsFRLep.push_back(TagsFR[iTags] + (abs(selLeptons[i].eta())<1.4?TString("_B"):TString("_E")));
-                     }
-
+		      }
+		      
                       mon.fillHisto("wrtJetPt", TagsFRJet, pTL1              , weight);
                       mon.fillHisto("wrtLepPt", TagsFRLep, selLeptons[i].pt(), weight);
-                  }
-                }//close loop on leptons
 
-            }//close FR study Zmass
+		    } // loop on the two taus 
+		  } // if opposite sign
+		} // tau tau case
+		
+		else if (abs(selLeptons[thirdL].pdgId())==15 || abs(selLeptons[fourthL].pdgId()==15)){
+		  if( selLeptons[thirdL].pdgId()*selLeptons[fourthL].pdgId()>0){
+		    
+		    int leptonicIndex = (abs(selLeptons[thirdL].pdgId())==15) ? fourthL : thirdL;
+		    
+		    int closestJetIndexL1=-1; double pTL1=-1; double etaL1=-1;
+		    double dRminL1 = closestJet(selLeptons[leptonicIndex].p4(), selJets, closestJetIndexL1);
+		    if(closestJetIndexL1>=0 && dRminL1<0.5){pTL1=selJets[closestJetIndexL1].pt(); etaL1=abs(selJets[closestJetIndexL1].eta());}
+		    else{pTL1=selLeptons[leptonicIndex].pt(); etaL1=abs(selLeptons[leptonicIndex].eta());}
+
+		    double tmass = TMath::Sqrt(2*selLeptons[leptonicIndex].pt()*met.pt()*(1-TMath::Cos(deltaPhi(met.phi(), selLeptons[leptonicIndex].phi()))));
+		    if(tmass<30.){
+
+		      bool passId = false;
+		      if(abs(selLeptons[leptonicIndex].pdgId())==11) passId = patUtils::passId(selLeptons[leptonicIndex].el, vtx[0], patUtils::llvvElecId::Loose,patUtils::CutVersion::ICHEP16Cut);
+		      if(abs(selLeptons[leptonicIndex].pdgId())==13) passId = patUtils::passId(selLeptons[leptonicIndex].mu, vtx[0], patUtils::llvvMuonId::Loose,patUtils::CutVersion::ICHEP16Cut);
+		      float relIso = patUtils::relIso(selLeptons[leptonicIndex], rho);
+		      
+		      if(true                 )TagsFR.push_back(PartName);
+		      if(passId && relIso<=0.1)TagsFR.push_back(PartName+("_Id_Iso01"));
+		      if(passId && relIso<=0.2)TagsFR.push_back(PartName+("_Id_Iso02"));
+		      if(passId && relIso<=0.3)TagsFR.push_back(PartName+("_Id_Iso03"));
+		      
+		      auto TagsFRJet = TagsFR;
+		      auto TagsFRLep = TagsFR;
+		      
+		      for(unsigned int iTags=0;iTags<TagsFR.size();iTags++){
+			TagsFRJet.push_back(TagsFR[iTags] + (etaL1<1.4                   ?TString("_B"):TString("_E")));
+			TagsFRLep.push_back(TagsFR[iTags] + (abs(selLeptons[leptonicIndex].eta())<1.4?TString("_B"):TString("_E")));
+		      }
+		      
+		      mon.fillHisto("wrtJetPt", TagsFRJet, pTL1              , weight);
+		      mon.fillHisto("wrtLepPt", TagsFRLep, selLeptons[leptonicIndex].pt(), weight);
+		    } // if the transverse mass is < 30 (veto genuine leptons from WZ)		    
+		  } // if opposite sign 
+		} // tau - l case
+		
+	      } // if passe the deltaR cut with Z leptons
+
+	    } // if there is a Z + 2 extra leptons
+
+
+	    // 
+	    // Fake Rate Z+1 jet (as in BSM analysis)
+	    //
+            // //LEPTON FAKE RATE ANALYSIS Z+jets  (no systematics taken into account here)
+            // if(ivar==0 && passZmass && (int)selLeptons.size()==3){  //Request exactly one Z + 1 additional lepton
+            //    bool IdentifiedThirdLepton=false;
+            //    double tmass=-999;
+            //     for(int i=0   ;i<(int)selLeptons.size() && !IdentifiedThirdLepton;i++){
+            //       if((i==dilLep1) || (i==dilLep2)) continue;
+            //       if(deltaR(selLeptons[i],  selLeptons[dilLep1])<0.1 || deltaR(selLeptons[i],  selLeptons[dilLep2])<0.1)continue;
+            //       if(abs(selLeptons[i].pdgId())==11||abs(selLeptons[i].pdgId())==13||abs(selLeptons[i].pdgId())==15){
+            //         tmass = TMath::Sqrt(2*selLeptons[i].pt()*met.pt()*(1-TMath::Cos(deltaPhi(met.phi(), selLeptons[i].phi()))));
+            //       }
+            //       if(abs(selLeptons[i].pdgId())==11 || abs(selLeptons[i].pdgId())==13 || abs(selLeptons[i].pdgId())==15){
+            //         int closestJetIndexL1=-1; double pTL1=-1; double etaL1=-1;
+            //         double dRminL1 = closestJet(selLeptons[i].p4(), selJets, closestJetIndexL1);
+            //         if(closestJetIndexL1>=0 && dRminL1<0.5){pTL1=selJets[closestJetIndexL1].pt(); etaL1=abs(selJets[closestJetIndexL1].eta());}
+            //         else{pTL1=selLeptons[i].pt(); etaL1=abs(selLeptons[i].eta());}
+
+
+            //         TString PartName = "FR_";
+            //         if     (abs(selLeptons[i].pdgId())==11)PartName += "El";
+            //         else if(abs(selLeptons[i].pdgId())==13)PartName += "Mu";
+            //         else if(abs(selLeptons[i].pdgId())==15)PartName += "Ta";
+            //         else PartName+= abs(selLeptons[i].pdgId());
+
+
+            //         std::vector<TString> TagsFR;
+
+            //         if(abs(selLeptons[i].pdgId())==11 || abs(selLeptons[i].pdgId())==13){
+            //            bool passId = false;
+            //            if(abs(selLeptons[i].pdgId())==11) passId = patUtils::passId(selLeptons[i].el, vtx[0], patUtils::llvvElecId::Loose,patUtils::CutVersion::ICHEP16Cut);
+            //            if(abs(selLeptons[i].pdgId())==13) passId = patUtils::passId(selLeptons[i].mu, vtx[0], patUtils::llvvMuonId::Loose,patUtils::CutVersion::ICHEP16Cut);
+            //            float relIso = patUtils::relIso(selLeptons[i], rho);
+
+            //            if(true                 )TagsFR.push_back(PartName);
+            //            if(passId && relIso<=0.1)TagsFR.push_back(PartName+("_Id_Iso01"));
+            //            if(passId && relIso<=0.2)TagsFR.push_back(PartName+("_Id_Iso02"));
+            //            if(passId && relIso<=0.3)TagsFR.push_back(PartName+("_Id_Iso03"));
+
+            //             if(passId && relIso<=0.3)IdentifiedThirdLepton=true;
+            //         }else{
+	    // 	       bool IdL         = selLeptons[i].tau.tauID("byLooseCombinedIsolationDeltaBetaCorr3Hits");
+	    // 	       bool IdM         = selLeptons[i].tau.tauID("byMediumCombinedIsolationDeltaBetaCorr3Hits");
+	    // 	       bool IdL_MVA     = selLeptons[i].tau.tauID("byLooseIsolationMVArun2v1DBoldDMwLT");
+	    // 	       bool IdM_MVA     = selLeptons[i].tau.tauID("byMediumIsolationMVArun2v1DBoldDMwLT");
+	    // 	       bool IdL_MVA_R03 = selLeptons[i].tau.tauID("byLooseIsolationMVArun2v1DBdR03oldDMwLT");
+	    // 	       bool IdM_MVA_R03 = selLeptons[i].tau.tauID("byMediumIsolationMVArun2v1DBdR03oldDMwLT");
+
+            //            if(true                 )TagsFR.push_back(PartName);
+            //            if(IdL                  )TagsFR.push_back(PartName+("_Id_IsoLo"));
+            //            if(IdM                  )TagsFR.push_back(PartName+("_Id_IsoMe"));
+	    // 	       if(IdL_MVA              )TagsFR.push_back(PartName+("_Id_IsoLo_MVA"));
+	    // 	       if(IdM_MVA              )TagsFR.push_back(PartName+("_Id_IsoMe_MVA"));
+	    // 	       if(IdL_MVA_R03          )TagsFR.push_back(PartName+("_Id_IsoLo_MVAR03"));
+	    // 	       if(IdM_MVA_R03          )TagsFR.push_back(PartName+("_Id_IsoMe_MVAR03"));
+            //         }
+
+            //          if(tmass<30){
+            //             int NTags = TagsFR.size();
+            //             for(unsigned int iTags=0;iTags<NTags;iTags++){
+            //                TagsFR.push_back(TagsFR[iTags] + TString("_TMCut"));
+            //             }
+            //          }
+
+            //          auto TagsFRJet = TagsFR;
+            //          auto TagsFRLep = TagsFR;
+
+            //          for(unsigned int iTags=0;iTags<TagsFR.size();iTags++){
+            //             TagsFRJet.push_back(TagsFR[iTags] + (etaL1<1.4                   ?TString("_B"):TString("_E")));
+            //             TagsFRLep.push_back(TagsFR[iTags] + (abs(selLeptons[i].eta())<1.4?TString("_B"):TString("_E")));
+            //          }
+
+            //           mon.fillHisto("wrtJetPt", TagsFRJet, pTL1              , weight);
+            //           mon.fillHisto("wrtLepPt", TagsFRLep, selLeptons[i].pt(), weight);
+            //       }
+            //     }//close loop on leptons
+
+            // }//close FR study Zmass
 
 
             //SIGNAL ANALYSIS Z+2Leptons  (no systematics taken into account here)
