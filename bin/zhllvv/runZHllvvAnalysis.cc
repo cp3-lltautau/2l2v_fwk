@@ -72,80 +72,79 @@ LorentzVector getSVFit(pat::MET met, std::vector<patUtils::GenericLepton> selLep
   if(higgsCandL1<0 || higgsCandL2<0) return LorentzVector(0,0,0,0);
 
   TMatrixD covMET(2, 2); // PFMET significance matrix
- //FIXME in MINIAODv2 74X, covariance is always 0000
 
- covMET[0][0] = met.getSignificanceMatrix()(0,0);
- covMET[0][1] = met.getSignificanceMatrix()(0,1);
- covMET[1][0] = met.getSignificanceMatrix()(1,0);
- covMET[1][1] = met.getSignificanceMatrix()(1,1);
+  covMET[0][0] = met.getSignificanceMatrix()(0,0);
+  covMET[0][1] = met.getSignificanceMatrix()(0,1);
+  covMET[1][0] = met.getSignificanceMatrix()(1,0);
+  covMET[1][1] = met.getSignificanceMatrix()(1,1);
 
   // std::cout<<"MET MATRIX: " << covMET[0][0] << " " << covMET[0][1] << " " << covMET[1][0] << " " << covMET[1][1] << "\n";
 
   // covMET[0][0] = 0.95;  covMET[0][1] = 0.05; covMET[1][0] = 0.05; covMET[1][1] = 0.95;
 
- int dlid = abs( selLeptons[higgsCandL1].pdgId() * selLeptons[higgsCandL2].pdgId() );
-
+  int dlid = abs( selLeptons[higgsCandL1].pdgId() * selLeptons[higgsCandL2].pdgId() );
+  
   std::cout<<"\n"<<selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << " Di-Tau ID ------------> " << dlid << std::endl;
-
+  
   if ( dlid == 165 || dlid == 195){
     if (abs(selLeptons[higgsCandL1].pdgId()) == 15) {
       // Switching leptons in semileptonic pairs:
       // e and mu should be passed as first MesuredTauLepton
-                    int temp = higgsCandL1;
-                    higgsCandL1  = higgsCandL2;
-                    higgsCandL2  = temp;                             
-                    }
-               }
-                                     
+      int temp = higgsCandL1;
+      higgsCandL1  = higgsCandL2;
+      higgsCandL2  = temp;                             
+    }
+  }
+  
   std::vector<svFitStandalone::MeasuredTauLepton> measuredTauLeptons;
-
+  
   if ( dlid == 165 ){
         //std::cout<< " ETau Pair --- > "<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
-        measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToElecDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
-                                   selLeptons[higgsCandL1].phi(), svFitStandalone::electronMass) );
-        measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToHadDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
-                                   selLeptons[higgsCandL2].phi(), selLeptons[higgsCandL2].mass(), selLeptons[higgsCandL2].tau.decayMode()) );
-      }
+    measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToElecDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
+								    selLeptons[higgsCandL1].phi(), svFitStandalone::electronMass) );
+    measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToHadDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
+								    selLeptons[higgsCandL2].phi(), selLeptons[higgsCandL2].mass(), selLeptons[higgsCandL2].tau.decayMode()) );
+  }
   else if( dlid == 195 ){
-      //std::cout<< " MuTau Pair --- > "<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
-      measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToMuDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
-                                   selLeptons[higgsCandL1].phi(), svFitStandalone::muonMass) );
-      measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToHadDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
-                                   selLeptons[higgsCandL2].phi(), selLeptons[higgsCandL2].mass(), selLeptons[higgsCandL2].tau.decayMode()) );
-    }
+    //std::cout<< " MuTau Pair --- > "<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
+    measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToMuDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
+								    selLeptons[higgsCandL1].phi(), svFitStandalone::muonMass) );
+    measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToHadDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
+								    selLeptons[higgsCandL2].phi(), selLeptons[higgsCandL2].mass(), selLeptons[higgsCandL2].tau.decayMode()) );
+  }
   else if ( dlid == 225 ){
-      //std::cout<< " TauTau Pair --- > "<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
-      measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToHadDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
-                                 selLeptons[higgsCandL1].phi(), selLeptons[higgsCandL1].mass(), selLeptons[higgsCandL1].tau.decayMode()) );
-       measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToHadDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
-                                 selLeptons[higgsCandL2].phi(), selLeptons[higgsCandL2].mass(), selLeptons[higgsCandL2].tau.decayMode()) );
-    }
-    else return LorentzVector(selLeptons[higgsCandL1].p4()+selLeptons[higgsCandL2].p4());
-
-
+    //std::cout<< " TauTau Pair --- > "<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
+    measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToHadDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
+								    selLeptons[higgsCandL1].phi(), selLeptons[higgsCandL1].mass(), selLeptons[higgsCandL1].tau.decayMode()) );
+    measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToHadDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
+								    selLeptons[higgsCandL2].phi(), selLeptons[higgsCandL2].mass(), selLeptons[higgsCandL2].tau.decayMode()) );
+  }
+  else return LorentzVector(selLeptons[higgsCandL1].p4()+selLeptons[higgsCandL2].p4());
+  
+  
   SVfitStandaloneAlgorithm algo(measuredTauLeptons, met.px(), met.py() , covMET, 2);
   algo.addLogM(false);
- // edm::FileInPath inputFileName_visPtResolution("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root");
- // TH1::AddDirectory(false);
- // TFile* inputFile_visPtResolution = new TFile(inputFileName_visPtResolution.fullPath().data());
- // algo.shiftVisPt(true, inputFile_visPtResolution);
- 
-
+  edm::FileInPath inputFileName_visPtResolution("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root");
+  TH1::AddDirectory(false);
+  TFile* inputFile_visPtResolution = new TFile(inputFileName_visPtResolution.fullPath().data());
+  algo.shiftVisPt(true, inputFile_visPtResolution);
+  
   algo.integrateMarkovChain();
- 
+  
   double mass = static_cast<svFitStandalone::MCPtEtaPhiMassAdapter*>(algo.getMCQuantitiesAdapter())->getMass(); // full mass of tau lepton pair in units of GeV
-
-
+  
   //double mass = algo.getMass(); // Full SVFit mass - return value is in units of GeV
- // double transverse_mass = algo.getTransverseMass(); // Transverse SVFit mass
-
-
-if ( algo.isValidSolution() ) {
+  //double transverse_mass = algo.getTransverseMass(); // Transverse SVFit mass
+  
+  
+  if ( algo.isValidSolution() ) {
     std::cout << "found mass = " << mass << std::endl;
   } else {
-    std::cout << "sorry -- status of NLL is not valid [" << algo.fitStatus() << "]" << std::endl;
-  
- }
+    std::cout << "sorry -- status of NLL is not valid [" << algo.fitStatus() << "]" << std::endl;   
+  }
+
+  delete inputFile_visPtResolution;
+
   return LorentzVector(selLeptons[higgsCandL1].p4()+selLeptons[higgsCandL2].p4());
 }
 
