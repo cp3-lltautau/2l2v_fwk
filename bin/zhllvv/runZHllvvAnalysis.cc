@@ -378,45 +378,48 @@ int main(int argc, char* argv[])
   h2->GetXaxis()->SetBinLabel(12,"OS #mu#mu#tau#tau");
   h2->GetXaxis()->SetBinLabel(13,"SS eeee");
   h2->GetXaxis()->SetBinLabel(14,"SS ee#mu#mu");
-   h2->GetXaxis()->SetBinLabel(15,"SS eee#mu");
-   h2->GetXaxis()->SetBinLabel(16,"SS eee#tau");
-   h2->GetXaxis()->SetBinLabel(17,"SS ee#mu#tau");
-   h2->GetXaxis()->SetBinLabel(18,"SS ee#tau#tau");
-   h2->GetXaxis()->SetBinLabel(19,"SS #mu#muee");
-   h2->GetXaxis()->SetBinLabel(20,"SS #mu#mu#mu#mu");
-   h2->GetXaxis()->SetBinLabel(21,"SS #mu#mue#mu");
-   h2->GetXaxis()->SetBinLabel(22,"SS #mu#mue#tau");
-   h2->GetXaxis()->SetBinLabel(23,"SS #mu#mu#mu#tau");
-   h2->GetXaxis()->SetBinLabel(24,"SS #mu#mu#tau#tau");
-   
+  h2->GetXaxis()->SetBinLabel(15,"SS eee#mu");
+  h2->GetXaxis()->SetBinLabel(16,"SS eee#tau");
+  h2->GetXaxis()->SetBinLabel(17,"SS ee#mu#tau");
+  h2->GetXaxis()->SetBinLabel(18,"SS ee#tau#tau");
+  h2->GetXaxis()->SetBinLabel(19,"SS #mu#muee");
+  h2->GetXaxis()->SetBinLabel(20,"SS #mu#mu#mu#mu");
+  h2->GetXaxis()->SetBinLabel(21,"SS #mu#mue#mu");
+  h2->GetXaxis()->SetBinLabel(22,"SS #mu#mue#tau");
+  h2->GetXaxis()->SetBinLabel(23,"SS #mu#mu#mu#tau");
+  h2->GetXaxis()->SetBinLabel(24,"SS #mu#mu#tau#tau");
   
-   // zll control
-   mon.addHistogram( new TH1F( "zlly",      		";y_{ll};Events", 50,-3,3) );
-   mon.addHistogram( new TH1F( "zlleta",    		";#eta_{ll};Events", 50,-10,10) ); 
-//   mon.addHistogram( new TH1F( "zllpt",     		";p_{T}^{ll} (GeV) ;Events/10 GeV", 50,0,500) );
-   mon.addHistogram( new TH1F( "zllpt",     		";p_{T}^{ll} (GeV) ;Events/10 GeV", 50,0,500) );
-   mon.addHistogram( new TH1F( "zllmass",   		";M_{ll} (GeV);Events/2 GeV", 80,20,180) );
- 
-   mon.addHistogram( new TH1F( "sumpt",            ";L_{T} (GeV);Events/10 GeV", 50,0,500) );
-   mon.addHistogram( new TH1F( "dPhi_AZ",          ";#DeltaPhi(#tau#tau,ll);Events",50,-3,3));
-//   mon.addHistogram( new TH1F( "dPhi_llMET",          ";#DeltaPhi(MET,ll);Events",50,-3,3));
-   mon.addHistogram( new TH1F( "llMETUnbalance", "|E_T^{miss} - p_{T}(ll)| / p_{T}(ll);Events",50,0,1));
- 
-   mon.addHistogram( new TH1F( "dPhi_AMet",        ";#Delta#phi(#tau#tau,#slash{E}_{T});Events",50,-3,3));
-   mon.addHistogram( new TH1F( "met",             ";#slash{E}_{T} (GeV);Events/10 GeV",50,0,500));
-   
-   mon.addHistogram( new TH1F( "Amet",             ";#slash{E}_{T} (GeV);Events/10 GeV",50,0,500));
-   mon.addHistogram( new TH1F( "Anjets",           ";Number of Jets;Events",10,-0.5,9.5));
-   mon.addHistogram( new TH1F( "Apt",              ";p_{T}^{#tau#tau} (GeV);Events/10 GeV",50,0,500));
-   mon.addHistogram( new TH1F( "Hpt",              ";p_{T}^{ll#tau#tau} (GeV);Events/10 GeV",50,0,500));
-   
-   double bins[]={5, 30,70,110,190,300,550,1800};
-   int nbins=sizeof(bins)/sizeof(double);
-   mon.addHistogram( new TH1F( "Amass",            ";M_{#tau#tau} (GeV);Events",nbins,bins));
-   mon.addHistogram( new TH1F( "Hmass",            ";M_{ll#tau#tau} (GeV);Events",nbins,bins));
-   mon.addHistogram( new TH1F( "Amasssvfit",       ";SVFit M_{#tau#tau} (GeV);Events",nbins,bins));
-   mon.addHistogram( new TH1F( "Hmasssvfit",       ";SVFit M_{ll#tau#tau} (GeV);Events",nbins,bins));
-   
+  
+  mon.addHistogram( new TH1F( "muiso"     ,  ";I_{#mu};Events", 100,0.,1.) );
+  mon.addHistogram( new TH1F( "eleiso"     ,  ";I_{ele};Events", 100,0.,1.) );
+
+  // zll control
+  mon.addHistogram( new TH1F( "zlly",      		";y_{ll};Events", 50,-3,3) );
+  mon.addHistogram( new TH1F( "zlleta",    		";#eta_{ll};Events", 50,-10,10) ); 
+  //   mon.addHistogram( new TH1F( "zllpt",     		";p_{T}^{ll} (GeV) ;Events/10 GeV", 50,0,500) );
+  mon.addHistogram( new TH1F( "zllpt",     		";p_{T}^{ll} (GeV) ;Events/10 GeV", 50,0,500) );
+  mon.addHistogram( new TH1F( "zllmass",   		";M_{ll} (GeV);Events/2 GeV", 80,20,180) );
+  
+  mon.addHistogram( new TH1F( "sumpt",            ";L_{T} (GeV);Events/10 GeV", 50,0,500) );
+  mon.addHistogram( new TH1F( "dPhi_AZ",          ";#DeltaPhi(#tau#tau,ll);Events",50,-3,3));
+  //   mon.addHistogram( new TH1F( "dPhi_llMET",          ";#DeltaPhi(MET,ll);Events",50,-3,3));
+  mon.addHistogram( new TH1F( "llMETUnbalance", "|E_T^{miss} - p_{T}(ll)| / p_{T}(ll);Events",50,0,1));
+  
+  mon.addHistogram( new TH1F( "dPhi_AMet",        ";#Delta#phi(#tau#tau,#slash{E}_{T});Events",50,-3,3));
+  mon.addHistogram( new TH1F( "met",             ";#slash{E}_{T} (GeV);Events/10 GeV",50,0,500));
+  
+  mon.addHistogram( new TH1F( "Amet",             ";#slash{E}_{T} (GeV);Events/10 GeV",50,0,500));
+  mon.addHistogram( new TH1F( "Anjets",           ";Number of Jets;Events",10,-0.5,9.5));
+  mon.addHistogram( new TH1F( "Apt",              ";p_{T}^{#tau#tau} (GeV);Events/10 GeV",50,0,500));
+  mon.addHistogram( new TH1F( "Hpt",              ";p_{T}^{ll#tau#tau} (GeV);Events/10 GeV",50,0,500));
+  
+  double bins[]={5, 30,70,110,190,300,550,1800};
+  int nbins=sizeof(bins)/sizeof(double);
+  mon.addHistogram( new TH1F( "Amass",            ";M_{#tau#tau} (GeV);Events",nbins,bins));
+  mon.addHistogram( new TH1F( "Hmass",            ";M_{ll#tau#tau} (GeV);Events",nbins,bins));
+  mon.addHistogram( new TH1F( "Amasssvfit",       ";SVFit M_{#tau#tau} (GeV);Events",nbins,bins));
+  mon.addHistogram( new TH1F( "Hmasssvfit",       ";SVFit M_{ll#tau#tau} (GeV);Events",nbins,bins));
+  
   //pu control
   mon.addHistogram( new TH1F( "nvtx",";Vertices;Events",50,0,50) );
   mon.addHistogram( new TH1F( "nvtxraw",";Vertices;Events",50,0,50) );
@@ -463,53 +466,51 @@ int main(int argc, char* argv[])
   mon.addHistogram( new TH1F( "wrtJetPt",  ";Jet p_{T} (GeV);Events",sizeof(ptbinsJets)/sizeof(float)-1,ptbinsJets));
   mon.addHistogram( new TH1F( "wrtLepPt",  ";Lep p_{T} (GeV);Events",sizeof(ptbinsJets)/sizeof(float)-1,ptbinsJets));
 
-//
-// HISTOGRAMS FOR OPTIMIZATION and STATISTICAL ANALYSIS
-//
-
-   std::vector<const char*> tauIDiso = {"byLooseCombinedIsolationDeltaBetaCorr3Hits"};
-   std::vector<float>    optim_Cuts_sumPt;
-   std::vector<int>      optim_Cuts_taIso;
-   std::vector<float>    optim_Cuts_muIso;
-   std::vector<float>    optim_Cuts_elIso;
+  //
+  // HISTOGRAMS FOR OPTIMIZATION and STATISTICAL ANALYSIS
+  //
+  
+  std::vector<const char*> tauIDiso = {"byLooseCombinedIsolationDeltaBetaCorr3Hits","byLooseIsolationMVArun2v1DBoldDMwLT","byLooseIsolationMVArun2v1DBdR03oldDMwLT"};
+  
+  std::vector<float>    optim_Cuts_sumPt;
+  std::vector<int>      optim_Cuts_taIso;
+  std::vector<float>    optim_Cuts_muIso;
+  std::vector<float>    optim_Cuts_elIso;
+  
+  for(float elIso=0.3;elIso>=0.1;elIso-=0.1){
+    for(float muIso=0.3;muIso>=0.1;muIso-=0.1){
+      for(int taIso=0;taIso<tauIDiso.size();taIso++){
+	for(float sumPt=0;sumPt<=200;sumPt+=20){
+	  optim_Cuts_elIso.push_back(elIso);
+	  optim_Cuts_muIso.push_back(muIso);
+	  optim_Cuts_taIso.push_back(taIso);
+	  optim_Cuts_sumPt.push_back(sumPt);
+	}
+      }
+    }
+  }
    
-   for(float elIso=0.30;elIso>=0.30;elIso-=0.1){
-     for(float muIso=0.3;muIso>=0.30;muIso-=0.1){
- 	for(int taIso=0;taIso<tauIDiso.size();taIso++){
- 	    for(float sumPt=0;sumPt<=200;sumPt+=20){
- 		optim_Cuts_elIso.push_back(elIso);
- 		optim_Cuts_muIso.push_back(muIso);
- 		optim_Cuts_taIso.push_back(taIso);
- 		optim_Cuts_sumPt.push_back(sumPt);
- 	      }
- 	  }
-       }
-   }
+  TH2F* Hoptim_cuts  =(TH2F*)mon.addHistogram(new TProfile2D("optim_cut",      ";cut index;variable",       optim_Cuts_sumPt.size(),0,optim_Cuts_sumPt.size(), 4, 0, 4)) ;
+  Hoptim_cuts->GetYaxis()->SetBinLabel(1, "eIso<"); 
+  Hoptim_cuts->GetYaxis()->SetBinLabel(2, "muIso<");
+  Hoptim_cuts->GetYaxis()->SetBinLabel(3, "tauIso<"); 
+  Hoptim_cuts->GetYaxis()->SetBinLabel(4, "sumPt>"); 
    
-   TH2F* Hoptim_cuts  =(TH2F*)mon.addHistogram(new TProfile2D("optim_cut",      ";cut index;variable",       optim_Cuts_sumPt.size(),0,optim_Cuts_sumPt.size(), 4, 0, 4)) ;
-   Hoptim_cuts->GetYaxis()->SetBinLabel(1, "eIso<"); 
-   Hoptim_cuts->GetYaxis()->SetBinLabel(2, "muIso<");
-   Hoptim_cuts->GetYaxis()->SetBinLabel(3, "tauIso<"); 
-   Hoptim_cuts->GetYaxis()->SetBinLabel(4, "sumPt>"); 
-   
-   for(unsigned int index=0;index<optim_Cuts_sumPt.size();index++){
-     Hoptim_cuts->Fill(index,0.0,optim_Cuts_elIso[index]); 
-     Hoptim_cuts->Fill(index,1.0,optim_Cuts_muIso[index]); 
-     Hoptim_cuts->Fill(index,2.0,optim_Cuts_taIso[index]); 
-     Hoptim_cuts->Fill(index,3.0,optim_Cuts_sumPt[index]); 
-   }
-   
-   TH1F* Hoptim_systs     =  (TH1F*) mon.addHistogram( new TH1F ("optim_systs"    , ";syst;", nvarsToInclude,0,nvarsToInclude) ) ;
+  for(unsigned int index=0;index<optim_Cuts_sumPt.size();index++){
+    Hoptim_cuts->Fill(index,0.0,optim_Cuts_elIso[index]); 
+    Hoptim_cuts->Fill(index,1.0,optim_Cuts_muIso[index]); 
+    Hoptim_cuts->Fill(index,2.0,optim_Cuts_taIso[index]); 
+    Hoptim_cuts->Fill(index,3.0,optim_Cuts_sumPt[index]); 
+  }
+  
+  TH1F* Hoptim_systs     =  (TH1F*) mon.addHistogram( new TH1F ("optim_systs"    , ";syst;", nvarsToInclude,0,nvarsToInclude) ) ;
    for(size_t ivar=0; ivar<nvarsToInclude; ivar++){
      Hoptim_systs->GetXaxis()->SetBinLabel(ivar+1, varNames[ivar]);
      mon.addHistogram( new TH2F (TString("Hsvfit_shapes")+varNames[ivar],";cut index;M_{ll#tau#tau};Events",optim_Cuts_sumPt.size(),0,optim_Cuts_sumPt.size(),nbins,bins) );
      mon.addHistogram( new TH2F (TString("Asvfit_shapes")+varNames[ivar],";cut index;M_{#tau#tau};Events",optim_Cuts_sumPt.size(),0,optim_Cuts_sumPt.size(),nbins,bins) );
      mon.addHistogram( new TH1F(TString("metsys")+varNames[ivar],                   ";#slash{E}_{T} (GeV);Events/10 GeV",50,0,500));
    }
-
-
-
-
+   
   //##############################################
   //######## GET READY FOR THE EVENT LOOP ########
   //##############################################
@@ -557,7 +558,7 @@ int main(int argc, char* argv[])
   // 	ElectronEnCorrector.initPrivateRng(new TRandom(1234));
   // }
 
-  EnergyScaleCorrection_class eScaler("EgammaAnalysis/ElectronTools/data/ScalesSmearings//Moriond17_23Jan_ele");
+  EnergyScaleCorrection_class eScaler("EgammaAnalysis/ElectronTools/data/ScalesSmearings/Moriond17_23Jan_ele");
   eScaler.doScale=true;
   eScaler.doSmearings=true;
 
@@ -876,7 +877,7 @@ int main(int argc, char* argv[])
          LorentzVector elDiff(0,0,0,0);
          for(size_t ilep=0; ilep<leptons.size(); ilep++){
              bool passKin(true),passId(true),passIso(true);
-             bool passLooseLepton(true), passSoftMuon(true), passSoftElectron(true), passVetoElectron(true);
+             bool  passVeryLooseLepton(true),passLooseLepton(true), passSoftMuon(true), passSoftElectron(true), passVetoElectron(true);
              int lid=leptons[ilep].pdgId();
 
              //no need for charge info any longer
@@ -899,14 +900,20 @@ int main(int argc, char* argv[])
              //Cut based identification
              passId           = lid==11?patUtils::passId(leptons[ilep].el, vtx[0], patUtils::llvvElecId::Tight, patUtils::CutVersion::ICHEP16Cut) : patUtils::passId(leptons[ilep].mu, vtx[0], patUtils::llvvMuonId::Tight,patUtils::CutVersion::ICHEP16Cut);
              passLooseLepton &= lid==11?patUtils::passId(leptons[ilep].el, vtx[0], patUtils::llvvElecId::Loose,patUtils::CutVersion::ICHEP16Cut) : patUtils::passId(leptons[ilep].mu, vtx[0], patUtils::llvvMuonId::Loose,patUtils::CutVersion::ICHEP16Cut);
+	     passVeryLooseLepton &= passLooseLepton; 
              passSoftMuon &= lid==11? false : patUtils::passId(leptons[ilep].mu, vtx[0], patUtils::llvvMuonId::Soft,patUtils::CutVersion::ICHEP16Cut);
 
              //isolation
              passIso = lid==11?patUtils::passIso(leptons[ilep].el,  patUtils::llvvElecIso::Tight,patUtils::CutVersion::ICHEP16Cut,0) : patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::Tight,patUtils::CutVersion::ICHEP16Cut);
              passLooseLepton &= lid==11?patUtils::passIso(leptons[ilep].el,  patUtils::llvvElecIso::Loose,patUtils::CutVersion::ICHEP16Cut,0) : patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::Loose,patUtils::CutVersion::ICHEP16Cut);
 
+	     // passVeryLooseLepton
+	     passVeryLooseLepton &= lid==11 ?  patUtils::passIso(leptons[ilep].el,  patUtils::llvvElecIso::VeryLoose, patUtils::CutVersion::CutSet::ICHEP16Cut) :
+	     patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::VeryLoose, patUtils::CutVersion::CutSet::ICHEP16Cut);
+	     
              //apply muon corrections
-             if(abs(lid)==13 && passIso && passId){
+             //if(abs(lid)==13 && passIso && passId){
+	     if(abs(lid)==13 && passVeryLooseLepton){ 
                  passSoftMuon=false;
                  if(muCor){
                    float qter;
@@ -922,7 +929,8 @@ int main(int argc, char* argv[])
                }
 
              //apply electron corrections
-	     if(abs(lid)==11  && passIso && passId){
+	     //if(abs(lid)==11  && passIso && passId){
+	     if(abs(lid)==11 && passVeryLooseLepton){ 
 	       //std::cout<<"START ---- "<<std::endl;
 	       elDiff -= leptons[ilep].p4();
 	       const EcalRecHitCollection* recHits = (leptons[ilep].el.isEB()) ? recHitCollectionEBHandle.product() : recHitCollectionEEHandle.product();
@@ -952,29 +960,30 @@ int main(int argc, char* argv[])
 		 //leptons[ilep] = patUtils::GenericLepton(leptons[ilep].el); //recreate the generic lepton to be sure that the p4 is ok
 
 	       }
-         elDiff += leptons[ilep].p4();
+	       elDiff += leptons[ilep].p4();
 	     }
 
 	     // conput the relative isolation on the momentum-corrected leptons
 	     leptons[ilep].addUserFloat("relIso",  patUtils::relIso(leptons[ilep], rho) ); //compute it once for all
+	     mon.fillHisto( lid == 11 ? "eleiso" : "muiso" ,  "controlPlots" , leptons[ilep].userFloat("relIso"), 1); 
 
               //kinematics
              float leta = fabs(lid==11 ?  leptons[ilep].el.superCluster()->eta() : leptons[ilep].eta());
              if(leta> (lid==11 ? 2.5 : 2.4) )            passKin=false;
              if(lid==11 && (leta>1.4442 && leta<1.5660)) passKin=false;
-             passLooseLepton &= passKin;
+	     passVeryLooseLepton &= passKin; 
              passSoftMuon    &= passKin;
              if(lid==13){
-               if(leptons[ilep].pt()<10) passLooseLepton=false;
+               if(leptons[ilep].pt()<10) passVeryLooseLepton=false;
                if(leptons[ilep].pt()<3)  passSoftMuon=false;
              }else if(lid==11){
-               if(leptons[ilep].pt()<10) passLooseLepton=false;
+               if(leptons[ilep].pt()<10) passVeryLooseLepton=false;
              }
              if(leptons[ilep].pt()<25) passKin=false;
 
              //if(passId && passIso && passKin)        selLeptons.push_back(leptons[ilep]);
-             if(passLooseLepton && passKin)            selLeptons.push_back(leptons[ilep]); //we need loose lepton for FR
-             else if(passLooseLepton || passSoftMuon)  extraLeptons.push_back(leptons[ilep]);
+             if(passVeryLooseLepton && passKin)             selLeptons.push_back(leptons[ilep]); //we need loose lepton for FR
+             else if( passVeryLooseLepton || passSoftMuon)  extraLeptons.push_back(leptons[ilep]);
            }
            std::sort(selLeptons.begin(),   selLeptons.end(), utils::sort_CandidatesByPt);
            std::sort(extraLeptons.begin(), extraLeptons.end(), utils::sort_CandidatesByPt);
@@ -1111,11 +1120,11 @@ int main(int argc, char* argv[])
          std::pair<double, double> scaleUncVar = patUtils::scaleVariation(ev);  //compute it only once
 
          for(size_t ivar=0; ivar<nvarsToInclude; ivar++){
-          if(!isMC && ivar>0 ) continue; //loop on variation only for MC samples
-
-          //start from a nominal
-          float weight = initialWeight;
-
+	   if(!isMC && ivar>0 ) continue; //loop on variation only for MC samples
+	   
+	   //start from a nominal
+	   float weight = initialWeight;
+	   
            //Theoretical Uncertanties: PDF, Alpha and Scale
            if(varNames[ivar]=="_th_factup")     weight *= std::max(0.9, std::min(scaleUncVar.first , 1.1));
            if(varNames[ivar]=="_th_factdown")   weight *= std::max(0.9, std::min(scaleUncVar.second, 1.1));
@@ -1144,8 +1153,8 @@ int main(int argc, char* argv[])
 	   if(varNames[ivar]=="_scale_edown")    imet = met.shiftedP4(pat::MET::METUncertainty::ElectronEnDown    , metcor);
 
            //to be implemented
-//	       if(varNames[ivar]=="_tesup")   selLeptons=getTauVariations(selLeptons,1.03);
-//	       if(varNames[ivar]=="_tesdown") selLeptons=getTauVariations(selLeptons,0.97);
+	   //	       if(varNames[ivar]=="_tesup")   selLeptons=getTauVariations(selLeptons,1.03);
+	   //	       if(varNames[ivar]=="_tesdown") selLeptons=getTauVariations(selLeptons,0.97);
 
 
            auto& selJets      = selJetsVar[""];        if(selJetsVar    .find(varNames[ivar].Data())!=selJetsVar    .end())selJets     = selJetsVar    [varNames[ivar].Data()];
@@ -1192,7 +1201,10 @@ int main(int argc, char* argv[])
                   }
                 }
               }
-            //get the Z candiate (end)
+	      //get the Z candiate (end)
+
+	    //The "all" tags considered all cases, also events without a Z
+	    chTags.push_back("all");
 
             bool isDileptonCandidate = false;
             if(dilId!=-1){
@@ -1213,6 +1225,7 @@ int main(int argc, char* argv[])
 
             if(!isDileptonCandidate) continue;
             bool passZmass = (fabs(zll.mass()-91.2)<15);
+	    mon.fillHisto("zllmass","controlPlots",zll.mass(),weight); 
 	    bool passZpt   = (zll.pt()>20);
 
 	   // bool passZVeto  = (fabs(zll.mass()-91.2)>15);
@@ -1284,12 +1297,20 @@ int main(int argc, char* argv[])
 
                         if(passId && relIso<=0.3)IdentifiedThirdLepton=true;
                     }else{
-                       bool IdL = selLeptons[i].tau.tauID("byLooseCombinedIsolationDeltaBetaCorr3Hits");
-                       bool IdM = selLeptons[i].tau.tauID("byMediumCombinedIsolationDeltaBetaCorr3Hits");
+		       bool IdL         = selLeptons[i].tau.tauID("byLooseCombinedIsolationDeltaBetaCorr3Hits");
+		       bool IdM         = selLeptons[i].tau.tauID("byMediumCombinedIsolationDeltaBetaCorr3Hits");
+		       bool IdL_MVA     = selLeptons[i].tau.tauID("byLooseIsolationMVArun2v1DBoldDMwLT");
+		       bool IdM_MVA     = selLeptons[i].tau.tauID("byMediumIsolationMVArun2v1DBoldDMwLT");
+		       bool IdL_MVA_R03 = selLeptons[i].tau.tauID("byLooseIsolationMVArun2v1DBdR03oldDMwLT");
+		       bool IdM_MVA_R03 = selLeptons[i].tau.tauID("byMediumIsolationMVArun2v1DBdR03oldDMwLT");
 
                        if(true                 )TagsFR.push_back(PartName);
                        if(IdL                  )TagsFR.push_back(PartName+("_Id_IsoLo"));
                        if(IdM                  )TagsFR.push_back(PartName+("_Id_IsoMe"));
+		       if(IdL_MVA              )TagsFR.push_back(PartName+("_Id_IsoLo_MVA"));
+		       if(IdM_MVA              )TagsFR.push_back(PartName+("_Id_IsoMe_MVA"));
+		       if(IdL_MVA_R03          )TagsFR.push_back(PartName+("_Id_IsoLo_MVAR03"));
+		       if(IdM_MVA_R03          )TagsFR.push_back(PartName+("_Id_IsoMe_MVAR03"));
                     }
 
                      if(tmass<30){
