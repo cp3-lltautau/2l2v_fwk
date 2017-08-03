@@ -644,6 +644,10 @@ namespace patUtils
                         if( barrel && relIso < 0.126    ) return true;
                         if( endcap && relIso < 0.144    ) return true;
                         break;
+			
+		     case llvvElecIso::VeryLoose :
+		        if ( relIso < 0.3 ) return true;
+			break;
 
                      case llvvElecIso::Loose :
                         if( barrel && relIso < 0.0893   ) return true;
@@ -675,6 +679,10 @@ namespace patUtils
                         if( barrel && relIso < 0.175    ) return true;
                         if( endcap && relIso < 0.159    ) return true;
                         break;
+
+	             case llvvElecIso::VeryLoose :
+		        if ( relIso < 0.3 ) return true;
+		        break;
 
                      case llvvElecIso::Loose :
                         if( barrel && relIso < 0.0994   ) return true;
@@ -725,6 +733,11 @@ namespace patUtils
     switch(cutVersion){
        case CutVersion::Spring15Cut25ns :
            switch(IsoLevel){
+
+	      case llvvMuonIso::VeryLoose :
+		if ( relIso < 0.3 ) return true;
+		break;
+
               case llvvMuonIso::Loose :
                  if( relIso < 0.20 ) return true;
                  break;
@@ -741,9 +754,14 @@ namespace patUtils
            break;
        case CutVersion::ICHEP16Cut :
            switch(IsoLevel){
+
+	      case llvvMuonIso::VeryLoose :
+		if ( relIso < 0.3 ) return true;
+		break;
+
               case llvvMuonIso::Loose :
-                 if( relIso < 0.20 && trkrelIso < 0.1) return true;
-                 break;
+                if( relIso < 0.20 && trkrelIso < 0.1) return true;
+                break;
 
               case llvvMuonIso::Tight :
                 if( relIso < 0.15 && trkrelIso < 0.1) return true;
@@ -758,6 +776,11 @@ namespace patUtils
 
        case CutVersion::Moriond17Cut :
            switch(IsoLevel){
+
+	      case llvvMuonIso::VeryLoose :
+		if ( relIso < 0.3 ) return true;
+		break;
+
               case llvvMuonIso::Loose :
                  if( relIso < 0.25 ) return true;
                  break;
