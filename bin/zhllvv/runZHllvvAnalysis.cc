@@ -1322,7 +1322,10 @@ int main(int argc, char* argv[])
 		  if( selLeptons[thirdL].pdgId()*selLeptons[fourthL].pdgId()>0){
 		    
 		    int leptonicIndex = (abs(selLeptons[thirdL].pdgId())==15) ? fourthL : thirdL;
-		    
+
+		    if     (abs(selLeptons[leptonicIndex].pdgId())==11)PartName += "El";
+		    else if(abs(selLeptons[leptonicIndex].pdgId())==13)PartName += "Mu";
+
 		    int closestJetIndexL1=-1; double pTL1=-1; double etaL1=-1;
 		    double dRminL1 = closestJet(selLeptons[leptonicIndex].p4(), selJets, closestJetIndexL1);
 		    if(closestJetIndexL1>=0 && dRminL1<0.5){pTL1=selJets[closestJetIndexL1].pt(); etaL1=abs(selJets[closestJetIndexL1].eta());}
