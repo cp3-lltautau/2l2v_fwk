@@ -413,7 +413,7 @@ int main(int argc, char* argv[])
   mon.addHistogram( new TH1F( "Hpt",              ";p_{T}^{ll#tau#tau} (GeV);Events/10 GeV",50,0,500));
   
   double bins[]={5, 30,70,110,190,300,550,1800};
-  int nbins=sizeof(bins)/sizeof(double);
+  int nbins=sizeof(bins)/sizeof(double) -1;
   mon.addHistogram( new TH1F( "Amass",            ";M_{#tau#tau} (GeV);Events",nbins,bins));
   mon.addHistogram( new TH1F( "Hmass",            ";M_{ll#tau#tau} (GeV);Events",nbins,bins));
   mon.addHistogram( new TH1F( "Amasssvfit",       ";SVFit M_{#tau#tau} (GeV);Events",nbins,bins));
