@@ -77,8 +77,8 @@ DEFAULT
 };
 
 
-LorentzVector getSVFit(pat::MET met, std::vector<patUtils::GenericLepton> selLeptons, int higgsCandL1, int higgsCandL2){
-  if(higgsCandL1<0 || higgsCandL2<0) return LorentzVector(0,0,0,0);
+double getSVFit(pat::MET met, std::vector<patUtils::GenericLepton> selLeptons, int higgsCandL1, int higgsCandL2){
+  if(higgsCandL1<0 || higgsCandL2<0) return 0.;
 
   TMatrixD covMET(2, 2); // PFMET significance matrix
 
@@ -88,8 +88,6 @@ LorentzVector getSVFit(pat::MET met, std::vector<patUtils::GenericLepton> selLep
   covMET[1][1] = met.getSignificanceMatrix()(1,1);
 
   // std::cout<<"MET MATRIX: " << covMET[0][0] << " " << covMET[0][1] << " " << covMET[1][0] << " " << covMET[1][1] << "\n";
-
-  // covMET[0][0] = 0.95;  covMET[0][1] = 0.05; covMET[1][0] = 0.05; covMET[1][1] = 0.95;
 
   int dlid = abs( selLeptons[higgsCandL1].pdgId() * selLeptons[higgsCandL2].pdgId() );
   
@@ -128,33 +126,34 @@ LorentzVector getSVFit(pat::MET met, std::vector<patUtils::GenericLepton> selLep
     measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToHadDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
 								    selLeptons[higgsCandL2].phi(), selLeptons[higgsCandL2].mass(), selLeptons[higgsCandL2].tau.decayMode()) );
   }
-  else return LorentzVector(selLeptons[higgsCandL1].p4()+selLeptons[higgsCandL2].p4());
+  else return (selLeptons[higgsCandL1].p4()+selLeptons[higgsCandL2].p4()).mass();
   
   
   SVfitStandaloneAlgorithm algo(measuredTauLeptons, met.px(), met.py() , covMET, 2);
   algo.addLogM(false);
-  //edm::FileInPath inputFileName_visPtResolution("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root");
-  //TH1::AddDirectory(false);
-  //TFile* inputFile_visPtResolution = new TFile(inputFileName_visPtResolution.fullPath().data());
-  //algo.shiftVisPt(true, inputFile_visPtResolution);
+  edm::FileInPath inputFileName_visPtResolution("TauAnalysis/SVfitStandalone/data/svFitVisMassAndPtResolutionPDF.root");
+  TH1::AddDirectory(false);
+  TFile* inputFile_visPtResolution = new TFile(inputFileName_visPtResolution.fullPath().data());
+  algo.shiftVisPt(true, inputFile_visPtResolution);
   
-  //  algo.integrateMarkovChain();
+  algo.integrateMarkovChain();
   
-  //  double mass = static_cast<svFitStandalone::MCPtEtaPhiMassAdapter*>(algo.getMCQuantitiesAdapter())->getMass(); // full mass of tau lepton pair in units of GeV
+  double mass = static_cast<svFitStandalone::MCPtEtaPhiMassAdapter*>(algo.getMCQuantitiesAdapter())->getMass(); // full mass of tau lepton pair in units of GeV
   
   //double mass = algo.getMass(); // Full SVFit mass - return value is in units of GeV
   //double transverse_mass = algo.getTransverseMass(); // Transverse SVFit mass
   
   
-  // if ( algo.isValidSolution() ) {
-  //  std::cout << "found mass = " << mass << std::endl;
-  // } else {
-  // std::cout << "sorry -- status of NLL is not valid [" << algo.fitStatus() << "]" << std::endl;   
-  // }
+  if ( algo.isValidSolution() ) {
+    std::cout << "found mass = " << mass << std::endl;
+  } else {
+    std::cout << "sorry -- status of NLL is not valid [" << algo.fitStatus() << "]" << std::endl;   
+  }
 
- // delete inputFile_visPtResolution;
+  delete inputFile_visPtResolution;
 
-  return LorentzVector(selLeptons[higgsCandL1].p4()+selLeptons[higgsCandL2].p4());
+  //return LorentzVector(selLeptons[higgsCandL1].p4()+selLeptons[higgsCandL2].p4());
+  return mass;
 }
 
 
@@ -583,7 +582,8 @@ int main(int argc, char* argv[])
   mon.addHistogram( new TH1F( "Hmass",            ";M_{ll#tau#tau} (GeV);Events",nbins,bins));
   mon.addHistogram( new TH1F( "Amasssvfit",       ";SVFit M_{#tau#tau} (GeV);Events",nbins,bins));
   mon.addHistogram( new TH1F( "Hmasssvfit",       ";SVFit M_{ll#tau#tau} (GeV);Events",nbins,bins));
-  
+  mon.addHistogram( new TH1F( "hmass_svfit",      ";SVFit_M_{#tau#tau} (GeV);Events",50,50.,150.));
+
   //pu control
   mon.addHistogram( new TH1F( "nvtx",";Vertices;Events",50,0,50) );
   mon.addHistogram( new TH1F( "nvtxraw",";Vertices;Events",50,0,50) );
@@ -1421,6 +1421,7 @@ int main(int argc, char* argv[])
             bool passDPhiCut    = 0;
             bool passHiggsLoose = 0;
             bool passHiggsMain  = 0;
+	    double higgsCandMass_SVFit = -1;
             LorentzVector higgsCand_SVFit;
             LorentzVector higgsCandH;
             LorentzVector higgsCandH_SVFit;
@@ -1680,11 +1681,12 @@ int main(int argc, char* argv[])
               higgsCand_SVFit = higgsCand;
 
                  //FIXME gives a lot of warning currently
- //                                if(passZmass && passZpt && passDPhiCut && passHiggsLoose && passLepVetoMain && passBJetVetoMain){
-  //                               std::cout<<"START SVFIT\n";
-    //                             higgsCand_SVFit = getSVFit(met, selLeptons, higgsCandL1, higgsCandL2);  //compute svfit mass in a smart way
-      //                           std::cout<<"END SVFIT\n";
-        //                          }            
+	      if(passZmass && passZpt && passDPhiCut && passHiggsLoose && passLepVetoMain && passBJetVetoMain){
+		std::cout<<"START SVFIT\n";
+		//                             higgsCand_SVFit = getSVFit(met, selLeptons, higgsCandL1, higgsCandL2);  //compute svfit mass in a smart way
+		higgsCandMass_SVFit  =  getSVFit(met, selLeptons, higgsCandL1, higgsCandL2); 
+		std::cout<<"END SVFIT\n";
+	      }            
 
 
 
@@ -1764,6 +1766,7 @@ int main(int argc, char* argv[])
                                    mon.fillHisto("eventflow"   ,chTagsMain,                 8, weight);
                                    mon.fillHisto("yields"          ,chTagsMain,                HiggsShortId, weight);
 
+				   mon.fillHisto("hmass_svfit", chTagsMain,higgsCandMass_SVFit,weight);
                                    mon.fillHisto("Apt"       	, chTagsMain, higgsCand.pt(),    weight);
                                    mon.fillHisto("Amass"           , chTagsMain, higgsCand.mass(),  weight);
                                    mon.fillHisto("Amasssvfit"      , chTagsMain, higgsCand_SVFit.mass(),  weight);
