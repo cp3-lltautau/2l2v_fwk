@@ -196,7 +196,7 @@ CRTypes checkBkgCR(std::vector<patUtils::GenericLepton> selLeptons, int higgsCan
     }
   }
 
-// Defining the Control Regions 
+// Defining the Control Regions // 
 
 // CR01 : One lepton passes the loose only, the other passes the tight 
 //      : Tau+Tau    -------> the loose lepton is the highest Pt Tau 
@@ -206,7 +206,6 @@ CRTypes checkBkgCR(std::vector<patUtils::GenericLepton> selLeptons, int higgsCan
 if ( (abs(selLeptons[higgsCandL1].pdgId()) == 15 && abs(selLeptons[higgsCandL2].pdgId()) == 15) || // TauTau
      (abs(selLeptons[higgsCandL1].pdgId()) == 15 && abs(selLeptons[higgsCandL2].pdgId()) == 11) || // elTau
      (abs(selLeptons[higgsCandL1].pdgId()) == 15 && abs(selLeptons[higgsCandL2].pdgId()) == 13) ){ // MuTau
-     if( selLeptons[higgsCandL1].pdgId()*selLeptons[higgsCandL2].pdgId()<0){  
      if( (!passId[0] || !passIso[0]) && (passId[1]&&passIso[1]) ){  // <----- L1 (higest pt) passes the Loose and L2 passes the tight 
 
 
@@ -214,17 +213,15 @@ if ( (abs(selLeptons[higgsCandL1].pdgId()) == 15 && abs(selLeptons[higgsCandL2].
 theCR=CRTypes::CR01;
 
         }
-}
+
 } else if( abs(selLeptons[higgsCandL1].pdgId()) == 13 && abs(selLeptons[higgsCandL2].pdgId()) == 11 ) { // Muel
-       if( selLeptons[higgsCandL1].pdgId()*selLeptons[higgsCandL2].pdgId()<0){  
-       if( ( (!passId[0] || !passIso[0]) && (passId[1]&&passIso[1]) ) ||
-           (  (passId[0]&&passIso[0])   && (passId[1]&&passIso[1]) ) ){ 
- 
+        if (!passId[1] || !passIso[1]) {
+         
  
 theCR=CRTypes::CR01;
 
      }
-}
+
 // CR10 : One lepton passes the loose only, the other passes the tight (reverted case of the CR01) 
 //      : Tau+Tau   -------> the loose is the lowest Pt Tau	
 //      : el/Mu+Tau -------> the loose is the el 
@@ -232,24 +229,21 @@ theCR=CRTypes::CR01;
 
       
    
-}else if ( (abs(selLeptons[higgsCandL1].pdgId()) == 15 && abs(selLeptons[higgsCandL2].pdgId()) == 15) || //TauTau
+}else if  ( (abs(selLeptons[higgsCandL1].pdgId()) == 15 && abs(selLeptons[higgsCandL2].pdgId()) == 15) || //TauTau
           ( abs(selLeptons[higgsCandL1].pdgId()) == 15 && abs(selLeptons[higgsCandL2].pdgId()) == 11) || // elTau
           ( abs(selLeptons[higgsCandL1].pdgId()) == 15 && abs(selLeptons[higgsCandL2].pdgId()) == 13) ){ // MuTau
-        if( selLeptons[higgsCandL1].pdgId()*selLeptons[higgsCandL2].pdgId()<0){  
-        if( (passId[0] || passIso[0]) && (!passId[1]&&!passIso[1]) ) { //<------- L2 passes the loose and L1 the tight
+          if( (passId[0] || passIso[0]) && (!passId[1]&&!passIso[1]) ) { //<------- L2 passes the loose and L1 the tight
 
     theCR=CRTypes::CR10;
       }
-} 
+ 
 
 
-} else if (abs(selLeptons[higgsCandL1].pdgId()) == 13 && abs(selLeptons[higgsCandL2].pdgId()) == 11 ) { // Muel
-     if( selLeptons[higgsCandL1].pdgId()*selLeptons[higgsCandL2].pdgId()<0){  
-     if( ((!passId[0] || !passIso[0]) && (!passId[0]&&!passIso[0])) ||
-         ((passId[0]&&passIso[0])  && (!passId[1]&&!passIso[1]) ) ) {
+} else if (abs(selLeptons[higgsCandL1].pdgId()) == 11 && abs(selLeptons[higgsCandL2].pdgId()) == 13 ) { // elMu
+       if(!passId[0] || !passIso[0]) {
  
     theCR=CRTypes::CR10;
-     }
+     
 }
 // CR00 : Both leptons pass the loose Id only, but not the tight Iso  
 } else if (  (!passId[0] || !passIso[0]) && (!passId[1] || !passIso[1])  ) {
@@ -562,8 +556,7 @@ int main(int argc, char* argv[])
   
   mon.addHistogram( new TH1F( "muiso"     ,  ";I_{#mu};Events", 100,0.,1.) );
   mon.addHistogram( new TH1F( "eleiso"     ,  ";I_{ele};Events", 100,0.,1.) );
-  std::vector<bool> passId;
-
+ 
   // zll control
   mon.addHistogram( new TH1F( "zlly",      		";y_{ll};Events", 50,-3,3) );
   mon.addHistogram( new TH1F( "zlleta",    		";#eta_{ll};Events", 50,-10,10) ); 
@@ -585,7 +578,7 @@ int main(int argc, char* argv[])
   mon.addHistogram( new TH1F( "Hpt",              ";p_{T}^{ll#tau#tau} (GeV);Events/10 GeV",50,0,500));
   
   double bins[]={5, 30,70,110,190,300,550,1800};
-  int nbins=sizeof(bins)/sizeof(double);
+  int nbins=sizeof(bins)/sizeof(double) -1;
   mon.addHistogram( new TH1F( "Amass",            ";M_{#tau#tau} (GeV);Events",nbins,bins));
   mon.addHistogram( new TH1F( "Hmass",            ";M_{ll#tau#tau} (GeV);Events",nbins,bins));
   mon.addHistogram( new TH1F( "Amasssvfit",       ";SVFit M_{#tau#tau} (GeV);Events",nbins,bins));
@@ -1842,7 +1835,7 @@ int main(int argc, char* argv[])
 //	      }
 //	    }
 
-if(selLeptons.size()>=2 && passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain && passDPhiCut && passHiggsLoose){
+if( passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain && passDPhiCut && passHiggsLoose){
           for(unsigned int index=0; index<optim_Cuts_sumPt.size();index++){
             bool passHiggs = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],true,vtx);
             if(passHiggs){
@@ -1858,14 +1851,14 @@ if(selLeptons.size()>=2 && passZmass && passZpt && selLeptons.size()>=4 && passL
 
 	              float theFRWeight=1;
  
-            if (theCR==CRTypes::CR10){//CR01
+            if (theCR==CRTypes::CR01){//CR01
 
                   theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR01");
 
                   mon.fillHisto(TString("Hsvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
                   mon.fillHisto(TString("Asvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
 
-            } else if (theCR==CRTypes::CR01) { //CR10
+            } else if (theCR==CRTypes::CR10) { //CR10
 
              theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR10");
 
