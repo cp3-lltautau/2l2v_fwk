@@ -1880,14 +1880,15 @@ int main(int argc, char* argv[])
             if(passHiggs){
               mon.fillHisto(TString("Hsvfit_shapes")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight);
               mon.fillHisto(TString("Asvfit_shapes")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight);
-<<<<<<< HEAD
-            } else if (isMC){
-	      	      
+
+            } else if (isMC && runSystematics ){
+
 	      // Control regions
 	      
 	      CRTypes theCR =  checkBkgCR(selLeptons, higgsCandL1, higgsCandL2, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],vtx);
 	      
 	      float theFRWeight=1;
+	      mon.fillHisto("CRCounts","controlPlots",theCR,1);
 	      
 	      if(theCR==CRTypes::CR10){
 		// CR10
@@ -1898,41 +1899,15 @@ int main(int argc, char* argv[])
 		// cout<<" CRTypes::CR10 - FR weight value = "<<theFRWeight<<endl;
 		
 	      } else if (theCR==CRTypes::CR01) {
-		// CR01
+                  // CR01
 		theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR01");
 		
 		mon.fillHisto(TString("Hsvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
 		mon.fillHisto(TString("Asvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
 		// cout<<" CRTypes::CR01 - FR weight value = "<<theFRWeight<<endl;
 	      } else {
-=======
-            } else if (isMC && runSystematics ){
 
-	             // Control regions
-
-	              CRTypes theCR =  checkBkgCR(selLeptons, higgsCandL1, higgsCandL2, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],vtx);
-
-	              float theFRWeight=1;
-                mon.fillHisto("CRCounts","controlPlots",theCR,1);
-
-	              if(theCR==CRTypes::CR10){
-                  // CR10
-                  theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR10");
-
-                  mon.fillHisto(TString("Hsvfit_shapes_CR10")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
-                  mon.fillHisto(TString("Asvfit_shapes_CR10")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
-                  // cout<<" CRTypes::CR10 - FR weight value = "<<theFRWeight<<endl;
-
-                } else if (theCR==CRTypes::CR01) {
-                  // CR01
-                  theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR01");
-
-                  mon.fillHisto(TString("Hsvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
-                  mon.fillHisto(TString("Asvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
-                  // cout<<" CRTypes::CR01 - FR weight value = "<<theFRWeight<<endl;
-                } else {
->>>>>>> c8b1fd8... Memory management improvements
-                  // CR11
+		// CR11
 		theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR11");
 		mon.fillHisto(TString("Hsvfit_shapes_CR11")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
 		mon.fillHisto(TString("Asvfit_shapes_CR11")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);

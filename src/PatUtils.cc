@@ -654,10 +654,6 @@ namespace patUtils
                         if( endcap && relIso < 0.121    ) return true;
                         break;
 
-	             case llvvElecIso::VeryLoose :
-		       if ( relIso < 0.3 ) return true;
-		       break;
-
                      case llvvElecIso::Medium :
                         if( barrel && relIso < 0.0766   ) return true;
                         if( endcap && relIso < 0.0678   ) return true;
@@ -688,10 +684,6 @@ namespace patUtils
 	             case llvvElecIso::VeryLoose :
 		       if ( relIso < 0.3 ) return true;
 		       break;
-
-	             case llvvElecIso::VeryLoose :
-		        if ( relIso < 0.3 ) return true;
-		        break;
 
                      case llvvElecIso::Loose :
                         if( barrel && relIso < 0.0994   ) return true;
