@@ -123,7 +123,7 @@ int main(int argc, char* argv[]){
 
 
 
-        if(DataHistos.find(cat[c]+var[v]+bin[b])==DataHistos.end()){
+        if(DataHistos.find(cat[c]+var[v]+bin[b]+wrt[w])==DataHistos.end()){
            gROOT->cd(); //make sure that the file is saved in memory and not in file
            DataHistos[cat[c]+var[v]+bin[b]+wrt[w]] = (TH1D*)hist->Clone(); //create a new histo, since it's not found
         }else{
@@ -148,7 +148,7 @@ int main(int argc, char* argv[]){
 
            if(DataHistos.find(cat[c]+var[v]+bin[b]+wrt[w])==DataHistos.end()){printf("Histo missing for %s\n", (cat[c]+var[v]+bin[b]+wrt[w]).c_str()); continue;}
            TH1D* histNum = DataHistos[cat[c]+var[v]+bin[b]+wrt[w]];
-           //histNum = (TH1D*)histNum->Clone((cat[c]+var[v]+"weight"+bin[b]+wrt[w]).c_str());
+           histNum = (TH1D*)histNum->Clone((cat[c]+var[v]+"weight"+bin[b]+wrt[w]).c_str());
            histNum->Divide(histDen);
            DataHistos[cat[c]+var[v]+"weight"+bin[b]+wrt[w]] = histNum;
         }

@@ -703,6 +703,12 @@ int main(int argc, char* argv[])
        higgsCandH_SVFit = zll + higgsCand_SVFit;
      }
 
+     if (passZpt){
+	for (auto& tag : chTagsMain){
+		TString newTag = tag+"_passZpt";
+		chTagsMain.push_back(newTag);
+	}	
+     }
 
      mon.fillHisto("eventflow"       , chTagsMain,                 0, weight);
      if(selLeptons.size()>=2){
@@ -747,12 +753,12 @@ int main(int argc, char* argv[])
 
              if (higgsEleCand > -1)
                {
-                 mon.fillHisto("higgsElept",        chTagsMain, selLeptons[higgsMuonCand].pt(), weight);
-                 mon.fillHisto("higgsEleeta",       chTagsMain, selLeptons[higgsMuonCand].eta(),weight);
-                 mon.fillHisto("higgsEleiso",       chTagsMain, selLeptons[higgsMuonCand].userFloat("relIso"),weight);
+                 mon.fillHisto("higgsElept",        chTagsMain, selLeptons[higgsEleCand].pt(), weight);
+                 mon.fillHisto("higgsEleeta",       chTagsMain, selLeptons[higgsEleCand].eta(),weight);
+                 mon.fillHisto("higgsEleiso",       chTagsMain, selLeptons[higgsEleCand].userFloat("relIso"),weight);
 
                for(int l1=0;l1<(int)selLeptons.size();l1++){
-                 mon.fillHisto("higgsEleDeltaRLep", chTagsMain,deltaR(selLeptons[l1], selLeptons[higgsMuonCand]),weight);
+                 mon.fillHisto("higgsEleDeltaRLep", chTagsMain,deltaR(selLeptons[l1], selLeptons[higgsEleCand]),weight);
                }
              }
 
