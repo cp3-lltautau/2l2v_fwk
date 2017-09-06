@@ -55,11 +55,11 @@ void FRAnalyzer::Initialize(){
 	hlabel.clear();
 
 	if(m_Data){ 
-	  sample = "data";
+		sample = "data";
 	}else{
-	  sample = "Z#rightarrow ll";
+		sample = "Z#rightarrow ll";
 	}
-	
+
 	cidx<<m_Index;
 	cidx>>Idx;
 	hlabel.push_back("");

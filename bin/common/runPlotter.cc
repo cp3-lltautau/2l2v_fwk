@@ -1324,6 +1324,7 @@ void ConvertToTex(JSONWrapper::Object& Root, TFile* File, NameAndType& HistoProp
 
 
 int main(int argc, char* argv[]){
+   gROOT->ProcessLine( "gErrorIgnoreLevel = 1001;");
    gROOT->LoadMacro("../../src/tdrstyle.C");
    setTDRStyle();  
    gStyle->SetPadTopMargin   (0.06);

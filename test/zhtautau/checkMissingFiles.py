@@ -57,17 +57,23 @@ for procBlock in procList :
             userName = str(subprocess.check_output("whoami",shell=True))
 
             squeueCMD     = "squeue -u ccaputo --format=\"%.18i %.5P %.184j %.2t %.10M\" | cut -d\'/\' -f17 | grep -c "+dtag+" "
+            squeueCMD_R   = "squeue -u ccaputo --format=\"%.18i %.5P %.184j %.2t %.10M %T\" | cut -d\'/\' -f17 | grep "+dtag+" | grep -c RUNNING"
+            squeueCMD_PD  = "squeue -u ccaputo --format=\"%.18i %.5P %.184j %.2t %.10M %T\" | cut -d\'/\' -f17 | grep "+dtag+" | grep -c PENDING"
             command_line  = "ls "+opt.theFolder+"/*.py   | grep -c "+sample+" "
             command_line2 = "ls "+opt.theFolder+"/*.root | grep -c "+sample+" "
             # args = shlex.split(command_line)
             # print command_line
             try:
-                jobs          = int( subprocess.check_output(command_line  , shell=True) )
-                processSqueue = subprocess.Popen(squeueCMD, stdout=subprocess.PIPE, shell=True)
-                process       = subprocess.Popen(command_line2 , stdout=subprocess.PIPE, shell=True)
-                returncode    = process.wait()
+                jobs             = int( subprocess.check_output(command_line  , shell=True) )
+                processSqueue    = subprocess.Popen(squeueCMD, stdout=subprocess.PIPE, shell=True)
+                processSqueue_R  = subprocess.Popen(squeueCMD_R, stdout=subprocess.PIPE, shell=True)
+                processSqueue_PD = subprocess.Popen(squeueCMD_PD, stdout=subprocess.PIPE, shell=True)
+                process          = subprocess.Popen(command_line2 , stdout=subprocess.PIPE, shell=True)
+                returncode       = process.wait()
                 # print('ping returned {0}'.format(returncode))
-                running = int( processSqueue.stdout.read() )
+                onFarm  = int( processSqueue.stdout.read() )
+                running = int( processSqueue_R.stdout.read() )
+                pending = int( processSqueue_PD.stdout.read() )
                 files = int( process.stdout.read() )
             except subprocess.CalledProcessError as e:
                 raise RuntimeError("command '{0}' return with error (code {1}): {2}".format(e.cmd, e.returncode, e.output))
@@ -77,6 +83,6 @@ for procBlock in procList :
             if jobs != files:
                 print bcolors.OKGREEN + dtag + bcolors.ENDC
                 print 'Missing Files: {0} - {1}'.format(files,jobs)
-                print bcolors.BOLD + "  Running: "+bcolors.ENDC+" {0} / {1}".format(running,int(jobs - files) )
+                print bcolors.BOLD + "  Running(Pending) / FileMissing: "+bcolors.ENDC+" {0}({1}) / {2}".format(running,pending,int(jobs - files) )
             # elif jobs == files :
             #     print 'Dataset processed!!'

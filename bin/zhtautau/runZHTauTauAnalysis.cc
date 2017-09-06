@@ -186,7 +186,7 @@ CRTypes checkBkgCR(std::vector<patUtils::GenericLepton> selLeptons, int higgsCan
       passIso.push_back((lep->userFloat("relIso") <= isoMuCut));
     }else if(abs(lep->pdgId())==15){
       passId.push_back(lep->tau.tauID("againstElectronTightMVA6") && lep->tau.tauID("againstMuonLoose3"));
-      passIso.push_back(bool(lep->tau.tauID(isoHaCut))); 
+      passIso.push_back(bool(lep->tau.tauID(isoHaCut)));
     }
   }
 
@@ -1175,9 +1175,9 @@ int main(int argc, char* argv[])
         passSoftMuon=false;
           if(is2016MC || is2016data){
 	    if(muCorMoriond17){
-	      
+
 	      muDiff -= leptons[ilep].p4();
-	      
+
 	      float qter =1.0;
 	      double pt  = leptons[ilep].pt();
 	      double eta = leptons[ilep].eta();
@@ -1191,12 +1191,12 @@ int main(int argc, char* argv[])
 		//TRandom3 *rgen_ = new TRandom3(0);
 		double u1 = rgenMuon_->Uniform();
 		double u2 = rgenMuon_->Uniform();
-		
+
 		double mcSF = muCorMoriond17->kScaleAndSmearMC(charge, pt, eta, phi, ntrk, u1, u2, 0, 0);
-		
+
 		leptons[ilep].mu.setP4(LorentzVector(p4.Px()*mcSF,p4.Py()*mcSF,p4.Pz()*mcSF,p4.E()*mcSF ) );
 		leptons[ilep] = patUtils::GenericLepton(leptons[ilep].mu);
-		
+
 		//cout<<"\t PT After Correction (2016): "<< p4.Pt() << " -- (Moriond17): "<< p4_2.Pt()<< endl;
 	      }else if (is2016data){
 		// muCor2016->momcor_data(p4, lid<0 ? -1 :1, 0, qter);
@@ -1206,7 +1206,7 @@ int main(int argc, char* argv[])
 		leptons[ilep] = patUtils::GenericLepton(leptons[ilep].mu);
 		// cout<<"\t PT After Correction: "<< leptons[ilep].pt() << endl;
 	      }
-	      
+
 	      //  leptons[ilep].mu.setP4(LorentzVector(p4.Px(),p4.Py(),p4.Pz(),p4.E() ) );
 	      //  leptons[ilep] = patUtils::GenericLepton(leptons[ilep].mu); //recreate the generic lepton to be sure that the p4 is ok
 	      muDiff += leptons[ilep].p4();
@@ -1219,8 +1219,8 @@ int main(int argc, char* argv[])
       if(abs(lid)==11  && passVeryLooseLepton){
         //std::cout<<"START ---- "<<std::endl;
         elDiff -= leptons[ilep].p4();
-        const EcalRecHitCollection* recHits = (leptons[ilep].el.isEB()) ? recHitCollectionEBHandle.product() : recHitCollectionEEHandle.product();
-        unsigned int gainSeed = patUtils::GainSeed(leptons[ilep].el,recHits);
+        //const EcalRecHitCollection* recHits = (leptons[ilep].el.isEB()) ? recHitCollectionEBHandle.product() : recHitCollectionEEHandle.product();
+        unsigned int gainSeed = patUtils::GainSeed(leptons[ilep].el, (leptons[ilep].el.isEB()) ? recHitCollectionEBHandle.product() : recHitCollectionEEHandle.product() );
 
         if(!isMC){
 
@@ -1261,10 +1261,10 @@ int main(int argc, char* argv[])
         if(lid==13){
           if(leptons[ilep].pt()<10) passVeryLooseLepton=false;
           if(leptons[ilep].pt()<3)  passSoftMuon=false;
-          if(leptons[ilep].pt()<25) passKin=false;
+          if(leptons[ilep].pt()<10) passKin=false;
         }else if(lid==11){
           if(leptons[ilep].pt()<10) passVeryLooseLepton=false;
-          if(leptons[ilep].pt()<30) passKin=false;
+          if(leptons[ilep].pt()<10) passKin=false;
         }
         //if(leptons[ilep].pt()<25) passKin=false;
 
@@ -1335,8 +1335,8 @@ int main(int argc, char* argv[])
         if(jet.pt()<15 || fabs(jet.eta())>4.7 ) continue;
 
         //mc truth for this jet
-        const reco::GenJet* genJet=jet.genJet();
-        TString jetType( genJet && genJet->pt()>0 ? "truejetsid" : "pujetsid" );
+        //const reco::GenJet* genJet=jet.genJet();
+        TString jetType( jet.genJet() && (jet.genJet())->pt()>0 ? "truejetsid" : "pujetsid" );
 
         //cross-clean with selected leptons and photons  (DISABLED AS WE NEED THOSE FOR FR STUDY)
         //double minDRlj(9999.); for(size_t ilep=0; ilep<selLeptons.size(); ilep++){if(abs(selLeptons[ilep].pdgId())>13){continue;}  minDRlj = TMath::Min( minDRlj, deltaR(jet,selLeptons[ilep]) );}  //ignore taus for the cross-cleaning
@@ -1486,7 +1486,9 @@ int main(int argc, char* argv[])
 
         for(unsigned int l1=0   ;l1<selLeptons.size();l1++){
           if(abs(selLeptons[l1].pdgId())==15)continue;
-          if( selLeptons[l1].pt()<20 ) continue;
+
+          double leadPtCutValue  = abs(selLeptons[l1].pdgId())==11 ? 30.0 : 25.0;
+          if( selLeptons[l1].pt()< leadPtCutValue ) continue;
           if(!( abs(selLeptons[l1].pdgId())==11 ? patUtils::passIso(selLeptons[l1].el,  patUtils::llvvElecIso::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut) :
                                                 patUtils::passIso(selLeptons[l1].mu,  patUtils::llvvMuonIso::Tight, patUtils::CutVersion::CutSet::Moriond17Cut)) ||
              !( abs(selLeptons[l1].pdgId())==11 ? patUtils::passId(selLeptons[l1].el, vtx[0], patUtils::llvvElecId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut, true) :
@@ -1494,7 +1496,9 @@ int main(int argc, char* argv[])
 
           for(unsigned int l2=l1+1;l2<selLeptons.size();l2++){
             if(abs(selLeptons[l2].pdgId())==15)continue;
-            if( selLeptons[l2].pt()<20 ) continue;
+
+            double trailPtCutValue = abs(selLeptons[l1].pdgId())==11 ? 15.0 : 10.0;
+            if( selLeptons[l2].pt() < trailPtCutValue ) continue;
             if(!( abs(selLeptons[l2].pdgId())==11 ? patUtils::passIso(selLeptons[l2].el,  patUtils::llvvElecIso::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut) :
                                                   patUtils::passIso(selLeptons[l2].mu,  patUtils::llvvMuonIso::Tight, patUtils::CutVersion::CutSet::Moriond17Cut)) ||
                !( abs(selLeptons[l2].pdgId())==11 ? patUtils::passId(selLeptons[l2].el, vtx[0], patUtils::llvvElecId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut, true) :
@@ -1799,9 +1803,9 @@ int main(int argc, char* argv[])
                 mon.fillHisto("tautrailerpt"    ,  chTagsMain,   selTaus.size()>1?selTaus[1].pt():-1,  weight);
                 mon.fillHisto("tautrailereta"   ,  chTagsMain,   selTaus.size()>1?selTaus[1].eta():-10, weight);
                 mon.fillHisto("taupt"           ,  chTags, selTaus.size()>0?selTaus[0].pt():-1, weight);
-                mon.fillHisto("taupt"           ,  chTags, selTaus.size()>0?selTaus[1].pt():-1, weight);
+                mon.fillHisto("taupt"           ,  chTags, selTaus.size()>1?selTaus[1].pt():-1, weight);
                 mon.fillHisto("taueta"          ,  chTagsMain,   selTaus.size()>0?selTaus[0].eta():-10, weight);
-                mon.fillHisto("taueta"          ,  chTagsMain,   selTaus.size()>0?selTaus[0].eta():-10, weight);
+                mon.fillHisto("taueta"          ,  chTagsMain,   selTaus.size()>1?selTaus[1].eta():-10, weight);
 
                 if(selLeptons.size()>=4){
                   mon.fillHisto("eventflow",   chTagsMain,                 4, weight);
@@ -1884,24 +1888,24 @@ int main(int argc, char* argv[])
             } else if (isMC && runSystematics ){
 
 	      // Control regions
-	      
+
 	      CRTypes theCR =  checkBkgCR(selLeptons, higgsCandL1, higgsCandL2, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],vtx);
-	      
+
 	      float theFRWeight=1;
 	      mon.fillHisto("CRCounts","controlPlots",theCR,1);
-	      
+
 	      if(theCR==CRTypes::CR10){
 		// CR10
 		theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR10");
-		
+
 		mon.fillHisto(TString("Hsvfit_shapes_CR10")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
 		mon.fillHisto(TString("Asvfit_shapes_CR10")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
 		// cout<<" CRTypes::CR10 - FR weight value = "<<theFRWeight<<endl;
-		
+
 	      } else if (theCR==CRTypes::CR01) {
                   // CR01
 		theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR01");
-		
+
 		mon.fillHisto(TString("Hsvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
 		mon.fillHisto(TString("Asvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
 		// cout<<" CRTypes::CR01 - FR weight value = "<<theFRWeight<<endl;
@@ -1912,10 +1916,10 @@ int main(int argc, char* argv[])
 		mon.fillHisto(TString("Hsvfit_shapes_CR11")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
 		mon.fillHisto(TString("Asvfit_shapes_CR11")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
 		// cout<<" CRTypes::CR11 - FR weight value = "<<theFRWeight<<endl;
-	      }  
+	      }
 	      // cout<<" FR weight value = "<<theFRWeight<<endl;
 	    }
-	    
+
 	    if(index==0 && selLeptons.size()>=2 && passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain ){
 	      mon.fillHisto(TString("metsys")+varNames[ivar], chTagsMain, imet.pt(), weight);
 	    }
