@@ -675,14 +675,15 @@ namespace patUtils
           case CutVersion::ICHEP16Cut :
       	  // ICHEP16 or Moriond17 selection, conditions: PU20 bx25
                switch(IsoLevel){
-                     case llvvElecIso::Veto :
-                        if( barrel && relIso < 0.175    ) return true;
-                        if( endcap && relIso < 0.159    ) return true;
-                        break;
+		 		 
+	             case llvvElecIso::Veto :
+		       if( barrel && relIso < 0.175    ) return true;
+		       if( endcap && relIso < 0.159    ) return true;
+		       break;
 
 	             case llvvElecIso::VeryLoose :
-		        if ( relIso < 0.3 ) return true;
-		        break;
+		       if ( relIso < 0.3 ) return true;
+		       break;
 
                      case llvvElecIso::Loose :
                         if( barrel && relIso < 0.0994   ) return true;
@@ -776,7 +777,6 @@ namespace patUtils
 
        case CutVersion::Moriond17Cut :
            switch(IsoLevel){
-
 	      case llvvMuonIso::VeryLoose :
 		if ( relIso < 0.3 ) return true;
 		break;
