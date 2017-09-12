@@ -26,11 +26,9 @@ scram b -j 8
 #git clone -b svFit_2015Apr03 https://github.com/veelken/SVfit_standalone.git TauAnalysis/SVfitStandalone
 
 # SVFit for 2016/2017 analyses
-git clone git@github.com:veelken/SVfit_standalone.git TauAnalysis/SVfitStandalone
-cd TauAnalysis/SVfitStandalone   # checkout needs to be done here, since it's a different repo
-git checkout HIG-16-006
-cd ../..
+git clone -b HIG-16-006 git@github.com:veelken/SVfit_standalone.git TauAnalysis/SVfitStandalone
 
+# Now our repo
 git clone https://github.com/cp3-lltautau/2l2v_fwk.git UserCode/llvv_fwk
 cd UserCode/llvv_fwk
 git checkout -b modified #copy the branch to a new one to host future modifications (ease pull request and code merging)
@@ -41,20 +39,17 @@ wget https://raw.githubusercontent.com/cms-analysis/HiggsAnalysis-CombinedLimit/
 wget https://raw.githubusercontent.com/cms-analysis/HiggsAnalysis-CombinedLimit/74x-root6/interface/th1fmorph.h -P UserCode/llvv_fwk/interface/
 find UserCode/llvv_fwk/ -type f -name '*.cc' -exec sed -i -e 's/HiggsAnalysis\/CombinedLimit\/interface\/th1fmorph.h/UserCode\/llvv_fwk\/interface\/th1fmorph.h/g' {} \;
 
-scramv1 b -j 16 #WARNING: this won't work! You first need to do "Step to use MELA" below and then compile
-```
-
 #Step to use MELA
-```bash
-cd CMSS_X_Y_Z/src
 git clone https://github.com/cms-analysis/HiggsAnalysis-ZZMatrixElement.git ZZMatrixElement
 cd ZZMatrixElement
+
+## Temporarily reverting last PR on MELA package
+git checkout 2b05a5864d8ee3f698dc521353ccb0228ce21272
 sh setup.sh -j 12
-```
-Now, ONLY after the code has finished to compile insert inside UserCode/llvv_fwk/BuildFile.xml
-``` c++
-<use name="ZZMatrixElement/MELA"/>
-scram b -j 12  
+cd ..
+
+#And compile
+scramv1 b -j 16 
 ```
 
 # An important note about PR in 80X (2016)
