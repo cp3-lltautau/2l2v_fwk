@@ -3,6 +3,8 @@
 
 #include<iostream>
 #include<vector>
+#include<fstream>
+#include<sstream>
 
 #include "TGraph.h"
 #include "TF1.h"
@@ -20,7 +22,7 @@
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
 
-#include "ZZMatrixElement/MELA/interface/Mela.h"
+//#include "ZZMatrixElement/MELA/interface/Mela.h"
 
 typedef ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > LorentzVector;
 
@@ -61,12 +63,12 @@ namespace higgs{
     TGraph* weightNarrowResonnance(bool isVBF, double mass, double Cprime, double BRnew, TFile *nrLineShapesFile, double& Norm, TString pf);
     TGraph* weightGGZZContinuum(TFile *nrLineShapesFile, double& Norm, TString pf);
 
-    double weightNarrowResonnance_MELA( Mela& mela, bool isVBF, TString MelaMode, double Cprime, double resonance, fwlite::Event& eV);  
-    float ComputeInterfWeight( Mela& mela, bool isVBF, TString MelaMode, double width, double mass, SimpleParticleCollection_t& daughters, SimpleParticleCollection_t& associated, SimpleParticleCollection_t& mothers);
+    //double weightNarrowResonnance_MELA( Mela& mela, bool isVBF, TString MelaMode, double Cprime, double resonance, fwlite::Event& eV);  
+    // float ComputeInterfWeight( Mela& mela, bool isVBF, TString MelaMode, double width, double mass, SimpleParticleCollection_t& daughters, SimpleParticleCollection_t& associated, SimpleParticleCollection_t& mothers);
     //float ComputeAllWeight( Mela& mela, bool isVBF, TString MelaMode, double kFactor, double width, double mass, SimpleParticleCollection_t& daughters, SimpleParticleCollection_t& associated, SimpleParticleCollection_t& mothers);
     TGraph* Get_NNLO_kFactors();
 
-    double weightContinuum_MELA( bool isVBF, double CP, double heavyMass);
+    //double weightContinuum_MELA( bool isVBF, double CP, double heavyMass);
     TGraph* Get_CPS_weights(double mass);
     
     //reweight to H125 interference
@@ -75,7 +77,7 @@ namespace higgs{
     //transverse mass
     double transverseMass(const LorentzVector &visible, const LorentzVector &invisible, bool assumeSameMass);
 
-    inline bool sort_CandidatesByPt_V2(const SimpleParticle_t &a, const SimpleParticle_t &b) { return a.second.Pt()>b.second.Pt(); }
+    //inline bool sort_CandidatesByPt_V2(const SimpleParticle_t &a, const SimpleParticle_t &b) { return a.second.Pt()>b.second.Pt(); }
 
   }  
 }

@@ -39,15 +39,6 @@ wget https://raw.githubusercontent.com/cms-analysis/HiggsAnalysis-CombinedLimit/
 wget https://raw.githubusercontent.com/cms-analysis/HiggsAnalysis-CombinedLimit/74x-root6/interface/th1fmorph.h -P UserCode/llvv_fwk/interface/
 find UserCode/llvv_fwk/ -type f -name '*.cc' -exec sed -i -e 's/HiggsAnalysis\/CombinedLimit\/interface\/th1fmorph.h/UserCode\/llvv_fwk\/interface\/th1fmorph.h/g' {} \;
 
-#Step to use MELA
-git clone https://github.com/cms-analysis/HiggsAnalysis-ZZMatrixElement.git ZZMatrixElement
-cd ZZMatrixElement
-
-## Temporarily reverting last PR on MELA package
-git checkout 2b05a5864d8ee3f698dc521353ccb0228ce21272
-sh setup.sh -j 12
-cd ..
-
 #And compile
 scramv1 b -j 16 
 ```
