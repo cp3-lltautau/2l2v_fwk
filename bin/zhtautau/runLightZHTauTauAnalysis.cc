@@ -628,6 +628,7 @@ int main(int argc, char* argv[])
 
      int higgsMuonCand = -1;
      int higgsEleCand  = -1;
+     double collinearMass = 0;
      //SIGNAL ANALYSIS Z+2Leptons  (no systematics taken into account here)
      if(passZmass && passZpt && (int)selLeptons.size()>=4){  //Request at least 4 leptons
        //printf("%30s %2i --> ", "BEFORE", -1); for(int l=0   ;l<(int)selLeptons.size();l++){ printf("%i ", selLeptons[l].pdgId());}printf("\n");
@@ -670,6 +671,29 @@ int main(int argc, char* argv[])
 
          if(selLeptons[higgsCandL2].pdgId() == 11) higgsEleCand =  higgsCandL2;
          if(selLeptons[higgsCandL1].pdgId() == 11) higgsEleCand =  higgsCandL1;
+
+
+         double tauCrossTau_z  = selLeptons[higgsCandL1].px() * selLeptons[higgsCandL2].py() - selLeptons[higgsCandL1].py()*selLeptons[higgsCandL2].px();
+         double tauCrossTau_z2  = selLeptons[higgsCandL1].p4().Px() * selLeptons[higgsCandL2].p4().Py() - selLeptons[higgsCandL1].p4().Py()*selLeptons[higgsCandL2].p4().Px();
+        //  double metCrossTau1_z = met.px() * selLeptons[higgsCandL1].py() - met.py() * selLeptons[higgsCandL1].px();
+        //  double metCrossTau2_z = met.px() * selLeptons[higgsCandL2].py() - met.py() * selLeptons[higgsCandL2].px();
+         //
+        //  double tau1Efraction  = tauCrossTau_z / (tauCrossTau_z + metCrossTau2_z);
+        //  double tau2Efraction  = tauCrossTau_z / (tauCrossTau_z + metCrossTau1_z);
+         //
+        //  double Den = tau1Efraction * tau2Efraction;
+
+         // if (Den > 0) collinearMass = higgsCand.mass() / ( TMath::Sqrt(tau1Efraction*tau2Efraction) );
+
+         cout << " \n---------   Testing Collinear Mass  ----------- "<<endl;
+         cout << "  Decay products pdg id:  "<< ChannelName<<"   Event id: "<<ev.eventAuxiliary().event()<< endl;
+         cout << " ---------------------------------------------- "<< endl;
+         cout << "     mass value = "<< higgsCand.mass()
+    //          << "\n   chi_1 = "<< tau1Efraction<<"  chi_2 = "<< tau2Efraction
+              << "\n Num = "<< tauCrossTau_z << "( "<<tauCrossTau_z2<<" )" << endl;//<< " Met x Tau_1 = " << metCrossTau1_z << "Met x Tau_2 = " << metCrossTau2_z << endl;
+      //   cout << " \t ------->  Collinear mass = "<< collinearMass << "  <---------" <<endl;
+
+
        }
        //std::cout << " ---------- Higgs flavour:  "<< signName + ChannelName << std::endl;
        chTagsMain.push_back(chTagsMain[chTagsMain.size()-1] + signName + ChannelName);
@@ -707,7 +731,7 @@ int main(int argc, char* argv[])
 	for (auto& tag : chTagsMain){
 		TString newTag = tag+"_passZpt";
 		chTagsMain.push_back(newTag);
-	}	
+	}
      }
 
      mon.fillHisto("eventflow"       , chTagsMain,                 0, weight);
@@ -778,11 +802,11 @@ int main(int argc, char* argv[])
          bool passHiggs = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],true,vtx);
 
          if(passHiggs){
-           std::cout<<" Leptons cut used for higgs selection optimization:\n"
-                    <<" IsoEle = "<<optim_Cuts_elIso[index]<<" IsoMu = "<<optim_Cuts_muIso[index]
-                    <<" IsoTau = "<<tauIDiso[optim_Cuts_taIso[index]] <<" SumPt = "<<optim_Cuts_sumPt[index]<<std::endl;
-           std::cout<<" Higgs cut status: "<< (passHiggs ? "PASSED" : "NOT PASSED") << std::endl;
-           std::cout<<" Masses values:   A = "<<higgsCand_SVFit.mass()<<" GeV --  H = "<<higgsCandH_SVFit.mass()<<" GeV"<<std::endl;
+          //  std::cout<<" Leptons cut used for higgs selection optimization:\n"
+          //           <<" IsoEle = "<<optim_Cuts_elIso[index]<<" IsoMu = "<<optim_Cuts_muIso[index]
+          //           <<" IsoTau = "<<tauIDiso[optim_Cuts_taIso[index]] <<" SumPt = "<<optim_Cuts_sumPt[index]<<std::endl;
+          //  std::cout<<" Higgs cut status: "<< (passHiggs ? "PASSED" : "NOT PASSED") << std::endl;
+          //  std::cout<<" Masses values:   A = "<<higgsCand_SVFit.mass()<<" GeV --  H = "<<higgsCandH_SVFit.mass()<<" GeV"<<std::endl;
 
            mon.fillHisto(TString("Hsvfit_shapes"),chTagsMain,index,higgsCandH_SVFit.mass(),weight);
            mon.fillHisto(TString("Asvfit_shapes"),chTagsMain,index,higgsCand_SVFit.mass(),weight);
