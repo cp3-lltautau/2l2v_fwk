@@ -1667,7 +1667,7 @@ int main(int argc, char* argv[])
         for(unsigned int l1=0   ;l1<selLeptons.size();l1++){
           if(abs(selLeptons[l1].pdgId())==15)continue;
 
-          double leadPtCutValue  = abs(selLeptons[l1].pdgId())==11 ? 30.0 : 25.0;
+          double leadPtCutValue  = abs(selLeptons[l1].pdgId())==11 ? 24.0 : 18.0;
           if( selLeptons[l1].pt()< leadPtCutValue ) continue;
           if(!( abs(selLeptons[l1].pdgId())==11 ? patUtils::passIso(selLeptons[l1].el,  patUtils::llvvElecIso::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut) :
                                                 patUtils::passIso(selLeptons[l1].mu,  patUtils::llvvMuonIso::Tight, patUtils::CutVersion::CutSet::Moriond17Cut)) ||
@@ -1677,7 +1677,7 @@ int main(int argc, char* argv[])
           for(unsigned int l2=l1+1;l2<selLeptons.size();l2++){
             if(abs(selLeptons[l2].pdgId())==15)continue;
 
-            double trailPtCutValue = abs(selLeptons[l1].pdgId())==11 ? 15.0 : 10.0;
+            double trailPtCutValue = abs(selLeptons[l1].pdgId())==11 ? 13.0 : 10.0;
             if( selLeptons[l2].pt() < trailPtCutValue ) continue;
             if(!( abs(selLeptons[l2].pdgId())==11 ? patUtils::passIso(selLeptons[l2].el,  patUtils::llvvElecIso::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut) :
                                                   patUtils::passIso(selLeptons[l2].mu,  patUtils::llvvMuonIso::Tight, patUtils::CutVersion::CutSet::Moriond17Cut)) ||
