@@ -19,7 +19,7 @@
 #include "DataFormats/PatCandidates/interface/Tau.h"
 #include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
 #include "DataFormats/PatCandidates/interface/GenericParticle.h"
-//#include "RecoTauTag/TauTagTools/interface/GeneratorTau.h"
+#include "RecoTauTag/TauTagTools/interface/GeneratorTau.h"
 
 #include "CondFormats/JetMETObjects/interface/JetResolution.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
@@ -475,6 +475,29 @@ std::vector<patUtils::GenericLepton> getTauVariations( std::vector<patUtils::Gen
   return selLeptonsNew;
 }
 
+//**********************************************************************************************//
+int tauDecayMode(const reco::GenParticle *genParticle)
+//**********************************************************************************************//
+{
+  int decayType = 0;
+  const reco::GenParticleRefVector& daughterRefs = (*genParticle).daughterRefVector();
+
+  for(auto& daughterRef: daughterRefs) {
+     const reco::GenParticle *daughter(daughterRef.get());
+     int dpdgId = fabs(daughter->pdgId());
+     if (dpdgId == 13 or dpdgId == 11 or dpdgId == 111 or dpdgId == 211 or dpdgId == 311 or dpdgId == 321){
+       if (dpdgId == 13) decayType = 1;
+       if (dpdgId == 11) decayType = 2;
+       if (dpdgId == 111 or dpdgId == 211 or dpdgId == 311 or dpdgId == 321) decayType = 3;
+       return decayType;
+     }
+     else if (dpdgId == 15){
+       return tauDecayMode(daughter);
+     }
+   }
+  return decayType; // Unknown hadronic decay mode
+}
+
 int main(int argc, char* argv[])
 {
   //##############################################
@@ -590,6 +613,47 @@ int main(int argc, char* argv[])
   h1->GetXaxis()->SetBinLabel(11,"#Delta #phi Z-MET");
   h1->GetXaxis()->SetBinLabel(12,"di-#tau Cand");
 
+  TH2 *eventflow_hMC= (TH2*) mon.addHistogram( new TH2F ("eventflow_hMC", ";;Events", 13,0,13,10,0,10) );
+  eventflow_hMC->GetXaxis()->SetBinLabel(1,"InitialEv");
+  eventflow_hMC->GetXaxis()->SetBinLabel(2,"Trigger");
+  eventflow_hMC->GetXaxis()->SetBinLabel(3,"METFilter");
+  eventflow_hMC->GetXaxis()->SetBinLabel(4,"Zcandidate");
+  eventflow_hMC->GetXaxis()->SetBinLabel(5,"Nlep#geq2");
+  eventflow_hMC->GetXaxis()->SetBinLabel(6,"Zmass");
+  eventflow_hMC->GetXaxis()->SetBinLabel(7,"Zkin");
+  eventflow_hMC->GetXaxis()->SetBinLabel(8,"Nlep+Ntau#geq4");
+  eventflow_hMC->GetXaxis()->SetBinLabel(9,"Lep Veto");
+  eventflow_hMC->GetXaxis()->SetBinLabel(10,"Btag Veto");
+  eventflow_hMC->GetXaxis()->SetBinLabel(11,"#Delta #phi Z-MET");
+  eventflow_hMC->GetXaxis()->SetBinLabel(12,"di-#tau Cand");
+  eventflow_hMC->GetYaxis()->SetBinLabel(1,"Unknown");
+  eventflow_hMC->GetYaxis()->SetBinLabel(2,"#tau_{#mu} #tau_{#mu}");
+  eventflow_hMC->GetYaxis()->SetBinLabel(3,"#tau_{#mu} #tau_{e}");
+  eventflow_hMC->GetYaxis()->SetBinLabel(4,"#tau_{#mu} #tau_{h}");
+  eventflow_hMC->GetYaxis()->SetBinLabel(5,"#tau_{e} #tau_{e}");
+  eventflow_hMC->GetYaxis()->SetBinLabel(6,"");
+  eventflow_hMC->GetYaxis()->SetBinLabel(7,"#tau_{e} #tau_{h}");
+  eventflow_hMC->GetYaxis()->SetBinLabel(8,"");
+  eventflow_hMC->GetYaxis()->SetBinLabel(10,"#tau_{h} #tau_{h}");
+
+  TH2 *eventflow_ZMC= (TH2*) mon.addHistogram( new TH2F ("eventflow_ZMC", ";;Events", 13,0,13,4,0,4) );
+  eventflow_ZMC->GetXaxis()->SetBinLabel(1,"InitialEv");
+  eventflow_ZMC->GetXaxis()->SetBinLabel(2,"Trigger");
+  eventflow_ZMC->GetXaxis()->SetBinLabel(3,"METFilter");
+  eventflow_ZMC->GetXaxis()->SetBinLabel(4,"Zcandidate");
+  eventflow_ZMC->GetXaxis()->SetBinLabel(5,"Nlep#geq2");
+  eventflow_ZMC->GetXaxis()->SetBinLabel(6,"Zmass");
+  eventflow_ZMC->GetXaxis()->SetBinLabel(7,"Zkin");
+  eventflow_ZMC->GetXaxis()->SetBinLabel(8,"Nlep+Ntau#geq4");
+  eventflow_ZMC->GetXaxis()->SetBinLabel(9,"Lep Veto");
+  eventflow_ZMC->GetXaxis()->SetBinLabel(10,"Btag Veto");
+  eventflow_ZMC->GetXaxis()->SetBinLabel(11,"#Delta #phi Z-MET");
+  eventflow_ZMC->GetXaxis()->SetBinLabel(12,"di-#tau Cand");
+  eventflow_ZMC->GetYaxis()->SetBinLabel(1,"Z #rightarrow #mu#mu");
+  eventflow_ZMC->GetYaxis()->SetBinLabel(2,"Z #rightarrow ee");
+  eventflow_ZMC->GetYaxis()->SetBinLabel(3,"Z #rightarrow #tau#tau");
+  eventflow_ZMC->GetYaxis()->SetBinLabel(4,"Z #rightarrow #nu or quarks");
+
   TH1 *h1_NoW=mon.addHistogram( new TH1F ("eventflowNoWeights", ";;Events", 13,0,13) );
   h1_NoW->GetXaxis()->SetBinLabel(1,"InitialEv");
   h1_NoW->GetXaxis()->SetBinLabel(2,"Trigger");
@@ -665,6 +729,11 @@ int main(int argc, char* argv[])
   h3->GetXaxis()->SetBinLabel(10,"OS #mu#mue#tau");
   h3->GetXaxis()->SetBinLabel(11,"OS #mu#mu#mu#tau");
   h3->GetXaxis()->SetBinLabel(12,"OS #mu#mu#tau#tau");
+
+  TH1 *h_jetID = mon.addHistogram( new TH1F ("jetId",";;Events",3,0,3));
+  h_jetID->GetXaxis()->SetBinLabel(1,"PFloose");
+  h_jetID->GetXaxis()->SetBinLabel(2,"LooseSimplePUId");
+  h_jetID->GetXaxis()->SetBinLabel(3,"PFloose & LooseSimplePUId");
 
   mon.addHistogram( new TH1F( "muiso"     ,  ";I_{#mu};Events", 100,0.,1.) );
   mon.addHistogram( new TH1F( "eleiso"     ,  ";I_{ele};Events", 100,0.,1.) );
@@ -763,7 +832,7 @@ int main(int argc, char* argv[])
 
   std::vector<double> eleIsoValues = {0.3, 0.2, 0.1};
   std::vector<double> muIsoValues  = {0.3, 0.2, 0.1};
-  std::vector<const char*> tauIDiso = {"byLooseCombinedIsolationDeltaBetaCorr3Hits","byMediumCombinedIsolationDeltaBetaCorr3Hits"};
+  std::vector<const char*> tauIDiso = {"byLooseIsolationMVArun2v1DBoldDMwLT","byMediumIsolationMVArun2v1DBoldDMwLT"};
   // std::vector<const char*> tauIDiso = {"byLooseCombinedIsolationDeltaBetaCorr3Hits","byLooseIsolationMVArun2v1DBoldDMwLT",
   //                                       "byLooseIsolationMVArun2v1DBdR03oldDMwLT"};
 
@@ -797,6 +866,8 @@ int main(int argc, char* argv[])
   //     }
   //   }
   // }
+  mon.addHistogram( new TH2F("NLep_vs_TauDecay",";NLep; #tau decay mode",8,0,8,10,0,10));
+  mon.addHistogram( new TH2F("NTau_vs_TauDecay",";NTau; #tau decay mode",4,0,4,10,0,10));
 
   TH2F* Hoptim_cuts  =(TH2F*)mon.addHistogram(new TProfile2D("optim_cut",      ";cut index;variable",       optim_Cuts_sumPt.size(),0,optim_Cuts_sumPt.size(), 4, 0, 4)) ;
   Hoptim_cuts->GetYaxis()->SetBinLabel(1, "eIso<");
@@ -1024,6 +1095,8 @@ int main(int argc, char* argv[])
 
       reco::GenParticleCollection gen;
       GenEventInfoProduct eventInfo;
+      int decayType = 0;
+      int ZbosonType = -1;
       if(isMC){
         fwlite::Handle< reco::GenParticleCollection > genHandle;
         genHandle.getByLabel(ev, "prunedGenParticles");
@@ -1056,23 +1129,38 @@ int main(int argc, char* argv[])
         weight *= puWeight;
 
         //Higgs GEN Level flavour
-        //if(isMC){
-        //  for( auto& genParticle : gen){
-        //    if( abs( genParticle.pdgId() )  == 25 && genParticle.status() == 62){
+        if(isMC){
 
-        //      const reco::GenParticleRefVector& daughterRefs = genParticle.daughterRefVector();
-        //      for(auto& daughter: daughterRefs) {
-        //        const reco::GenParticle *tau(daughter.get());
-        //        GeneratorTau tauGEN = (*tau);
-	//               cout<<"    - Daughter "<<daughter->pdgId()<<"    "<< tauGEN.computeDecayMode(tau) <<endl;
-        //       }
-        //      // for (int i=0; i<genParticle.numberOfDaughters(); i++){
-        //      //   auto tau = genParticle.daughter(i);
-        //      //   cout<<" Tau: "<<genParticle.pdgId()<<endl;//gen[k].daughter(0)->pdgId()<<  "  pt: "<<gen[k].daughter(0)->pt()<<endl;
-        //      // }
-        //    }
-        //  }
-        //}
+          for( auto& genParticle : gen){
+            if( abs( genParticle.pdgId() )  == 23 && genParticle.status() == 62){
+              const reco::GenParticleRefVector& daughterRefs = genParticle.daughterRefVector();
+              for(auto& daughter: daughterRefs) {
+                const reco::GenParticle *lepton(daughter.get());
+                int lpdgId = abs(lepton->pdgId());
+                ZbosonType = 3;
+                if( lpdgId == 13 ) ZbosonType = 0;
+                if( lpdgId == 11 ) ZbosonType = 1;
+                if( lpdgId == 15 ) ZbosonType = 2;
+              }
+            }
+            if( abs( genParticle.pdgId() )  == 25 && genParticle.status() == 62){
+
+              const reco::GenParticleRefVector& daughterRefs = genParticle.daughterRefVector();
+              decayType = 1;
+	             for(auto& daughter: daughterRefs) {
+                 const reco::GenParticle *tau(daughter.get());
+                 decayType *= tauDecayMode(tau);
+    //             GeneratorTau tauGEN = (*tau);
+		// if (tauGEN.computeDecayMode(tau)==0) decayType *= 2; //electron decay
+		// if (tauGEN.computeDecayMode(tau)==1) decayType *= 1; //muon decay
+		// if (tauGEN.computeDecayMode(tau)>1) decayType *= 3;  //hadron decay
+		// if (tauGEN.computeDecayMode(tau)==8) decayType = 0;
+
+	          //     cout<<"    - Daughter "<<daughter->pdgId()<<"    "<< tauGEN.computeDecayMode(tau) <<endl;
+               }
+            }
+          }
+        }
         //GEN LEVEL FILTERING
         if(isMC && (mctruthmode==15 || mctruthmode==1113)){// && (string(dtag.Data()).find("Z#rightarrow")==0 || isMC_ZZ2l2nu))
         int prodId = 1;
@@ -1148,18 +1236,24 @@ int main(int argc, char* argv[])
     mon.fillHisto("eventflow"           , "all", 0, weight);
     mon.fillHisto("eventflowNoWeights"  , "all", 0, 1);
     mon.fillHisto("eventflowNoLepSF"    , "all", 0, weightNoLepSF);
+    mon.fillHisto("eventflow_hMC"    , "all", 0, decayType, weightNoLepSF);
+    mon.fillHisto("eventflow_ZMC"    , "all", 0, ZbosonType, weightNoLepSF);
 
     if(!passTrigger)continue;
 
     mon.fillHisto("eventflow"           , "all", 1, weight);
     mon.fillHisto("eventflowNoWeights"  , "all", 1, 1);
     mon.fillHisto("eventflowNoLepSF"    , "all", 1, weightNoLepSF);
+    mon.fillHisto("eventflow_hMC"    , "all", 1, decayType, weightNoLepSF);
+    mon.fillHisto("eventflow_ZMC"    , "all", 1, ZbosonType, weightNoLepSF);
     //##############################################   EVENT PASSED THE TRIGGER   ######################################
 	  if (metFilterValue==10 || metFilterValue==11) { metFilterValue=0; }
           if( metFilterValue!=0 ) continue;	 //Note this must also be applied on MC
     mon.fillHisto("eventflow"           , "all", 2, weight);
     mon.fillHisto("eventflowNoWeights"  , "all", 2, 1);
     mon.fillHisto("eventflowNoLepSF"    , "all", 2, weightNoLepSF);
+    mon.fillHisto("eventflow_hMC"    , "all", 2, decayType, weightNoLepSF);
+    mon.fillHisto("eventflow_ZMC"    , "all", 2, ZbosonType, weightNoLepSF);
 
 
 	  // Apply Bad Charged Hadron and Bad Muon Filters from MiniAOD (for Run II 2016 only )
@@ -1475,7 +1569,7 @@ int main(int argc, char* argv[])
 
         bool overlapWithLepton(false);
         for(int l1=0; l1<(int)selLeptons.size();++l1){
-          if(deltaR(tau, selLeptons[l1])<0.1){overlapWithLepton=true; break;}
+          if(deltaR(tau, selLeptons[l1])< (selLeptons[l1].pdgId() == 15 ? 0.5 : 0.3) ){overlapWithLepton=true; break;}
         }
         if(overlapWithLepton) continue;
 
@@ -1526,6 +1620,7 @@ int main(int argc, char* argv[])
         //jet id
         bool passPFloose = patUtils::passPFJetID("Loose", jet);
         bool passLooseSimplePuId = patUtils::passPUJetID(jet); //FIXME Broken in miniAOD V2 : waiting for JetMET fix. (Hugo)
+        //bool passLooseSimplePuId = jet.userInt("pileupJetId:fullId") & (1 << 2);
         if(jet.pt()>30){
           mon.fillHisto(jetType,"",fabs(jet.eta()),0);
           if(passPFloose)                        mon.fillHisto("jetId", jetType,fabs(jet.eta()),1);
@@ -1536,7 +1631,12 @@ int main(int argc, char* argv[])
 
 
         //check for btagging
-        if(jet.pt()>30 && fabs(jet.eta())<2.5){
+        bool overlapWithTau(false);
+        for(int l1=0; l1<(int)selTaus.size();++l1){
+          if(deltaR(jet, selTaus[l1])< 0.5  ){overlapWithTau=true; break;}
+        }
+
+        if(!overlapWithTau && jet.pt()>30 && fabs(jet.eta())<2.5){
           bool hasCSVtag = (jet.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags")>btagLoose);
           bool hasCSVtagUp = hasCSVtag;
           bool hasCSVtagDown = hasCSVtag;
@@ -1667,22 +1767,22 @@ int main(int argc, char* argv[])
         for(unsigned int l1=0   ;l1<selLeptons.size();l1++){
           if(abs(selLeptons[l1].pdgId())==15)continue;
 
-          double leadPtCutValue  = abs(selLeptons[l1].pdgId())==11 ? 30.0 : 25.0;
+          double leadPtCutValue  = abs(selLeptons[l1].pdgId())==11 ? 24.0 : 18.0;
           if( selLeptons[l1].pt()< leadPtCutValue ) continue;
-          if(!( abs(selLeptons[l1].pdgId())==11 ? patUtils::passIso(selLeptons[l1].el,  patUtils::llvvElecIso::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut) :
-                                                patUtils::passIso(selLeptons[l1].mu,  patUtils::llvvMuonIso::Tight, patUtils::CutVersion::CutSet::Moriond17Cut)) ||
-             !( abs(selLeptons[l1].pdgId())==11 ? patUtils::passId(selLeptons[l1].el, vtx[0], patUtils::llvvElecId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut, true) :
-                                                patUtils::passId(selLeptons[l1].mu, vtx[0], patUtils::llvvMuonId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut)) ) continue;
+          // if(!( abs(selLeptons[l1].pdgId())==11 ? patUtils::passIso(selLeptons[l1].el,  patUtils::llvvElecIso::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut) :
+          //                                       patUtils::passIso(selLeptons[l1].mu,  patUtils::llvvMuonIso::Tight, patUtils::CutVersion::CutSet::Moriond17Cut)) ||
+          //    !( abs(selLeptons[l1].pdgId())==11 ? patUtils::passId(selLeptons[l1].el, vtx[0], patUtils::llvvElecId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut, true) :
+          //                                       patUtils::passId(selLeptons[l1].mu, vtx[0], patUtils::llvvMuonId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut)) ) continue;
 
           for(unsigned int l2=l1+1;l2<selLeptons.size();l2++){
             if(abs(selLeptons[l2].pdgId())==15)continue;
 
-            double trailPtCutValue = abs(selLeptons[l1].pdgId())==11 ? 15.0 : 10.0;
+            double trailPtCutValue = abs(selLeptons[l1].pdgId())==11 ? 13.0 : 10.0;
             if( selLeptons[l2].pt() < trailPtCutValue ) continue;
-            if(!( abs(selLeptons[l2].pdgId())==11 ? patUtils::passIso(selLeptons[l2].el,  patUtils::llvvElecIso::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut) :
-                                                  patUtils::passIso(selLeptons[l2].mu,  patUtils::llvvMuonIso::Tight, patUtils::CutVersion::CutSet::Moriond17Cut)) ||
-               !( abs(selLeptons[l2].pdgId())==11 ? patUtils::passId(selLeptons[l2].el, vtx[0], patUtils::llvvElecId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut, true) :
-                                                  patUtils::passId(selLeptons[l2].mu, vtx[0], patUtils::llvvMuonId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut)) ) continue;
+            // if(!( abs(selLeptons[l2].pdgId())==11 ? patUtils::passIso(selLeptons[l2].el,  patUtils::llvvElecIso::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut) :
+            //                                       patUtils::passIso(selLeptons[l2].mu,  patUtils::llvvMuonIso::Tight, patUtils::CutVersion::CutSet::Moriond17Cut)) ||
+            //    !( abs(selLeptons[l2].pdgId())==11 ? patUtils::passId(selLeptons[l2].el, vtx[0], patUtils::llvvElecId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut, true) :
+            //                                       patUtils::passId(selLeptons[l2].mu, vtx[0], patUtils::llvvMuonId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut)) ) continue;
 
             if(abs(selLeptons[l1].pdgId())!=abs(selLeptons[l2].pdgId())) continue; 				 //SAME FLAVOUR PAIR
             if(selLeptons[l1].pdgId()*selLeptons[l2].pdgId()>=0) continue;					 //OPPOSITE SIGN
@@ -1737,11 +1837,13 @@ int main(int argc, char* argv[])
           mon.fillHisto("eventflow"           , chTags, 3, weight);
           mon.fillHisto("eventflowNoWeights"  , chTags, 3, 1);
           mon.fillHisto("eventflowNoLepSF"    , chTags, 3, weightNoLepSF);
+          mon.fillHisto("eventflow_hMC"       , chTags, 3, decayType, weightNoLepSF);
+          mon.fillHisto("eventflow_ZMC"       , chTags, 3, ZbosonType, weightNoLepSF);
           mon.fillHisto("zllmass","controlPlots",zll.mass(),weight);
         }
 
 
-  	bool passZmass = (fabs(zll.mass()-91.2)<15);
+  	bool passZmass = (fabs(zll.mass()-91.2)<30.0);
         bool passZpt   = (zll.pt()>20);
         bool passMass = passZmass;
         bool passBJetVetoMain = (nbtags ==0);
@@ -1943,7 +2045,7 @@ int main(int argc, char* argv[])
 
           passDPhiCut    =  (fabs(deltaPhi(zll.phi(), met.phi()))>1.5);
           passHiggsLoose = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, 0.3, 0.3, "decayModeFinding", 0., false, vtx);
-          passHiggsMain  = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, 0.1, 0.15, "byLooseCombinedIsolationDeltaBetaCorr3Hits", 20., true, vtx);
+          passHiggsMain  = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, 0.1, 0.15, "byMediumIsolationMVArun2v1DBoldDMwLT", 0., true, vtx);
 
           //SVFIT MASS
           higgsCand_SVFit = higgsCand;
@@ -1978,14 +2080,20 @@ int main(int argc, char* argv[])
           // mon.fillHisto("eventflowNoLepSF"    , chTagsMain, 4, weightNoLepSF);
           if(selLeptons.size()>=2){
             mon.fillHisto("nlep"           ,   chTags, selLeptons.size(), weight);
+            mon.fillHisto("NLep_vs_TauDecay"           ,   chTags, selLeptons.size(), decayType,weight);
+            mon.fillHisto("NTau_vs_TauDecay"           ,   chTags, selTaus.size(), decayType,weight);
             mon.fillHisto("eventflow"           , chTagsMain, 4, weight);
             mon.fillHisto("eventflowNoWeights"  , chTagsMain, 4, 1);
             mon.fillHisto("eventflowNoLepSF"    , chTagsMain, 4, weightNoLepSF);
+            mon.fillHisto("eventflow_hMC"       , chTagsMain, 4, decayType, weightNoLepSF);
+            mon.fillHisto("eventflow_ZMC"       , chTagsMain, 4, ZbosonType, weightNoLepSF);
             mon.fillHisto("zllmass"          ,   chTagsMain, zll.mass(),    weight);
             if(passZmass){
               mon.fillHisto("eventflow"           , chTagsMain, 5, weight);
               mon.fillHisto("eventflowNoWeights"  , chTagsMain, 5, 1);
               mon.fillHisto("eventflowNoLepSF"    , chTagsMain, 5, weightNoLepSF);
+              mon.fillHisto("eventflow_hMC"       , chTagsMain, 5, decayType, weightNoLepSF);
+              mon.fillHisto("eventflow_ZMC"       , chTagsMain, 5, ZbosonType, weightNoLepSF);
               //pu control
               mon.fillHisto("nvtx"        ,   chTagsMain, vtx.size(),      weight);
               mon.fillHisto("nvtxraw"     ,   chTagsMain, vtx.size(),      weight/puWeight);
@@ -2011,6 +2119,8 @@ int main(int argc, char* argv[])
                 mon.fillHisto("eventflow"           , chTagsMain, 6, weight);
                 mon.fillHisto("eventflowNoWeights"  , chTagsMain, 6, 1);
                 mon.fillHisto("eventflowNoLepSF"    , chTagsMain, 6, weightNoLepSF);
+                mon.fillHisto("eventflow_hMC"       , chTagsMain, 6, decayType, weightNoLepSF);
+                mon.fillHisto("eventflow_ZMC"       , chTagsMain, 6, ZbosonType, weightNoLepSF);
 
                 mon.fillHisto("ntaus"           ,  chTags, selTaus.size(), weight);
                 mon.fillHisto("tauleadpt"       ,  chTagsMain,   selTaus.size()>0?selTaus[0].pt():-1,  weight);
@@ -2026,6 +2136,8 @@ int main(int argc, char* argv[])
                   mon.fillHisto("eventflow"           , chTagsMain, 7, weight);
                   mon.fillHisto("eventflowNoWeights"  , chTagsMain, 7, 1);
                   mon.fillHisto("eventflowNoLepSF"    , chTagsMain, 7, weightNoLepSF);
+                  mon.fillHisto("eventflow_hMC"       , chTagsMain, 7, decayType, weightNoLepSF);
+                  mon.fillHisto("eventflow_ZMC"       , chTagsMain, 7, ZbosonType, weightNoLepSF);
                   mon.fillHisto("yields"          ,"all_4Lep",                HiggsShortId, weight);
                   mon.fillHisto("yields"          ,"all_4Lep_NoWeigth",                HiggsShortId, 1);
                   if (higgsMuonCand > -1)
@@ -2058,6 +2170,9 @@ int main(int argc, char* argv[])
                     mon.fillHisto("eventflow"           , chTagsMain, 8, weight);
                     mon.fillHisto("eventflowNoWeights"  , chTagsMain, 8, 1);
                     mon.fillHisto("eventflowNoLepSF"    , chTagsMain, 8, weightNoLepSF);
+                    mon.fillHisto("eventflow_hMC"       , chTagsMain, 8, decayType, weightNoLepSF);
+                    mon.fillHisto("eventflow_ZMC"       , chTagsMain, 8, ZbosonType, weightNoLepSF);
+
                     mon.fillHisto("nbtags"    , chTags, nbtags,  weight);
                     mon.fillHisto("njets"     , chTags, njets,   weight);
 
@@ -2065,22 +2180,29 @@ int main(int argc, char* argv[])
                       mon.fillHisto("eventflow"           , chTagsMain, 9, weight);
                       mon.fillHisto("eventflowNoWeights"  , chTagsMain, 9, 1);
                       mon.fillHisto("eventflowNoLepSF"    , chTagsMain, 9, weightNoLepSF);
+                      mon.fillHisto("eventflow_hMC"       , chTagsMain, 9, decayType, weightNoLepSF);
+                      mon.fillHisto("eventflow_ZMC"       , chTagsMain, 9, ZbosonType, weightNoLepSF);
 
                       mon.fillHisto("dPhi_AZ"    , chTagsMain, deltaPhi(higgsCand.phi(), zll.phi()),    weight);
                       mon.fillHisto("dPhi_AMet"  , chTagsMain, deltaPhi(higgsCand.phi(), met.phi()),    weight);
                       mon.fillHisto("dPhi_ZMet"  , chTagsMain, deltaPhi(zll.phi(), met.phi()),    weight);
                       mon.fillHisto("met"      	, chTagsMain, met.pt()         , weight);
 
-                      if(passDPhiCut){
+                      if(true){//if(passDPhiCut){
                         mon.fillHisto("eventflow"           , chTagsMain, 10, weight);
                         mon.fillHisto("eventflowNoWeights"  , chTagsMain, 10, 1);
                         mon.fillHisto("eventflowNoLepSF"    , chTagsMain, 10, weightNoLepSF);
+                        mon.fillHisto("eventflow_hMC"       , chTagsMain, 10, decayType, weightNoLepSF);
+                        mon.fillHisto("eventflow_ZMC"       , chTagsMain, 10, ZbosonType, weightNoLepSF);
                         if(passHiggsLoose){
                           mon.fillHisto("sumpt",   chTagsMain, selLeptons[higgsCandL1].pt()+selLeptons[higgsCandL2].pt(), weight);
                           if(passHiggsMain){
                             mon.fillHisto("eventflow"           , chTagsMain, 11, weight);
                             mon.fillHisto("eventflowNoWeights"  , chTagsMain, 11, 1);
                             mon.fillHisto("eventflowNoLepSF"    , chTagsMain, 11, weightNoLepSF);
+                            mon.fillHisto("eventflow_hMC"       , chTagsMain, 11, decayType, weightNoLepSF);
+                            mon.fillHisto("eventflow_ZMC"       , chTagsMain, 11, ZbosonType, weightNoLepSF);
+
                             mon.fillHisto("yields"          ,chTagsMain,                HiggsShortId, weight);
                             mon.fillHisto("yieldsOS"     ,chTagsMain,                HiggsShortId, weight);
 

@@ -27,7 +27,7 @@ if [[ $# -ge 4 ]]; then echo "Additional arguments will be considered: "$argumen
 #--------------------------------------------------
 # Global Variables
 #--------------------------------------------------
-SUFFIX=_2017_08_30
+SUFFIX=_2017_10_6
 #SUFFIX=$(date +"_%Y_%m_%d")
 MAINDIR=$CMSSW_BASE/src/UserCode/llvv_fwk/test/zhtautau
 JSON=$MAINDIR/samples.json
@@ -58,7 +58,7 @@ case $step in
 	queue='8nh'
 	#IF CRAB3 is provided in argument, use crab submissiong instead of condor/lsf
 	if [[ $arguments == *"crab3"* ]]; then queue='crab3' ;fi
-	runAnalysisOverSamples.py -e runZHTauTauAnalysis -j $JSON -o $RESULTSDIR  -c $MAINDIR/../runAnalysis_cfg.py.templ -p "@useMVA=True @saveSummaryTree=True @runSystematics=True @automaticSwitch=False @is2011=False @jacknife=0 @jacks=0 @data_pileup=datapileup_latest" -s $queue --report True $arguments
+	runAnalysisOverSamples.py -e runZHTauTauAnalysis -j $JSON -o $RESULTSDIR  -c $MAINDIR/../runAnalysis_cfg.py.templ -p "@useMVA=True @saveSummaryTree=True @runSystematics=False @automaticSwitch=False @is2011=False @jacknife=0 @jacks=0 @data_pileup=datapileup_latest" -s $queue --report True $arguments
 	;;
 
     1.1)  #submit jobs for 2l2v photon jet analysis
@@ -187,7 +187,7 @@ case $step in
            echo "WARNING: $RESULTSDIR/LUMI.txt file is missing so use fixed integrated luminosity value, this might be different than the dataset you ran on"
         fi
 	echo "MAKE PLOTS AND SUMMARY ROOT FILE, BASED ON AN INTEGRATED LUMINOSITY OF $INTLUMI"
-	runPlotter --iEcm 13 --iLumi $INTLUMI --inDir $RESULTSDIR/ --outDir $PLOTSDIR/ --outFile $PLOTTER.root  --json $JSON --no2D $arguments
+	runPlotter --iEcm 13 --iLumi $INTLUMI --inDir $RESULTSDIR/ --outDir $PLOTSDIR/ --outFile $PLOTTER.root --no2D --json $JSON $arguments
 	ln -s -f $PLOTTER.root $MAINDIR/plotter.root
 	;;
 

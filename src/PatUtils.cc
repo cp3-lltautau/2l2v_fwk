@@ -644,7 +644,7 @@ namespace patUtils
                         if( barrel && relIso < 0.126    ) return true;
                         if( endcap && relIso < 0.144    ) return true;
                         break;
-			
+
 		     case llvvElecIso::VeryLoose :
 		        if ( relIso < 0.3 ) return true;
 			break;
@@ -675,7 +675,7 @@ namespace patUtils
           case CutVersion::ICHEP16Cut :
       	  // ICHEP16 or Moriond17 selection, conditions: PU20 bx25
                switch(IsoLevel){
-		 		 
+
 	             case llvvElecIso::Veto :
 		       if( barrel && relIso < 0.175    ) return true;
 		       if( endcap && relIso < 0.159    ) return true;
@@ -1092,11 +1092,12 @@ namespace patUtils
 
 
   bool passPFJetID(std::string label,
-                  pat::Jet jet){
+                  pat::Jet jetCorr){
 
     bool passID = false;
+    const pat::Jet jet = jetCorr.correctedJet("Uncorrected");
 
-    float rawJetEn(jet.correctedJet("Uncorrected").energy() );
+    float rawJetEn(jet.energy() );
     // Note: All fractions are calculated with the raw/uncorrected energy of the jet (only then they add up to unity). So the PF JetID has to be applied before the jet energy corrections.
 
     float nhf( (jet.neutralHadronEnergy() + jet.HFHadronEnergy())/rawJetEn );
