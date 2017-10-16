@@ -16,6 +16,9 @@ from DataFormats.FWLite import Events, Handle
 from math import *
 from array import array
 
+global _debug
+_debug = False
+
 def isAncestor(a,p) :
         if a == p :
                 return True
@@ -53,11 +56,20 @@ class genParticle(baseParticle):
         self.decayProducts = self.getDaughters(prunedParticle)
         self.leading  = self.getDaughters(prunedParticle)[0]
         self.trailing = self.getDaughters(prunedParticle)[1]
+        self.muonicTauPt = 0.0
+        self.electronicTauPt = 0.0
+        self.muonicTauEta = 0.0
+        self.electronicTauEta = 0.0
         if len(self.decayProducts)>1:
             mother = self.leading.p4 + self.trailing.p4
             self.motherMass = mother.M()
         self.decayMode  = abs(self.leading.pdgId)
-        self.tausFinalState = self.getTau1Flavour() * self.getTau2Flavour()
+        self.tausFinalState = 0
+        self.tausFinalStateNew = 0
+        if( self.pdgId ==  25 ):
+            #self.tausFinalState = self.getTau1Flavour() * self.getTau2Flavour()
+            self.tausFinalStateNew = self.getTauDecayMode(self.leading.prunedParticle) * self.getTauDecayMode(self.trailing.prunedParticle)
+
 
     def getDaughters(self, p):
         fermions = []
@@ -75,27 +87,75 @@ class genParticle(baseParticle):
         flavour = 0
         if not abs(self.leading.pdgId) == 15:
             return flavour
+        if _debug:
+            print " First tau ---"
         if self.__isMuonDecay(self.leading.prunedParticle):     flavour = 1;
         if self.__isElectronDecay(self.leading.prunedParticle): flavour = 2;
         if self.__isHadronicDecay(self.leading.prunedParticle):   flavour = 3;
+        if _debug:
+            print "        Tau Decay Flavour:  {0}".format(flavour)
         return flavour
 
     def getTau2Flavour(self):
         flavour = 0
         if not abs(self.trailing.pdgId) == 15:
             return flavour
+        if _debug:
+            print " Second tau ---"
         if self.__isMuonDecay(self.trailing.prunedParticle):     flavour = 1;
         if self.__isElectronDecay(self.trailing.prunedParticle): flavour = 2;
         if self.__isHadronicDecay(self.trailing.prunedParticle):   flavour = 3;
+        if _debug:
+            print "        Tau Decay Flavour:  {0}".format(flavour)
         return flavour
 
+    def getTauDecayMode(self,tau):
+        flavour = 0
+        if not abs(tau.pdgId()) == 15:
+            return flavour
+
+        return self.__tauDecayMode(tau)
+
+
+    def __tauDecayMode(self,tau):
+        mode=0
+        for i in range(0, tau.numberOfDaughters()):
+            daughter = tau.daughter(i)
+            dpdgId= abs(daughter.pdgId())
+            if _debug:
+                print "  #__tauDecayMode#   Tau Daughter PdgId: {0}, status: {1}".format(daughter.pdgId(),daughter.status())
+            if dpdgId == 13 or dpdgId == 11 or dpdgId == 111 or dpdgId == 211 or dpdgId == 311 or dpdgId == 321:
+                if dpdgId == 13:
+                    mode = 1
+                    self.muonicTauPt = daughter.pt()
+                    self.muonicTauEta = daughter.eta()
+                elif dpdgId == 11:
+                    mode = 2
+                    self.electronicTauPt = daughter.pt()
+                    self.electronicTauEta = daughter.eta()
+                elif dpdgId == 111 or dpdgId == 211 or dpdgId == 311 or dpdgId == 321:
+                    mode = 3
+                return mode
+            elif abs(daughter.pdgId()) == 15:
+                if _debug:
+                    print " ."*20
+                return self.__tauDecayMode(daughter)
+        # if _debug:
+        print " --------- decayMode = {0}".format(mode)
+        return mode
 
     def __isMuonDecay(self, tau):
         isMuon = False
         for i in range(0, tau.numberOfDaughters()):
             daughter = tau.daughter(i)
+            if _debug:
+                print "  #__isMuonDecay#   Tau Daughter PdgId: {0}, status: {1}".format(daughter.pdgId(),daughter.status())
             if abs(daughter.pdgId()) == 13:
                 isMuon = True
+                self.muonicTauPt = daughter.pt()
+                return isMuon
+            elif abs(daughter.pdgId()) == 15:
+                self.__isMuonDecay(daughter)
         return isMuon
 
     def __isElectronDecay(self, tau):
@@ -104,10 +164,28 @@ class genParticle(baseParticle):
             daughter = tau.daughter(i)
             if abs(daughter.pdgId()) == 11:
                 isElectron = True
+                self.electronicTauPt = daughter.pt()
+                return isElectron
+            elif abs(daughter.pdgId()) == 15:
+                self.__isElectronDecay(daughter)
         return isElectron
 
     def __isHadronicDecay(self, tau):
-        return (not self.__isMuonDecay(tau) and not self.__isElectronDecay(tau))
+        isHadronic = False
+        for i in range(0, tau.numberOfDaughters()):
+            daughter = tau.daughter(i)
+            dpdgId= abs(daughter.pdgId())
+            if _debug:
+                print "  #__isHadronicDecay#   Tau Daughter PdgId: {0}, status: {1}".format(daughter.pdgId(),daughter.status())
+            if dpdgId == 111 or dpdgId == 211:
+                isHadronic = True
+                return isHadronic
+            elif abs(daughter.pdgId()) == 15:
+                if _debug:
+                    print "."*20
+                self.__isHadronicDecay(daughter)
+        return isHadronic
+        #return (not self.__isMuonDecay(tau) and not self.__isElectronDecay(tau))
 
 # class tauDecayMode(Enum):
 #     kMuDecay = 1
@@ -124,6 +202,7 @@ treeLumiId = array( 'i', [ 0 ] )
 treeRunId = array( 'i', [ 0 ] )
 ZDecay = array( 'i', [ 0 ] )
 HDecayMode = array( 'i', [ 0 ] )
+HDecayModeNew = array( 'i', [ 0 ] )
 pt_Z = array( 'f', [ 0 ] )
 eta_Z = array( 'f', [ 0 ] )
 mass_Z = array( 'f', [ 0 ] )
@@ -141,6 +220,11 @@ pt_lead_H = array( 'f', [ 0 ] )
 pt_trail_H = array( 'f', [ 0 ] )
 eta_lead_H = array( 'f', [ 0 ] )
 eta_trail_H = array( 'f', [ 0 ] )
+
+pt_muonic_tau = array( 'f', [ 0 ] )
+pt_electronic_tau = array( 'f', [ 0 ] )
+eta_muonic_tau = array( 'f', [ 0 ] )
+eta_electronic_tau = array( 'f', [ 0 ] )
 
 t.Branch('eventId', treeEventId , "eventId/I")
 t.Branch('lumiId' , treeLumiId  , "lumiId/I" )
@@ -165,8 +249,14 @@ t.Branch('eta_lead_H'  , eta_lead_H   , "eta_lead_H/F"  )
 t.Branch('pt_trail_H'  , pt_trail_H   , "pt_trail_H/F"  )
 t.Branch('eta_trail_H'  , eta_trail_H   , "eta_trail_H/F"  )
 
+t.Branch('pt_muonic_tau'  , pt_muonic_tau   , "pt_muonic_tau/F"  )
+t.Branch('pt_electronic_tau'  , pt_electronic_tau   , "pt_electronic_tau/F"  )
+t.Branch('eta_muonic_tau'  , eta_muonic_tau   , "eta_muonic_tau/F"  )
+t.Branch('eta_electronic_tau'  , eta_electronic_tau   , "eta_electronic_tau/F"  )
+
 t.Branch( 'ZfinalState', ZDecay, 'ZfinalState/I' )
 t.Branch( 'HfinalState', HDecayMode, 'HfinalState/I' )
+t.Branch( 'HfinalStateNew', HDecayModeNew, 'HfinalStateNew/I' )
 
 events = Events (["/storage/data/cms/store/mc/RunIISummer16MiniAODv2/ZHToTauTau_M125_13TeV_powheg_pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/70000/20245004-44C7-E611-A5AF-A0369F3016EC.root",
                   "/storage/data/cms/store/mc/RunIISummer16MiniAODv2/ZHToTauTau_M125_13TeV_powheg_pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/70000/220CB8B6-53C7-E611-BC88-0CC47AD99052.root",
@@ -229,9 +319,15 @@ for iev,event in enumerate(events):
         # isHadDecay = False
         if abs(p.pdgId()) == 25 :
             if p.status() == 62:
+                if _debug:
+                    print "="*30
+                    print "Event:  {0}".format(iev)
                 HiggsCandidate = genParticle(p)
+                # if HiggsCandidate.tausFinalStateNew == 0:
+                #     print "="*30
+                #     print "Event:  {0}".format(iev)
                 #print HiggsCandidate.motherMass
-                # print "="*30
+
                 # print HiggsCandidate
                 # #print "PdgId : %s   pt : %s  eta : %s   phi : %s   numberOfDaughters: %s" %(p.pdgId(),p.pt(),p.eta(),p.phi(),p.numberOfDaughters())
                 # print " ---- daughters"
@@ -244,6 +340,7 @@ for iev,event in enumerate(events):
                 #         print "\t {0}".format(dau)
                 # print HiggsCandidate.tausFinalState
                 HDecayMode[0] = HiggsCandidate.tausFinalState
+                HDecayModeNew[0] = HiggsCandidate.tausFinalStateNew
                 pt_H [0] = HiggsCandidate.pt
                 eta_H [0] = HiggsCandidate.phi
                 mass_H[0] = HiggsCandidate.motherMass
@@ -253,6 +350,10 @@ for iev,event in enumerate(events):
                 pt_trail_H[0]  = HiggsCandidate.trailing.pt
                 eta_lead_H[0]  = HiggsCandidate.leading.eta
                 eta_trail_H[0] = HiggsCandidate.trailing.eta
+                pt_muonic_tau[0] = HiggsCandidate.muonicTauPt
+                pt_electronic_tau[0] = HiggsCandidate.electronicTauPt
+                eta_muonic_tau[0] = HiggsCandidate.muonicTauEta
+                eta_electronic_tau[0] = HiggsCandidate.electronicTauEta
                 # print "="*30
 
     t.Fill()
