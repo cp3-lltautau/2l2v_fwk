@@ -30,6 +30,10 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "PhysicsTools/Utilities/interface/LumiReWeighting.h"
 #include "TauAnalysis/SVfitStandalone/interface/SVfitStandaloneAlgorithm.h" //for svfit
+//ClassicSVfit
+#include "TauAnalysis/ClassicSVfit/interface/ClassicSVfit.h"
+#include "TauAnalysis/ClassicSVfit/interface/MeasuredTauLepton.h"
+#include "TauAnalysis/ClassicSVfit/interface/svFitHistogramAdapter.h"
 
 #include "EgammaAnalysis/ElectronTools/interface/ElectronEnergyCalibratorRun2.h"
 #include "EgammaAnalysis/ElectronTools/interface/PhotonEnergyCalibratorRun2.h"
@@ -235,18 +239,18 @@ double getSVFit(pat::MET met, std::vector<patUtils::GenericLepton> selLeptons, i
 								    selLeptons[higgsCandL2].phi(), svFitStandalone::muonMass) );
   }
   else if (dlid == 13*13){
-    //std::cout<< " MuMu Pair  --->"<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
-        measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToMuDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
-								    selLeptons[higgsCandL1].phi(), svFitStandalone::muonMass) );
-	measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToMuDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
-								    selLeptons[higgsCandL2].phi(), svFitStandalone::muonMass) );
+    //std::cout<< " EE Pair  --->"<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
+        measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToElecDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
+								    selLeptons[higgsCandL1].phi(), svFitStandalone::electronMass) );
+	measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToElecDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
+								    selLeptons[higgsCandL2].phi(), svFitStandalone::electronMass) );
   }
   else if (dlid == 11*11){
     //std::cout<< " EE Pair  --->"<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
-    measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToElecDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
-								    selLeptons[higgsCandL1].phi(), svFitStandalone::electronMass) );
-    measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToElecDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
-								    selLeptons[higgsCandL2].phi(), svFitStandalone::electronMass) );
+    measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToMuDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
+								    selLeptons[higgsCandL1].phi(), svFitStandalone::muonMass) );
+    measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToMuDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
+								    selLeptons[higgsCandL2].phi(), svFitStandalone::muonMass) );
   }
   else return (selLeptons[higgsCandL1].p4()+selLeptons[higgsCandL2].p4()).mass();
 
@@ -266,6 +270,7 @@ double getSVFit(pat::MET met, std::vector<patUtils::GenericLepton> selLeptons, i
   //double transverse_mass = algo.getTransverseMass(); // Transverse SVFit mass
 
   // if ( algo.isValidSolution() ) {
+  //   std::cout << "\t-------- StandaloneSVfit --------"<<endl;
   //   std::cout << "found mass = " << mass << std::endl;
   // } else {
   //   std::cout << "sorry -- status of NLL is not valid [" << algo.fitStatus() << "]" << std::endl;
@@ -274,6 +279,126 @@ double getSVFit(pat::MET met, std::vector<patUtils::GenericLepton> selLeptons, i
   delete inputFile_visPtResolution;
 
   //return LorentzVector(selLeptons[higgsCandL1].p4()+selLeptons[higgsCandL2].p4());
+  return mass;
+}
+
+
+//***********************************************************************************************//
+double getClassicSVFit(pat::MET met, std::vector<patUtils::GenericLepton> selLeptons, int higgsCandL1, int higgsCandL2)
+//***********************************************************************************************//
+{
+  using namespace classic_svFit;
+
+  if(higgsCandL1<0 || higgsCandL2<0) return 0.;
+
+  TMatrixD covMET(2, 2); // PFMET significance matrix
+
+  covMET[0][0] = met.getSignificanceMatrix()(0,0);
+  covMET[0][1] = met.getSignificanceMatrix()(0,1);
+  covMET[1][0] = met.getSignificanceMatrix()(1,0);
+  covMET[1][1] = met.getSignificanceMatrix()(1,1);
+
+  // std::cout<<"MET MATRIX: " << covMET[0][0] << " " << covMET[0][1] << " " << covMET[1][0] << " " << covMET[1][1] << "\n";
+
+  int dlid = abs( selLeptons[higgsCandL1].pdgId() * selLeptons[higgsCandL2].pdgId() );
+
+  //std::cout<<"\n"<<selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << " Di-Tau ID ------------> " << dlid << std::endl;
+
+  if ( dlid == 11*15 || dlid == 13*15){
+    if (abs(selLeptons[higgsCandL1].pdgId()) == 15) {
+      // Switching leptons in semileptonic pairs:
+      // e and mu should be passed as first MesuredTauLepton
+      int temp = higgsCandL1;
+      higgsCandL1  = higgsCandL2;
+      higgsCandL2  = temp;
+    }
+  }
+
+  std::vector<classic_svFit::MeasuredTauLepton> measuredTauLeptons;
+
+  if ( dlid == 11*15 ){
+    //std::cout<< " ETau Pair --- > "<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToElecDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
+								    selLeptons[higgsCandL1].phi(), classic_svFit::electronMass) );
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToHadDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
+								    selLeptons[higgsCandL2].phi(), selLeptons[higgsCandL2].mass(), selLeptons[higgsCandL2].tau.decayMode()) );
+  }
+  else if( dlid == 13*15 ){
+    //std::cout<< " MuTau Pair --- > "<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToMuDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
+								    selLeptons[higgsCandL1].phi(), classic_svFit::muonMass) );
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToHadDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
+								    selLeptons[higgsCandL2].phi(), selLeptons[higgsCandL2].mass(), selLeptons[higgsCandL2].tau.decayMode()) );
+  }
+  else if ( dlid == 15*15 ){
+    //std::cout<< " TauTau Pair --- > "<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToHadDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
+								    selLeptons[higgsCandL1].phi(), selLeptons[higgsCandL1].mass(), selLeptons[higgsCandL1].tau.decayMode()) );
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToHadDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
+								    selLeptons[higgsCandL2].phi(), selLeptons[higgsCandL2].mass(), selLeptons[higgsCandL2].tau.decayMode()) );
+  }
+  else if (dlid == 13*11 ){
+    //std::cout<< " EMu Pair  --->"<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToElecDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
+								    selLeptons[higgsCandL1].phi(), classic_svFit::electronMass) );
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToMuDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
+								    selLeptons[higgsCandL2].phi(), classic_svFit::muonMass) );
+  }
+  else if (dlid == 13*13){
+    //std::cout<< " EE Pair  --->"<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
+        measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToElecDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
+								    selLeptons[higgsCandL1].phi(), classic_svFit::electronMass) );
+	measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToElecDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
+								    selLeptons[higgsCandL2].phi(), classic_svFit::electronMass) );
+  }
+  else if (dlid == 11*11){
+    //std::cout<< " EE Pair  --->"<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToMuDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
+								    selLeptons[higgsCandL1].phi(), classic_svFit::muonMass) );
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToMuDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
+								    selLeptons[higgsCandL2].phi(), classic_svFit::muonMass) );
+  }
+  else return (selLeptons[higgsCandL1].p4()+selLeptons[higgsCandL2].p4()).mass();
+
+
+  int verbosity = 0;
+  ClassicSVfit svFitAlgo(verbosity);
+#ifdef USE_SVFITTF
+  //HadTauTFCrystalBall2* hadTauTF = new HadTauTFCrystalBall2();
+  //svFitAlgo.setHadTauTF(hadTauTF);
+  //svFitAlgo.enableHadTauTF();
+#endif
+  //svFitAlgo.addLogM_fixed(false);
+  svFitAlgo.addLogM_fixed(true, 6.);
+  //svFitAlgo.addLogM_dynamic(true, "(m/1000.)*15.");
+  //svFitAlgo.setMaxObjFunctionCalls(100000); // CV: default is 100000 evaluations of integrand per event
+  svFitAlgo.setLikelihoodFileName("testClassicSVfit.root");
+  svFitAlgo.integrate(measuredTauLeptons, met.px(), met.py() , covMET);
+  bool isValidSolution = svFitAlgo.isValidSolution();
+
+  double mass = static_cast<DiTauSystemHistogramAdapter*>(svFitAlgo.getHistogramAdapter())->getMass();
+  double massErr = static_cast<DiTauSystemHistogramAdapter*>(svFitAlgo.getHistogramAdapter())->getMassErr();
+  double transverseMass = static_cast<DiTauSystemHistogramAdapter*>(svFitAlgo.getHistogramAdapter())->getTransverseMass();
+  double transverseMassErr = static_cast<DiTauSystemHistogramAdapter*>(svFitAlgo.getHistogramAdapter())->getTransverseMassErr();
+  double pt = static_cast<DiTauSystemHistogramAdapter*>(svFitAlgo.getHistogramAdapter())->getPt();
+  double ptErr = static_cast<DiTauSystemHistogramAdapter*>(svFitAlgo.getHistogramAdapter())->getPtErr();
+  double eta = static_cast<DiTauSystemHistogramAdapter*>(svFitAlgo.getHistogramAdapter())->getEta();
+  double phi = static_cast<DiTauSystemHistogramAdapter*>(svFitAlgo.getHistogramAdapter())->getPhi();
+
+  double p  = pt*TMath::CosH(eta);
+  double px = pt*TMath::Cos(phi);
+  double py = pt*TMath::Sin(phi);
+  double pz = pt*TMath::SinH(eta);
+  double energy = TMath::Sqrt(p*p + mass*mass);
+  TLorentzVector p4(px, py, pz, energy);
+  // if ( isValidSolution ) {
+  //   std::cout << "\t-------- ClassicSVfit --------"<<endl;
+  //   std::cout << "found valid solution: mass = " << mass << " +/- " << massErr << " (expected value = 115.746 +/- 92.8784),"
+  //             << " transverse mass = " << transverseMass << " +/- " << transverseMassErr << " (expected value = 114.242 +/- 91.5567)"
+  //             << " pt = " << pt << " +/- " << ptErr << std::endl;
+  // } else {
+  //   std::cout << "sorry, failed to find valid solution !!" << std::endl;
+  // }
   return mass;
 }
 
@@ -768,10 +893,12 @@ int main(int argc, char* argv[])
   int nbins=sizeof(bins)/sizeof(double) - 1;
   mon.addHistogram( new TH1F( "AmassFine",        ";M_{#tau#tau} (GeV);Events",100,0,500));
   mon.addHistogram( new TH1F( "AmassFineCollinear",        ";M_{#tau#tau} (GeV);Events",100,0,500));
-  mon.addHistogram( new TH1F( "AmassFineSVFit",        ";M_{#tau#tau} (GeV);Events",100,0,500));
+  mon.addHistogram( new TH1F( "AmassFineSVFit",        ";SVFit M_{#tau#tau} (GeV);Events",100,0,500));
+  mon.addHistogram( new TH1F( "AmassFineClassicSVFit",        ";ClassicSVFit M_{#tau#tau} (GeV);Events",100,0,500));
   mon.addHistogram( new TH1F( "Amass",            ";M_{#tau#tau} (GeV);Events",nbins,bins));
   mon.addHistogram( new TH1F( "Hmass",            ";M_{ll#tau#tau} (GeV);Events",nbins,bins));
   mon.addHistogram( new TH1F( "Amasssvfit",       ";SVFit M_{#tau#tau} (GeV);Events",nbins,bins));
+  mon.addHistogram( new TH1F( "AmassClassicsvfit",       ";ClassicSVFit M_{#tau#tau} (GeV);Events",nbins,bins));
   mon.addHistogram( new TH1F( "Hmasssvfit",       ";SVFit M_{ll#tau#tau} (GeV);Events",nbins,bins));
 
   //pu control
@@ -988,6 +1115,7 @@ int main(int argc, char* argv[])
 
   //double btagLoose = 0.605; //https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation74X
   double btagLoose = 0.5426;  //Moriond17 recommendation Loose
+  double btagMedium = 0.8484;
 
   // // setup calibration readers
   // BTagCalibration btagCalib("CSVv2", string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/weights/btagSF_CSVv2.csv");
@@ -1128,7 +1256,7 @@ int main(int argc, char* argv[])
         puWeightDown = PuShifters[utils::cmssw::PUDOWN]->Eval(ngenITpu) * (PUNorm[1]/PUNorm[0]);
         weight *= puWeight;
 
-        //Higgs GEN Level flavour
+        //Z and Higgs GEN Level flavour
         if(isMC){
 
           for( auto& genParticle : gen){
@@ -1141,6 +1269,7 @@ int main(int argc, char* argv[])
                 if( lpdgId == 13 ) ZbosonType = 0;
                 if( lpdgId == 11 ) ZbosonType = 1;
                 if( lpdgId == 15 ) ZbosonType = 2;
+                //if( lpdgId == 13 || lpdgId == 11) cout<<"##GEN##  Z Lepton:  pt = "<<lepton->pt()<<"  eta = "<<lepton->eta()<<"  phi = "<<lepton->phi()<<endl;
               }
             }
             if( abs( genParticle.pdgId() )  == 25 && genParticle.status() == 62){
@@ -1260,6 +1389,20 @@ int main(int argc, char* argv[])
 	  //	  if (!filterbadPFMuon || !filterbadChCandidate) continue;
     //##############################################   EVENT PASSED MET FILTER   #######################################
 
+
+    vector<pat::TriggerObjectStandAlone> triggerObjects;
+    fwlite::Handle< vector<pat::TriggerObjectStandAlone> > triggerObjectsHandle;
+    triggerObjectsHandle.getByLabel(ev,"selectedPatTrigger");
+
+    fwlite::Handle< edm::TriggerResults > triggerBitsHandle;
+    triggerBitsHandle.getByLabel(ev,"TriggerResults","","HLT");
+
+    const edm::TriggerNames &names = ev.triggerNames(*triggerBitsHandle);
+    // auto names = tr.triggerNames();
+    // for (auto& name: names){
+    //  if (tr.accept(name))  cout<<" Trigger: "<<name <<"  "<< (tr.accept(name) ? "PASS" : "fail (or not run)")
+    //             << std::endl;
+    // }
 
     //load all the objects we will need to access
     reco::VertexCollection vtx;
@@ -1637,7 +1780,7 @@ int main(int argc, char* argv[])
         }
 
         if(!overlapWithTau && jet.pt()>30 && fabs(jet.eta())<2.5){
-          bool hasCSVtag = (jet.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags")>btagLoose);
+          bool hasCSVtag = (jet.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags")>btagMedium);
           bool hasCSVtagUp = hasCSVtag;
           bool hasCSVtagDown = hasCSVtag;
 
@@ -1832,7 +1975,55 @@ int main(int argc, char* argv[])
         }
 
 
-        if(!isDileptonCandidate) continue;
+        // if(!isDileptonCandidate) continue;
+        // cout<<"  ##RECO##  Z Lepton 1:  pt = "<<selLeptons[dilLep1].pt()<<"  eta = "<<selLeptons[dilLep1].eta()<<"  phi = "<<selLeptons[dilLep1].phi()<<endl;
+        // if ( selLeptons[dilLep1].genParticle() ) cout<<"    ##RECO (GEN Match)##  Z Lepton 1:  pt = "<<(selLeptons[dilLep1].genParticle())->pt()<<"  eta = "<<(selLeptons[dilLep1].genParticle())->eta()<<"  phi = "<<(selLeptons[dilLep1].genParticle())->phi()<<endl;
+        // cout<<"  ##RECO##  Z Lepton 2:  pt = "<<selLeptons[dilLep2].pt()<<"  eta = "<<selLeptons[dilLep2].eta()<<"  phi = "<<selLeptons[dilLep2].phi()<<endl;
+        // if ( selLeptons[dilLep2].genParticle() ) cout<<"    ##RECO (GEN Match)##  Z Lepton 2:  pt = "<<(selLeptons[dilLep2].genParticle())->pt()<<"  eta = "<<(selLeptons[dilLep2].genParticle())->eta()<<"  phi = "<<(selLeptons[dilLep2].genParticle())->phi()<<endl;
+        //
+        // int triggerType = abs(dilId)==121 ? 82 : 83;
+        // std::cout << "\n TRIGGER OBJECTS " << std::endl;
+        // for (pat::TriggerObjectStandAlone obj : *triggerObjectsHandle) { // note: not "const &" since we want to call unpackPathNames
+        //     obj.unpackPathNames(names);
+        //
+        //     bool typeMatched = false;
+        //     for (unsigned h = 0; h < obj.filterIds().size(); ++h) {
+        //       typeMatched |= (obj.filterIds()[h] == triggerType) ;
+        //     }
+        //     if (!typeMatched) continue;
+        //
+        //     std::cout << "\tTrigger object:  pt " << obj.pt() << ", eta " << obj.eta() << ", phi " << obj.phi() << ", pdgId "<< obj.pdgId() << std::endl;
+        //     // Print trigger object collection and type
+        //     std::cout << "\t   Collection: " << obj.collection() << std::endl;
+        //     std::cout << "\t   Type IDs:   ";
+        //     for (unsigned h = 0; h < obj.filterIds().size(); ++h) std::cout << " " << obj.filterIds()[h] ;
+        //     std::cout << std::endl;
+        //     // Print associated trigger filters
+        //     std::cout << "\t   Filters:    ";
+        //     for (unsigned h = 0; h < obj.filterLabels().size(); ++h) std::cout << " " << obj.filterLabels()[h];
+        //     std::cout << std::endl;
+        //     std::vector< std::string > pathNamesAll = obj.pathNames(false);
+        //     std::vector< std::string > pathNamesLast = obj.pathNames(true);
+        //     // Print all trigger paths, for each one record also if the object is associated to a 'l3' filter (always true for the
+        //     // definition used in the PAT trigger producer) and if it's associated to the last filter of a successfull path (which
+        //     // means that this object did cause this trigger to succeed; however, it doesn't work on some multi-object triggers)
+        //     std::cout << "\t   Paths (" << pathNamesAll.size()<<"/"<<pathNamesLast.size()<<"):    ";
+        //     for (unsigned h = 0, n = pathNamesAll.size(); h < n; ++h) {
+        //         bool isBoth = obj.hasPathName( pathNamesAll[h], true, true );
+        //         bool isL3   = obj.hasPathName( pathNamesAll[h], false, true );
+        //         bool isLF   = obj.hasPathName( pathNamesAll[h], true, false );
+        //         bool isNone = obj.hasPathName( pathNamesAll[h], false, false );
+        //         std::cout << "   " << pathNamesAll[h];
+        //         if (isBoth) std::cout << "(L,3)";
+        //         if (isL3 && !isBoth) std::cout << "(*,3)";
+        //         if (isLF && !isBoth) std::cout << "(L,*)";
+        //         if (isNone && !isBoth && !isL3 && !isLF) std::cout << "(*,*)";
+        //     }
+        //     std::cout << std::endl;
+        // }
+        // std::cout << std::endl;
+
+
         if (ivar == 0 ){
           mon.fillHisto("eventflow"           , chTags, 3, weight);
           mon.fillHisto("eventflowNoWeights"  , chTags, 3, 1);
@@ -1860,6 +2051,7 @@ int main(int argc, char* argv[])
         bool passHiggsLoose = 0;
         bool passHiggsMain  = 0;
         double higgsCand_SVFitMass = 0;
+        double classiSVFit_mass = 0;
         LorentzVector higgsCand_SVFit;
         LorentzVector higgsCandH;
         LorentzVector higgsCandH_SVFit;
@@ -2053,7 +2245,11 @@ int main(int argc, char* argv[])
           //FIXME gives a lot of warning currently
         if(passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain && passDPhiCut){
          // std::cout<<"START SVFIT\n";
-         // higgsCand_SVFitMass = getSVFit(met, selLeptons, higgsCandL1, higgsCandL2);  //compute svfit mass in a smart way
+         // cout<<"============================================================="<<endl;
+         // cout<<"    Higgs mass = "<<higgsCand.M()<<"   Higgs pt = "<<higgsCand.Pt()<<endl;
+         higgsCand_SVFitMass = getSVFit(met, selLeptons, higgsCandL1, higgsCandL2);  //compute svfit mass in a smart way
+         classiSVFit_mass = getClassicSVFit(met, selLeptons, higgsCandL1, higgsCandL2);
+         // cout<<"============================================================="<<endl;
          // std::cout<<"END SVFIT\n";
         }
 
@@ -2209,10 +2405,12 @@ int main(int argc, char* argv[])
                             mon.fillHisto("Apt"       	, chTagsMain, higgsCand.pt(),    weight);
                             mon.fillHisto("AmassFine"           , chTagsMain, higgsCand.mass(),  weight);
                             mon.fillHisto("AmassFineSVFit"           , chTagsMain, higgsCand_SVFitMass,  weight);
+                            mon.fillHisto("AmassFineClassicSVFit"           , chTagsMain, classiSVFit_mass,  weight);
                             mon.fillHisto("AmassFineCollinear"           , chTagsMain, collinearMass,  weight);
                             // cout<< " h mass = "<<higgsCand.mass()<<" -  h coll_mass = "<<collinearMass<<" -  weight = "<<weight<<endl;
                             mon.fillHisto("Amass"           , chTagsMain, higgsCand.mass(),  weight);
                             mon.fillHisto("Amasssvfit"      , chTagsMain, higgsCand_SVFit.mass(),  weight);
+                            mon.fillHisto("AmassClassicsvfit"      , chTagsMain, classiSVFit_mass,  weight);
                             mon.fillHisto("Hmass"           , chTagsMain, higgsCandH.mass(),  weight);
                             mon.fillHisto("Hpt"             , chTagsMain, higgsCandH.pt(),  weight);
                             mon.fillHisto("Hmasssvfit"   , chTagsMain, higgsCandH_SVFit.mass(),  weight);

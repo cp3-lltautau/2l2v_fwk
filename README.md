@@ -28,6 +28,10 @@ scram b -j 8
 # SVFit for 2016/2017 analyses
 git clone -b HIG-16-006 git@github.com:veelken/SVfit_standalone.git TauAnalysis/SVfitStandalone
 
+# ClassicSVFit for 2016/2017 analyses
+git clone https://github.com/veelken/ClassicSVfit TauAnalysis/ClassicSVfit 
+git clone https://github.com/veelken/SVfitTF TauAnalysis/SVfitTF
+
 # Now our repo
 git clone https://github.com/cp3-lltautau/2l2v_fwk.git UserCode/llvv_fwk
 cd UserCode/llvv_fwk
@@ -40,7 +44,7 @@ wget https://raw.githubusercontent.com/cms-analysis/HiggsAnalysis-CombinedLimit/
 find UserCode/llvv_fwk/ -type f -name '*.cc' -exec sed -i -e 's/HiggsAnalysis\/CombinedLimit\/interface\/th1fmorph.h/UserCode\/llvv_fwk\/interface\/th1fmorph.h/g' {} \;
 
 #And compile
-scramv1 b -j 16 
+scramv1 b -j 16
 ```
 
 # An important note about PR in 80X (2016)
