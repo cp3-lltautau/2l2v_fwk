@@ -3,6 +3,7 @@
     {
       "tag":"data",
       "isdata":true,
+      "keys":["Data2016"],
       "color":1,
       "fill":0,
       "marker":20,

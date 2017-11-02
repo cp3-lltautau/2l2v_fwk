@@ -34,6 +34,7 @@
 #include "TauAnalysis/ClassicSVfit/interface/ClassicSVfit.h"
 #include "TauAnalysis/ClassicSVfit/interface/MeasuredTauLepton.h"
 #include "TauAnalysis/ClassicSVfit/interface/svFitHistogramAdapter.h"
+#include "TauAnalysis/SVfitTF/interface/HadTauTFCrystalBall2.h"
 
 #include "EgammaAnalysis/ElectronTools/interface/ElectronEnergyCalibratorRun2.h"
 #include "EgammaAnalysis/ElectronTools/interface/PhotonEnergyCalibratorRun2.h"
@@ -240,17 +241,17 @@ double getSVFit(pat::MET met, std::vector<patUtils::GenericLepton> selLeptons, i
   }
   else if (dlid == 13*13){
     //std::cout<< " EE Pair  --->"<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
-        measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToElecDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
-								    selLeptons[higgsCandL1].phi(), svFitStandalone::electronMass) );
-	measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToElecDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
-								    selLeptons[higgsCandL2].phi(), svFitStandalone::electronMass) );
+    measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToMuDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
+                    selLeptons[higgsCandL1].phi(), svFitStandalone::muonMass) );
+    measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToMuDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
+                    selLeptons[higgsCandL2].phi(), svFitStandalone::muonMass) );
   }
   else if (dlid == 11*11){
     //std::cout<< " EE Pair  --->"<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
-    measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToMuDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
-								    selLeptons[higgsCandL1].phi(), svFitStandalone::muonMass) );
-    measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToMuDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
-								    selLeptons[higgsCandL2].phi(), svFitStandalone::muonMass) );
+    measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToElecDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
+                selLeptons[higgsCandL1].phi(), svFitStandalone::electronMass) );
+    measuredTauLeptons.push_back(svFitStandalone::MeasuredTauLepton(svFitStandalone::kTauToElecDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
+                selLeptons[higgsCandL2].phi(), svFitStandalone::electronMass) );
   }
   else return (selLeptons[higgsCandL1].p4()+selLeptons[higgsCandL2].p4()).mass();
 
@@ -284,12 +285,13 @@ double getSVFit(pat::MET met, std::vector<patUtils::GenericLepton> selLeptons, i
 
 
 //***********************************************************************************************//
-double getClassicSVFit(pat::MET met, std::vector<patUtils::GenericLepton> selLeptons, int higgsCandL1, int higgsCandL2)
+LorentzVector getClassicSVFit(pat::MET met, std::vector<patUtils::GenericLepton> selLeptons, int higgsCandL1, int higgsCandL2)
 //***********************************************************************************************//
 {
   using namespace classic_svFit;
 
-  if(higgsCandL1<0 || higgsCandL2<0) return 0.;
+  LorentzVector pEmpty(0,0,0,0);
+  if(higgsCandL1<0 || higgsCandL2<0) return pEmpty;
 
   TMatrixD covMET(2, 2); // PFMET significance matrix
 
@@ -346,64 +348,70 @@ double getClassicSVFit(pat::MET met, std::vector<patUtils::GenericLepton> selLep
   }
   else if (dlid == 13*13){
     //std::cout<< " EE Pair  --->"<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
-        measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToElecDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
-								    selLeptons[higgsCandL1].phi(), classic_svFit::electronMass) );
-	measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToElecDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
-								    selLeptons[higgsCandL2].phi(), classic_svFit::electronMass) );
+        measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToMuDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
+								    selLeptons[higgsCandL1].phi(), classic_svFit::muonMass) );
+	measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToMuDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
+								    selLeptons[higgsCandL2].phi(), classic_svFit::muonMass) );
   }
   else if (dlid == 11*11){
     //std::cout<< " EE Pair  --->"<< selLeptons[higgsCandL1].pdgId() << "  " << selLeptons[higgsCandL2].pdgId() << std::endl;
-    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToMuDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
-								    selLeptons[higgsCandL1].phi(), classic_svFit::muonMass) );
-    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToMuDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
-								    selLeptons[higgsCandL2].phi(), classic_svFit::muonMass) );
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToElecDecay, selLeptons[higgsCandL1].pt(), selLeptons[higgsCandL1].eta(),
+								    selLeptons[higgsCandL1].phi(), classic_svFit::electronMass) );
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToElecDecay, selLeptons[higgsCandL2].pt(), selLeptons[higgsCandL2].eta(),
+								    selLeptons[higgsCandL2].phi(), classic_svFit::electronMass) );
   }
-  else return (selLeptons[higgsCandL1].p4()+selLeptons[higgsCandL2].p4()).mass();
+  else return (selLeptons[higgsCandL1].p4()+selLeptons[higgsCandL2].p4());
 
 
   int verbosity = 0;
-  ClassicSVfit svFitAlgo(verbosity);
+  ClassicSVfit *svFitAlgo = new ClassicSVfit(verbosity);
 #ifdef USE_SVFITTF
-  //HadTauTFCrystalBall2* hadTauTF = new HadTauTFCrystalBall2();
-  //svFitAlgo.setHadTauTF(hadTauTF);
-  //svFitAlgo.enableHadTauTF();
+  // HadTauTFCrystalBall2* hadTauTF = new HadTauTFCrystalBall2();
+  // svFitAlgo->setHadTauTF(hadTauTF);
+  // svFitAlgo->enableHadTauTF();
 #endif
   //svFitAlgo.addLogM_fixed(false);
-  svFitAlgo.addLogM_fixed(true, 6.);
+  svFitAlgo->addLogM_fixed(true, 6.);
   //svFitAlgo.addLogM_dynamic(true, "(m/1000.)*15.");
   //svFitAlgo.setMaxObjFunctionCalls(100000); // CV: default is 100000 evaluations of integrand per event
-  svFitAlgo.setLikelihoodFileName("testClassicSVfit.root");
-  svFitAlgo.integrate(measuredTauLeptons, met.px(), met.py() , covMET);
-  bool isValidSolution = svFitAlgo.isValidSolution();
+  //svFitAlgo.setLikelihoodFileName("testClassicSVfit.root");
+  svFitAlgo->integrate(measuredTauLeptons, met.px(), met.py() , covMET);
+  bool isValidSolution = svFitAlgo->isValidSolution();
 
-  double mass = static_cast<DiTauSystemHistogramAdapter*>(svFitAlgo.getHistogramAdapter())->getMass();
-  double massErr = static_cast<DiTauSystemHistogramAdapter*>(svFitAlgo.getHistogramAdapter())->getMassErr();
-  double transverseMass = static_cast<DiTauSystemHistogramAdapter*>(svFitAlgo.getHistogramAdapter())->getTransverseMass();
-  double transverseMassErr = static_cast<DiTauSystemHistogramAdapter*>(svFitAlgo.getHistogramAdapter())->getTransverseMassErr();
-  double pt = static_cast<DiTauSystemHistogramAdapter*>(svFitAlgo.getHistogramAdapter())->getPt();
-  double ptErr = static_cast<DiTauSystemHistogramAdapter*>(svFitAlgo.getHistogramAdapter())->getPtErr();
-  double eta = static_cast<DiTauSystemHistogramAdapter*>(svFitAlgo.getHistogramAdapter())->getEta();
-  double phi = static_cast<DiTauSystemHistogramAdapter*>(svFitAlgo.getHistogramAdapter())->getPhi();
+  DiTauSystemHistogramAdapter* DiTauSystemPtr = static_cast<DiTauSystemHistogramAdapter*>(svFitAlgo->getHistogramAdapter());
+
+  double mass = DiTauSystemPtr->getMass();
+  double massErr = DiTauSystemPtr->getMassErr();
+  double transverseMass = DiTauSystemPtr->getTransverseMass();
+  double transverseMassErr = DiTauSystemPtr->getTransverseMassErr();
+  double pt = DiTauSystemPtr->getPt();
+  double ptErr = DiTauSystemPtr->getPtErr();
+  double eta = DiTauSystemPtr->getEta();
+  double phi = DiTauSystemPtr->getPhi();
 
   double p  = pt*TMath::CosH(eta);
   double px = pt*TMath::Cos(phi);
   double py = pt*TMath::Sin(phi);
   double pz = pt*TMath::SinH(eta);
   double energy = TMath::Sqrt(p*p + mass*mass);
-  TLorentzVector p4(px, py, pz, energy);
+  LorentzVector p4(px, py, pz, energy);
   // if ( isValidSolution ) {
   //   std::cout << "\t-------- ClassicSVfit --------"<<endl;
-  //   std::cout << "found valid solution: mass = " << mass << " +/- " << massErr << " (expected value = 115.746 +/- 92.8784),"
-  //             << " transverse mass = " << transverseMass << " +/- " << transverseMassErr << " (expected value = 114.242 +/- 91.5567)"
+  //   std::cout << "found valid solution: mass = " << mass << " +/- " << massErr << " \n,"
+  //             << " transverse mass = " << transverseMass << " +/- " << transverseMassErr << " \n,"
   //             << " pt = " << pt << " +/- " << ptErr << std::endl;
   // } else {
   //   std::cout << "sorry, failed to find valid solution !!" << std::endl;
   // }
-  return mass;
+  delete svFitAlgo;
+#ifdef USE_SVFITTF
+  // delete hadTauTF;
+#endif
+  return p4;
 }
 
 //**********************************************************************************************//
-CRTypes checkBkgCR(std::vector<patUtils::GenericLepton> selLeptons, int higgsCandL1, int higgsCandL2, double isoElCut, double isoMuCut, const char* isoHaCut, float sumPtCut, reco::VertexCollection vtx){
+CRTypes checkBkgCR(std::vector<patUtils::GenericLepton> selLeptons, int higgsCandL1, int higgsCandL2, double isoElCut, double isoMuCut, std::string isoHaCut, float sumPtCut, reco::VertexCollection vtx){
 //**********************************************************************************************//
 
   using namespace patUtils; //<---- needed for the cut version
@@ -448,7 +456,7 @@ CRTypes checkBkgCR(std::vector<patUtils::GenericLepton> selLeptons, int higgsCan
 }
 
 //**********************************************************************************************//
-bool passHiggsCuts(std::vector<patUtils::GenericLepton> selLeptons, int higgsCandL1, int higgsCandL2, double isoElCut, double isoMuCut, const char* isoHaCut, float sumPtCut, bool requireId, reco::VertexCollection vtx)
+bool passHiggsCuts(std::vector<patUtils::GenericLepton> selLeptons, int higgsCandL1, int higgsCandL2, double isoElCut, double isoMuCut, std::string isoHaCut, float sumPtCut, bool requireId, reco::VertexCollection vtx)
 //**********************************************************************************************//
 {
   if(higgsCandL1<0 || higgsCandL2<0)return false;
@@ -498,7 +506,7 @@ double closestJet(const LorentzVector& obj, pat::JetCollection& selJets, int& cl
 }
 
  //**********************************************************************************************//
-float getTheFRWeight(std::vector<patUtils::GenericLepton>& selLeptons, pat::JetCollection& selJets, int higgsCandL1, int higgsCandL2, FRWeights theFRWeightTool,double isoElCut, double isoMuCut, const char* isoHaCut, float sumPtCut,std::string CRType)
+float getTheFRWeight(std::vector<patUtils::GenericLepton>& selLeptons, pat::JetCollection& selJets, int higgsCandL1, int higgsCandL2, FRWeights theFRWeightTool,double isoElCut, double isoMuCut, std::string isoHaCut, float sumPtCut,std::string CRType)
 //**********************************************************************************************//
 {
   float theFinalWeight=1;
@@ -542,9 +550,14 @@ float getTheFRWeight(std::vector<patUtils::GenericLepton>& selLeptons, pat::JetC
 
      } else if(abs(lep->pdgId())==15){
 
-      if(strcmp(isoHaCut,"byLooseCombinedIsolationDeltaBetaCorr3Hits")==0)    isobin = "_Id_IsoLoweight";
-      if(strcmp(isoHaCut,"byMediumCombinedIsolationDeltaBetaCorr3Hits")==0) isobin = "_Id_IsoMeweight";
-
+      if (isoHaCut.find("CombinedIsolationDeltaBetaCorr3Hits") != std::string::npos){
+        if(isoHaCut.find("byLooseCombinedIsolationDeltaBetaCorr3Hits") != std::string::npos)    isobin = "_Id_IsoLoweight";
+        if(isoHaCut.find("byMediumCombinedIsolationDeltaBetaCorr3Hits")!= std::string::npos) isobin = "_Id_IsoMeweight";
+      }
+      if (isoHaCut.find("IsolationMVArun2v1DBoldDMwLT") != std::string::npos){
+        if(isoHaCut.find("byLooseIsolationMVArun2v1DBoldDMwLT") != std::string::npos)    isobin = "_Id_IsoLo_MVAweight";
+        if(isoHaCut.find("byMediumIsolationMVArun2v1DBoldDMwLT")!= std::string::npos) isobin = "_Id_IsoMe_MVAweight";
+      }
       theWeights.push_back(theFRWeightTool.getWeight("FR_Ta",etabin,isobin,"_wrtJetPt",pTclosestJet));
 
     }
@@ -959,8 +972,8 @@ int main(int argc, char* argv[])
 
   std::vector<double> eleIsoValues = {0.3, 0.2, 0.1};
   std::vector<double> muIsoValues  = {0.3, 0.2, 0.1};
-  std::vector<const char*> tauIDiso = {"byLooseIsolationMVArun2v1DBoldDMwLT","byMediumIsolationMVArun2v1DBoldDMwLT"};
-  // std::vector<const char*> tauIDiso = {"byLooseCombinedIsolationDeltaBetaCorr3Hits","byLooseIsolationMVArun2v1DBoldDMwLT",
+  std::vector<std::string> tauIDiso = {"byLooseIsolationMVArun2v1DBoldDMwLT","byMediumIsolationMVArun2v1DBoldDMwLT"};
+  // std::vector<std::string> tauIDiso = {"byLooseCombinedIsolationDeltaBetaCorr3Hits","byLooseIsolationMVArun2v1DBoldDMwLT",
   //                                       "byLooseIsolationMVArun2v1DBdR03oldDMwLT"};
 
   std::vector<float>    optim_Cuts_sumPt;
@@ -1335,9 +1348,7 @@ int main(int argc, char* argv[])
 	    filterduplicateMuonHIP = metFilter.BadGlobalMuonTaggerFilter(ev,outduplicateMuon,true); if (!filterduplicateMuonHIP) { metFilterValue=11; }
     }
 
-    //bool passTrigger        = mumuTrigger||muTrigger||eeTrigger||eTrigger;//||emuTrigger;
-
-    bool passTrigger        = mumuTrigger||eeTrigger;
+    bool passTrigger        = mumuTrigger||muTrigger||eeTrigger||eTrigger;//||emuTrigger;
 
     if(  mumuTrigger)mon.fillHisto("trigger", "raw", 0 , weight);
     if(    muTrigger)mon.fillHisto("trigger", "raw", 1 , weight);
@@ -2052,6 +2063,7 @@ int main(int argc, char* argv[])
         bool passHiggsMain  = 0;
         double higgsCand_SVFitMass = 0;
         double classiSVFit_mass = 0;
+        LorentzVector higgsCand_ClassicSVFit;
         LorentzVector higgsCand_SVFit;
         LorentzVector higgsCandH;
         LorentzVector higgsCandH_SVFit;
@@ -2236,6 +2248,7 @@ int main(int argc, char* argv[])
           }
 
           passDPhiCut    =  (fabs(deltaPhi(zll.phi(), met.phi()))>1.5);
+          passDPhiCut    = true;
           passHiggsLoose = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, 0.3, 0.3, "decayModeFinding", 0., false, vtx);
           passHiggsMain  = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, 0.1, 0.15, "byMediumIsolationMVArun2v1DBoldDMwLT", 0., true, vtx);
 
@@ -2248,7 +2261,9 @@ int main(int argc, char* argv[])
          // cout<<"============================================================="<<endl;
          // cout<<"    Higgs mass = "<<higgsCand.M()<<"   Higgs pt = "<<higgsCand.Pt()<<endl;
          higgsCand_SVFitMass = getSVFit(met, selLeptons, higgsCandL1, higgsCandL2);  //compute svfit mass in a smart way
-         classiSVFit_mass = getClassicSVFit(met, selLeptons, higgsCandL1, higgsCandL2);
+         //  higgsCand_ClassicSVFit = getClassicSVFit(met, selLeptons, higgsCandL1, higgsCandL2);
+        //  higgsCand_SVFit = higgsCand_ClassicSVFit;
+        //  classiSVFit_mass = higgsCand_ClassicSVFit.mass();
          // cout<<"============================================================="<<endl;
          // std::cout<<"END SVFIT\n";
         }
@@ -2384,7 +2399,7 @@ int main(int argc, char* argv[])
                       mon.fillHisto("dPhi_ZMet"  , chTagsMain, deltaPhi(zll.phi(), met.phi()),    weight);
                       mon.fillHisto("met"      	, chTagsMain, met.pt()         , weight);
 
-                      if(true){//if(passDPhiCut){
+                      if(passDPhiCut){
                         mon.fillHisto("eventflow"           , chTagsMain, 10, weight);
                         mon.fillHisto("eventflowNoWeights"  , chTagsMain, 10, 1);
                         mon.fillHisto("eventflowNoLepSF"    , chTagsMain, 10, weightNoLepSF);
@@ -2409,7 +2424,7 @@ int main(int argc, char* argv[])
                             mon.fillHisto("AmassFineCollinear"           , chTagsMain, collinearMass,  weight);
                             // cout<< " h mass = "<<higgsCand.mass()<<" -  h coll_mass = "<<collinearMass<<" -  weight = "<<weight<<endl;
                             mon.fillHisto("Amass"           , chTagsMain, higgsCand.mass(),  weight);
-                            mon.fillHisto("Amasssvfit"      , chTagsMain, higgsCand_SVFit.mass(),  weight);
+                            mon.fillHisto("Amasssvfit"      , chTagsMain, higgsCand_SVFitMass,  weight);
                             mon.fillHisto("AmassClassicsvfit"      , chTagsMain, classiSVFit_mass,  weight);
                             mon.fillHisto("Hmass"           , chTagsMain, higgsCandH.mass(),  weight);
                             mon.fillHisto("Hpt"             , chTagsMain, higgsCandH.pt(),  weight);
@@ -2434,9 +2449,9 @@ int main(int argc, char* argv[])
             bool passHiggs = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],true,vtx);
             if(passHiggs){
               mon.fillHisto(TString("Hsvfit_shapes")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight);
-              mon.fillHisto(TString("Asvfit_shapes")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight);
+              mon.fillHisto(TString("Asvfit_shapes")+varNames[ivar],chTagsMain,index,higgsCand_SVFitMass,weight);
 
-            } else if (isMC && runSystematics ){
+            } else {   //if ( runSystematics ){
 
 	      // Control regions
 
@@ -2450,7 +2465,7 @@ int main(int argc, char* argv[])
 		theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR10");
 
 		mon.fillHisto(TString("Hsvfit_shapes_CR10")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
-		mon.fillHisto(TString("Asvfit_shapes_CR10")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
+		mon.fillHisto(TString("Asvfit_shapes_CR10")+varNames[ivar],chTagsMain,index,higgsCand_SVFitMass,weight*theFRWeight);
 		// cout<<" CRTypes::CR10 - FR weight value = "<<theFRWeight<<endl;
 
 	      } else if (theCR==CRTypes::CR01) {
@@ -2458,14 +2473,14 @@ int main(int argc, char* argv[])
 		theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR01");
 
 		mon.fillHisto(TString("Hsvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
-		mon.fillHisto(TString("Asvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
+		mon.fillHisto(TString("Asvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCand_SVFitMass,weight*theFRWeight);
 		// cout<<" CRTypes::CR01 - FR weight value = "<<theFRWeight<<endl;
 	      } else {
 
 		// CR11
 		theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR11");
 		mon.fillHisto(TString("Hsvfit_shapes_CR11")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
-		mon.fillHisto(TString("Asvfit_shapes_CR11")+varNames[ivar],chTagsMain,index,higgsCand_SVFit.mass(),weight*theFRWeight);
+		mon.fillHisto(TString("Asvfit_shapes_CR11")+varNames[ivar],chTagsMain,index,higgsCand_SVFitMass,weight*theFRWeight);
 		// cout<<" CRTypes::CR11 - FR weight value = "<<theFRWeight<<endl;
 	      }
 	      // cout<<" FR weight value = "<<theFRWeight<<endl;

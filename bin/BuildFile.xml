@@ -6,6 +6,7 @@
 <use name="UserCode/llvv_fwk"/>
 <use name="TauAnalysis/SVfitStandalone"/>
 <use name="TauAnalysis/ClassicSVfit"/>
+<use name="TauAnalysis/SVfitTF"/>
 <use name="RecoJets/JetProducers"/>
 <use name="HiggsAnalysis/CombinedLimit"/>
 <use name="RecoEgamma/ElectronIdentification"/>
