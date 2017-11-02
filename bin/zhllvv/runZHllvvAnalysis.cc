@@ -887,6 +887,9 @@ int main(int argc, char* argv[])
   //DuplicatesChecker duplicatesChecker;
   //int nDuplicates(0)
 
+  std::shared_ptr<TRandom3> rgenMuon_(new TRandom3(0));
+  std::shared_ptr<TRandom3> rgenEle_(new TRandom3(1));
+
   printf("Progressing Bar           :0%%       20%%       40%%       60%%       80%%       100%%\n");
   for(unsigned int f=0;f<urls.size();f++){
      TFile* file = TFile::Open(urls[f].c_str() );
@@ -1198,10 +1201,9 @@ int main(int argc, char* argv[])
 	      int ntrk = leptons[ilep].mu.innerTrack()->hitPattern().trackerLayersWithMeasurement();
 	      if(is2016MC){
               //muCor2016->momcor_mc  (p4, lid<0 ? -1 :1, ntrk, qter);
-              TRandom3 *rgen_ = new TRandom3(0);
             
-              double u1 = rgen_->Uniform();
-	      double u2 = rgen_->Uniform();
+              double u1 = rgenMuon_->Uniform();
+	      double u2 = rgenMuon_->Uniform();
  
               double mcSF = muCorMoriond17->kScaleAndSmearMC(charge, pt, eta, phi, ntrk, u1, u2, 0, 0);
 
@@ -1264,8 +1266,7 @@ int main(int argc, char* argv[])
 		 double sigma=eScaler.getSmearingSigma(ev.eventAuxiliary().run(),leptons[ilep].el.isEB(),leptons[ilep].el.r9(), leptons[ilep].el.superCluster()->eta(), leptons[ilep].el.et(),gainSeed,0,0);
 		 //Put the last two inputs at 0,0 for the nominal value of sigma
 		 //Now smear the MC energy
-		   TRandom3 *rgen_ = new TRandom3(0);
-		 double smearValue = rgen_->Gaus(1, sigma) ;
+		 double smearValue = rgenEle_->Gaus(1, sigma) ;
 		 //std::cout<<"smearing  ---- "<<smearValue<<std::endl;
 		 TLorentzVector p4(leptons[ilep].el.px(),leptons[ilep].el.py(),leptons[ilep].el.pz(),leptons[ilep].el.energy());
 		 leptons[ilep].el.setP4(LorentzVector(p4.Px()*smearValue,p4.Py()*smearValue,p4.Pz()*smearValue,p4.E()*smearValue ) );
