@@ -77,8 +77,8 @@ namespace patUtils
    namespace llvvElecId { enum ElecId  {Veto, Loose, Medium, Tight, LooseMVA, MediumMVA, TightMVA}; }
    namespace llvvMuonId { enum MuonId  {Loose, Soft, Tight, tkHighPT, TightAndTlkHighPt, StdLoose, StdSoft, StdMedium, StdTight}; }
    namespace llvvPhotonId { enum PhotonId  {Loose, Medium, Tight}; }
-   namespace llvvElecIso{ enum ElecIso {Veto, VeryLoose, Loose, Medium, Tight}; }
-   namespace llvvMuonIso{ enum MuonIso {VeryLoose, Loose,Tight, H4lWP, TightBoosted, TightAndTkRelatBoosted}; }
+   namespace llvvElecIso{ enum ElecIso {Veto, FakeRateWP, VeryLoose, Loose, Medium, Tight}; }
+   namespace llvvMuonIso{ enum MuonIso {FakeRateWP, VeryLoose, Loose,Tight, H4lWP, TightBoosted, TightAndTkRelatBoosted}; }
    namespace CutVersion { enum CutSet {Spring15Cut25ns, ICHEP16Cut, Moriond17Cut, Moriond17Cut_BCDEF, Moriond17Cut_GH}; }
 
    unsigned int GainSeed (pat::Electron &electron, const EcalRecHitCollection* recHits);

@@ -62,7 +62,7 @@ double FRWeights::getWeight(const std::string& cat ,const std::string& bin, cons
   //TGraphErrors* graph = FRWeightGraphs[cat+var+bin+wrt];
   double result=-1.;
   if(FRWeightGraphs[name]){
-    result=(1 - FRWeightGraphs[name]->Eval(pT));
+    result=(FRWeightGraphs[name]->Eval(pT));
   } else {
     result = 1;
     //cout<<" Result = "<<result<<" -- "<<name<<endl;

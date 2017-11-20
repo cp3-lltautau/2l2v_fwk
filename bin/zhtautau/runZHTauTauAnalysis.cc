@@ -421,7 +421,7 @@ CRTypes checkBkgCR(std::vector<patUtils::GenericLepton> selLeptons, int higgsCan
 
   std::vector<bool> passId;
   std::vector<bool> passIso;
-
+  float sumpt = 0;
 
 
   for(auto lepIt=HiggsLegs.begin();lepIt!=HiggsLegs.end();lepIt++){
@@ -438,19 +438,21 @@ CRTypes checkBkgCR(std::vector<patUtils::GenericLepton> selLeptons, int higgsCan
       passId.push_back(lep->tau.tauID("againstElectronTightMVA6") && lep->tau.tauID("againstMuonLoose3"));
       passIso.push_back(bool(lep->tau.tauID(isoHaCut)));
     }
+    sumpt += lep->pt();
   }
 
   passId.resize(2);
   passIso.resize(2);
 
-  if( (!passId[0] || !passIso[0]) && (passId[1]&&passIso[1]) ) {
-    theCR=CRTypes::CR10;
-  } else if (  (passId[0] || passIso[0]) && (!passId[1] || !passIso[1] ) ) {
-    theCR=CRTypes::CR01;
-  } else if (  (!passId[0] || !passIso[0]) && (!passId[1] || !passIso[1])  ) {
-    theCR=CRTypes::CR11;
+  if (sumpt>sumPtCut ){
+    if( (!passId[0] || !passIso[0]) && (passId[1]&&passIso[1]) ) {
+      theCR=CRTypes::CR10;
+    } else if (  (passId[0] || passIso[0]) && (!passId[1] || !passIso[1] ) ) {
+      theCR=CRTypes::CR01;
+    } else if (  (!passId[0] || !passIso[0]) && (!passId[1] || !passIso[1])  ) {
+      theCR=CRTypes::CR11;
+    }
   }
-
   return theCR;
 
 }
@@ -653,6 +655,7 @@ int main(int argc, char* argv[])
   const edm::ParameterSet &runProcess = edm::readPSetsFrom(argv[1])->getParameter<edm::ParameterSet>("runProcess");
 
   bool isMC = runProcess.getParameter<bool>("isMC");
+  bool runSVfit = runProcess.getParameter<bool>("runSVfit");
   double xsec = runProcess.getParameter<double>("xsec");
   int mctruthmode=runProcess.getParameter<int>("mctruthmode");
   TString dtag=runProcess.getParameter<std::string>("dtag");
@@ -957,11 +960,16 @@ int main(int argc, char* argv[])
   }
 
   //fake rate histograms
-  mon.addHistogram( new TH1F( "CRCounts"  ,  ";CR type;Events", 4,-0.5,3.5));
+  TH1* h_CR = mon.addHistogram( new TH1F( "CRCounts"  ,  ";CR type;Events", 4,-0.5,3.5));
+  h_CR->GetXaxis()->SetBinLabel(1,"CR10");
+  h_CR->GetXaxis()->SetBinLabel(2,"CR01");
+  h_CR->GetXaxis()->SetBinLabel(3,"CR11");
+  h_CR->GetXaxis()->SetBinLabel(4,"DEFAULT");
 
-  float ptbinsJets[] = {10, 20, 30, 40, 60, 80, 100, 125, 150, 175,250};
+  float ptbinsJets[] = {10, 20, 30, 40, 60, 80, 100, 125, 150, 175,250,350,1000};
   int ptbinsJetsN = sizeof(ptbinsJets)/sizeof(float)-1;
   mon.addHistogram( new TH1F( "wrtJetPt",  ";Jet p_{T} (GeV);Events",sizeof(ptbinsJets)/sizeof(float)-1,ptbinsJets));
+  mon.addHistogram( new TH1F( "wrtJetPt_v2",  ";Jet p_{T} (GeV);Events",sizeof(ptbinsJets)/sizeof(float)-1,ptbinsJets));
   mon.addHistogram( new TH1F( "wrtLepPt",  ";Lep p_{T} (GeV);Events",sizeof(ptbinsJets)/sizeof(float)-1,ptbinsJets));
 
 
@@ -1554,6 +1562,7 @@ int main(int argc, char* argv[])
     LorentzVector elDiff(0,0,0,0);
     for(size_t ilep=0; ilep<leptons.size(); ilep++){
       bool passKin(true),passId(true),passIso(true);
+      bool passIsoWPforFakeRate(true);
       bool passVeryLooseLepton(true), passLooseLepton(true), passSoftMuon(true), passSoftElectron(true), passVetoElectron(true);
       int lid=leptons[ilep].pdgId();
 
@@ -1597,54 +1606,54 @@ int main(int argc, char* argv[])
       passVeryLooseLepton &= lid==11 ?  patUtils::passIso(leptons[ilep].el,  patUtils::llvvElecIso::VeryLoose, patUtils::CutVersion::CutSet::ICHEP16Cut) :
       patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::VeryLoose, patUtils::CutVersion::CutSet::ICHEP16Cut);
 
+      passIsoWPforFakeRate = lid==11 ?  patUtils::passIso(leptons[ilep].el,  patUtils::llvvElecIso::FakeRateWP, patUtils::CutVersion::CutSet::ICHEP16Cut) :
+      patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::FakeRateWP, patUtils::CutVersion::CutSet::ICHEP16Cut);
+
       //apply muon corrections
-      //if(abs(lid)==13 && passIso && passId)
       if(abs(lid)==13 && passVeryLooseLepton){
+      //if(abs(lid)==13 && passIsoWPforFakeRate){
         passSoftMuon=false;
           if(is2016MC || is2016data){
-	    if(muCorMoriond17){
+	           if(muCorMoriond17){
 
-	      muDiff -= leptons[ilep].p4();
+	              muDiff -= leptons[ilep].p4();
 
-	      float qter =1.0;
-	      double pt  = leptons[ilep].pt();
-	      double eta = leptons[ilep].eta();
-	      double phi = leptons[ilep].phi();
-	      int charge = leptons[ilep].charge();
-	      TLorentzVector p4(leptons[ilep].px(),leptons[ilep].py(),leptons[ilep].pz(),leptons[ilep].energy());
-	      // cout<<"PT Befor Correction: "<< p4.Pt() << endl;
-	      int ntrk = leptons[ilep].mu.innerTrack()->hitPattern().trackerLayersWithMeasurement();
-	      if(is2016MC){
-		//muCor2016->momcor_mc  (p4, lid<0 ? -1 :1, ntrk, qter);
-		//TRandom3 *rgen_ = new TRandom3(0);
-		double u1 = rgenMuon_->Uniform();
-		double u2 = rgenMuon_->Uniform();
+	              float qter =1.0;
+	              double pt  = leptons[ilep].pt();
+	              double eta = leptons[ilep].eta();
+	              double phi = leptons[ilep].phi();
+	              int charge = leptons[ilep].charge();
+	              TLorentzVector p4(leptons[ilep].px(),leptons[ilep].py(),leptons[ilep].pz(),leptons[ilep].energy());
+	              // cout<<"PT Befor Correction: "<< p4.Pt() << endl;
+	              int ntrk = leptons[ilep].mu.innerTrack()->hitPattern().trackerLayersWithMeasurement();
 
-		double mcSF = muCorMoriond17->kScaleAndSmearMC(charge, pt, eta, phi, ntrk, u1, u2, 0, 0);
+                if(is2016MC){
 
-		leptons[ilep].mu.setP4(LorentzVector(p4.Px()*mcSF,p4.Py()*mcSF,p4.Pz()*mcSF,p4.E()*mcSF ) );
-		leptons[ilep] = patUtils::GenericLepton(leptons[ilep].mu);
+		              double u1 = rgenMuon_->Uniform();
+		              double u2 = rgenMuon_->Uniform();
+		              double mcSF = muCorMoriond17->kScaleAndSmearMC(charge, pt, eta, phi, ntrk, u1, u2, 0, 0);
 
-		//cout<<"\t PT After Correction (2016): "<< p4.Pt() << " -- (Moriond17): "<< p4_2.Pt()<< endl;
-	      }else if (is2016data){
-		// muCor2016->momcor_data(p4, lid<0 ? -1 :1, 0, qter);
-		double dataSF = muCorMoriond17->kScaleDT(charge, pt, eta, phi, 0, 0);
+		              leptons[ilep].mu.setP4(LorentzVector(p4.Px()*mcSF,p4.Py()*mcSF,p4.Pz()*mcSF,p4.E()*mcSF ) );
+		              leptons[ilep] = patUtils::GenericLepton(leptons[ilep].mu);
 
-		leptons[ilep].mu.setP4(LorentzVector(p4.Px()*dataSF,p4.Py()*dataSF,p4.Pz()*dataSF,p4.E()*dataSF ) );
-		leptons[ilep] = patUtils::GenericLepton(leptons[ilep].mu);
-		// cout<<"\t PT After Correction: "<< leptons[ilep].pt() << endl;
-	      }
+	              }else if (is2016data){
+
+                  double dataSF = muCorMoriond17->kScaleDT(charge, pt, eta, phi, 0, 0);
+
+                  leptons[ilep].mu.setP4(LorentzVector(p4.Px()*dataSF,p4.Py()*dataSF,p4.Pz()*dataSF,p4.E()*dataSF ) );
+                  leptons[ilep] = patUtils::GenericLepton(leptons[ilep].mu);
+                }
 
 	      //  leptons[ilep].mu.setP4(LorentzVector(p4.Px(),p4.Py(),p4.Pz(),p4.E() ) );
 	      //  leptons[ilep] = patUtils::GenericLepton(leptons[ilep].mu); //recreate the generic lepton to be sure that the p4 is ok
-	      muDiff += leptons[ilep].p4();
+        muDiff += leptons[ilep].p4();
 	    }
 	  }
-      }
+  }// end muons correction
 
       //apply electron corrections
-      //if(abs(lid)==11  && passIso && passId)
       if(abs(lid)==11  && passVeryLooseLepton){
+      //if(abs(lid)==11 && passIsoWPforFakeRate){
         //std::cout<<"START ---- "<<std::endl;
         elDiff -= leptons[ilep].p4();
         //const EcalRecHitCollection* recHits = (leptons[ilep].el.isEB()) ? recHitCollectionEBHandle.product() : recHitCollectionEEHandle.product();
@@ -1698,7 +1707,7 @@ int main(int argc, char* argv[])
 
         //if(passId && passIso && passKin)          selLeptons.push_back(leptons[ilep]);
         if(passVeryLooseLepton && passKin)            selLeptons.push_back(leptons[ilep]); //we need loose lepton for FR
-        else if(passVeryLooseLepton || passSoftMuon)  extraLeptons.push_back(leptons[ilep]);
+        if(passIsoWPforFakeRate && passKin)                 extraLeptons.push_back(leptons[ilep]);
       }
       std::sort(selLeptons.begin(),   selLeptons.end(), utils::sort_CandidatesByPt);
       std::sort(extraLeptons.begin(), extraLeptons.end(), utils::sort_CandidatesByPt);
@@ -1737,11 +1746,12 @@ int main(int argc, char* argv[])
 
         selTaus.push_back(tau);
         selLeptons.push_back(tau);
+        extraLeptons.push_back(tau);
         ntaus++;
       }
       std::sort(selTaus.begin(), selTaus.end(), utils::sort_CandidatesByPt);
       std::sort(selLeptons.begin(),   selLeptons.end(), utils::sort_CandidatesByPt);
-
+      std::sort(extraLeptons.begin(),   extraLeptons.end(), utils::sort_CandidatesByPt);
 
       //
       //JET/MET ANALYSIS
@@ -1986,7 +1996,10 @@ int main(int argc, char* argv[])
         }
 
 
-        // if(!isDileptonCandidate) continue;
+        if(!isDileptonCandidate) continue;
+        /************************* EVENT HAS a Z-like candidate ***************************/
+
+
         // cout<<"  ##RECO##  Z Lepton 1:  pt = "<<selLeptons[dilLep1].pt()<<"  eta = "<<selLeptons[dilLep1].eta()<<"  phi = "<<selLeptons[dilLep1].phi()<<endl;
         // if ( selLeptons[dilLep1].genParticle() ) cout<<"    ##RECO (GEN Match)##  Z Lepton 1:  pt = "<<(selLeptons[dilLep1].genParticle())->pt()<<"  eta = "<<(selLeptons[dilLep1].genParticle())->eta()<<"  phi = "<<(selLeptons[dilLep1].genParticle())->phi()<<endl;
         // cout<<"  ##RECO##  Z Lepton 2:  pt = "<<selLeptons[dilLep2].pt()<<"  eta = "<<selLeptons[dilLep2].eta()<<"  phi = "<<selLeptons[dilLep2].phi()<<endl;
@@ -2071,36 +2084,36 @@ int main(int argc, char* argv[])
 
 
         //LEPTON FAKE RATE ANALYSIS Z+1jets  (no systematics taken into account here)
-        if(ivar==0 && passZmass && (int)selLeptons.size()==3){  //Request exactly one Z + 1 additional lepton
+        if(ivar==0 && passZmass && (int) extraLeptons.size()==3){  //Request exactly one Z + 1 additional lepton
           bool IdentifiedThirdLepton=false;
           double tmass=-999;
-          for(int i=0   ;i<(int)selLeptons.size() && !IdentifiedThirdLepton;i++){
-            if((i==dilLep1) || (i==dilLep2)) continue;
-            if(deltaR(selLeptons[i],  selLeptons[dilLep1])<0.1 || deltaR(selLeptons[i],  selLeptons[dilLep2])<0.1)continue;
-            if(abs(selLeptons[i].pdgId())==11||abs(selLeptons[i].pdgId())==13||abs(selLeptons[i].pdgId())==15){
-              tmass = TMath::Sqrt(2*selLeptons[i].pt()*met.pt()*(1-TMath::Cos(deltaPhi(met.phi(), selLeptons[i].phi()))));
+          for(int i=0   ;i<(int)extraLeptons.size() && !IdentifiedThirdLepton;i++){
+            // if((i==dilLep1) || (i==dilLep2)) continue;
+            if(deltaR(extraLeptons[i],  selLeptons[dilLep1])<0.1 || deltaR(extraLeptons[i],  selLeptons[dilLep2])<0.1)continue;
+            if(abs(extraLeptons[i].pdgId())==11||abs(extraLeptons[i].pdgId())==13||abs(extraLeptons[i].pdgId())==15){
+              tmass = TMath::Sqrt(2*extraLeptons[i].pt()*met.pt()*(1-TMath::Cos(deltaPhi(met.phi(), extraLeptons[i].phi()))));
             }
-            if(abs(selLeptons[i].pdgId())==11 || abs(selLeptons[i].pdgId())==13 || abs(selLeptons[i].pdgId())==15){
+            if(abs(extraLeptons[i].pdgId())==11 || abs(extraLeptons[i].pdgId())==13 || abs(extraLeptons[i].pdgId())==15){
               int closestJetIndexL1=-1; double pTL1=-1; double etaL1=-1;
-              double dRminL1 = closestJet(selLeptons[i].p4(), selJets, closestJetIndexL1);
+              double dRminL1 = closestJet(extraLeptons[i].p4(), selJets, closestJetIndexL1);
               if(closestJetIndexL1>=0 && dRminL1<0.5){pTL1=selJets[closestJetIndexL1].pt(); etaL1=abs(selJets[closestJetIndexL1].eta());}
-              else{pTL1=selLeptons[i].pt(); etaL1=abs(selLeptons[i].eta());}
+              else{pTL1=extraLeptons[i].pt(); etaL1=abs(extraLeptons[i].eta());}
 
 
               TString PartName = "FR_";//+chTags.at(1)+"_";
-              if     (abs(selLeptons[i].pdgId())==11)PartName += "El";
-              else if(abs(selLeptons[i].pdgId())==13)PartName += "Mu";
-              else if(abs(selLeptons[i].pdgId())==15)PartName += "Ta";
+              if     (abs(extraLeptons[i].pdgId())==11)PartName += "El";
+              else if(abs(extraLeptons[i].pdgId())==13)PartName += "Mu";
+              else if(abs(extraLeptons[i].pdgId())==15)PartName += "Ta";
               else PartName+= abs(selLeptons[i].pdgId());
 
 
               std::vector<TString> TagsFR;
 
-              if(abs(selLeptons[i].pdgId())==11 || abs(selLeptons[i].pdgId())==13){
+              if(abs(extraLeptons[i].pdgId())==11 || abs(extraLeptons[i].pdgId())==13){
                 bool passId = false;
-                if(abs(selLeptons[i].pdgId())==11) passId = patUtils::passId(selLeptons[i].el, vtx[0], patUtils::llvvElecId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
-                if(abs(selLeptons[i].pdgId())==13) passId = patUtils::passId(selLeptons[i].mu, vtx[0], patUtils::llvvMuonId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
-                float relIso = patUtils::relIso(selLeptons[i], rho);
+                if(abs(extraLeptons[i].pdgId())==11) passId = patUtils::passId(extraLeptons[i].el, vtx[0], patUtils::llvvElecId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
+                if(abs(extraLeptons[i].pdgId())==13) passId = patUtils::passId(extraLeptons[i].mu, vtx[0], patUtils::llvvMuonId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
+                float relIso = patUtils::relIso(extraLeptons[i], rho);
 
                 if(true                 )TagsFR.push_back(PartName);
                 if(passId && relIso<=0.1)TagsFR.push_back(PartName+("_Id_Iso01"));
@@ -2109,12 +2122,12 @@ int main(int argc, char* argv[])
 
                 if(passId && relIso<=0.3)IdentifiedThirdLepton=true;
               }else{
-                bool IdL         = selLeptons[i].tau.tauID("byLooseCombinedIsolationDeltaBetaCorr3Hits");
-                bool IdM         = selLeptons[i].tau.tauID("byMediumCombinedIsolationDeltaBetaCorr3Hits");
-                bool IdL_MVA     = selLeptons[i].tau.tauID("byLooseIsolationMVArun2v1DBoldDMwLT");
-                bool IdM_MVA     = selLeptons[i].tau.tauID("byMediumIsolationMVArun2v1DBoldDMwLT");
-                bool IdL_MVA_R03 = selLeptons[i].tau.tauID("byLooseIsolationMVArun2v1DBdR03oldDMwLT");
-                bool IdM_MVA_R03 = selLeptons[i].tau.tauID("byMediumIsolationMVArun2v1DBdR03oldDMwLT");
+                bool IdL         = extraLeptons[i].tau.tauID("byLooseCombinedIsolationDeltaBetaCorr3Hits");
+                bool IdM         = extraLeptons[i].tau.tauID("byMediumCombinedIsolationDeltaBetaCorr3Hits");
+                bool IdL_MVA     = extraLeptons[i].tau.tauID("byLooseIsolationMVArun2v1DBoldDMwLT");
+                bool IdM_MVA     = extraLeptons[i].tau.tauID("byMediumIsolationMVArun2v1DBoldDMwLT");
+                bool IdL_MVA_R03 = extraLeptons[i].tau.tauID("byLooseIsolationMVArun2v1DBdR03oldDMwLT");
+                bool IdM_MVA_R03 = extraLeptons[i].tau.tauID("byMediumIsolationMVArun2v1DBdR03oldDMwLT");
 
                 if(true                 )TagsFR.push_back(PartName);
                 if(IdL                  )TagsFR.push_back(PartName+("_Id_IsoLo"));
@@ -2137,11 +2150,12 @@ int main(int argc, char* argv[])
 
               for(unsigned int iTags=0;iTags<TagsFR.size();iTags++){
                 TagsFRJet.push_back(TagsFR[iTags] + (etaL1<1.4                   ?TString("_B"):TString("_E")));
-                TagsFRLep.push_back(TagsFR[iTags] + (abs(selLeptons[i].eta())<1.4?TString("_B"):TString("_E")));
+                TagsFRLep.push_back(TagsFR[iTags] + (abs(extraLeptons[i].eta())<1.4?TString("_B"):TString("_E")));
               }
 
               mon.fillHisto("wrtJetPt", TagsFRJet, pTL1              , weight);
-              mon.fillHisto("wrtLepPt", TagsFRLep, selLeptons[i].pt(), weight);
+              if(closestJetIndexL1>=0 && dRminL1<0.5) mon.fillHisto("wrtJetPt_v2", TagsFRJet, pTL1              , weight);
+              mon.fillHisto("wrtLepPt", TagsFRLep, extraLeptons[i].pt(), weight);
             }
           }//close loop on leptons
 
@@ -2256,7 +2270,7 @@ int main(int argc, char* argv[])
           higgsCand_SVFit = higgsCand;
 
           //FIXME gives a lot of warning currently
-        if(passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain && passDPhiCut){
+        if(runSVfit && passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain && passDPhiCut){
          // std::cout<<"START SVFIT\n";
          // cout<<"============================================================="<<endl;
          // cout<<"    Higgs mass = "<<higgsCand.M()<<"   Higgs pt = "<<higgsCand.Pt()<<endl;
