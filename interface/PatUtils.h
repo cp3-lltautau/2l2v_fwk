@@ -66,6 +66,7 @@ namespace patUtils
       public:
       // constructor
       ~GenericLepton(){};
+       GenericLepton(){};
        GenericLepton(pat::Electron el_) : pat::GenericParticle(el_) {el = el_; };
        GenericLepton(pat::Muon     mu_) : pat::GenericParticle(mu_) {mu = mu_; };
        GenericLepton(pat::Tau     tau_) : pat::GenericParticle(tau_){tau = tau_; };

@@ -1941,7 +1941,7 @@ int main(int argc, char* argv[])
           for(unsigned int l2=l1+1;l2<selLeptons.size();l2++){
             if(abs(selLeptons[l2].pdgId())==15)continue;
 
-            double trailPtCutValue = abs(selLeptons[l1].pdgId())==11 ? 13.0 : 10.0;
+            double trailPtCutValue = abs(selLeptons[l2].pdgId())==11 ? 13.0 : 10.0;
             if( selLeptons[l2].pt() < trailPtCutValue ) continue;
             // if(!( abs(selLeptons[l2].pdgId())==11 ? patUtils::passIso(selLeptons[l2].el,  patUtils::llvvElecIso::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut) :
             //                                       patUtils::passIso(selLeptons[l2].mu,  patUtils::llvvMuonIso::Tight, patUtils::CutVersion::CutSet::Moriond17Cut)) ||

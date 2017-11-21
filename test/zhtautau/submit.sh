@@ -27,7 +27,7 @@ if [[ $# -ge 4 ]]; then echo "Additional arguments will be considered: "$argumen
 #--------------------------------------------------
 # Global Variables
 #--------------------------------------------------
-SUFFIX=_2017_11_16_FR
+SUFFIX=_2017_11_20_FR
 #SUFFIX=$(date +"_%Y_%m_%d")
 MAINDIR=$CMSSW_BASE/src/UserCode/llvv_fwk/test/zhtautau
 JSON=$MAINDIR/samples_FR.json
@@ -69,6 +69,17 @@ case $step in
 	echo "Output: " $RESULTSDIR
 	if [[ $arguments == *"crab3"* ]]; then queue='crab3' ;fi
 	runAnalysisOverSamples.py -e runZHTauTauAnalysis -j $JSON -o $RESULTSDIR -c $MAINDIR/../runAnalysis_cfg.py.templ -p "@useMVA=True @saveSummaryTree=True @runSystematics=True @automaticSwitch=False @is2011=False @jacknife=0 @jacks=0" -s $queue --report True $arguments
+	;;
+    
+    1.2)  #submit jobs for FakeRate analysis
+	echo "JOB SUBMISSION"
+	echo "Input: " $JSON
+	echo "Output: " $RESULTSDIR
+
+	queue='8nh'
+	#IF CRAB3 is provided in argument, use crab submissiong instead of condor/lsf
+	if [[ $arguments == *"crab3"* ]]; then queue='crab3' ;fi
+	runAnalysisOverSamples.py -e runZHFakeRateTreeProducer -j $JSON -o $RESULTSDIR  -c $MAINDIR/../runAnalysis_cfg.py.templ -p "@useMVA=True @saveSummaryTree=True @runSVfit=False @runSystematics=False @automaticSwitch=False @is2011=False @jacknife=0 @jacks=0 @data_pileup=datapileup_latest" -s $queue --report True $arguments
 	;;
 
     2)  #extract integrated luminosity of the processed lumi blocks
