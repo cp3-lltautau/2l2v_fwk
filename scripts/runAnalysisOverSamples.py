@@ -63,7 +63,7 @@ def DASQuery(query):
    if(outputs[0]==0):cachedQueryDBcursor.execute("""INSERT INTO queries(date, query, result) VALUES(?, ?, ?)""", (time.strftime('%Y-%m-%d %H:%M:%S'), query, result))
    cachedQueryDB.commit()  #commit changes to the DB
 
-   return result 
+   return result
 
 initialCommand = '';
 def initProxy():
@@ -79,7 +79,7 @@ def initProxy():
       if(not os.path.isfile(os.path.expanduser('~/.globus/mysecret.txt'))):
          os.system('mkdir -p '+PROXYDIR+'; voms-proxy-init --voms cms             -valid 192:00 --out '+PROXYDIR+'/x509_proxy')
       else:
-         os.system('mkdir -p '+PROXYDIR+'; voms-proxy-init --voms cms             -valid 192:00 --out '+PROXYDIR+'/x509_proxy -pwstdin < /home/fynu/quertenmont/.globus/mysecret.txt') 
+         os.system('mkdir -p '+PROXYDIR+'; voms-proxy-init --voms cms             -valid 192:00 --out '+PROXYDIR+'/x509_proxy -pwstdin < /home/fynu/quertenmont/.globus/mysecret.txt')
    initialCommand = 'export X509_USER_PROXY='+PROXYDIR+'/x509_proxy;voms-proxy-init --voms cms --noregen; ' #no voms here, otherwise I (LQ) have issues
    os.system('cp '+PROXYDIR+'/x509_proxy /tmp/x509up_u%s' % pwd.getpwuid( os.getuid() ).pw_uid)
 
@@ -92,12 +92,12 @@ def getFileList(procData,DefaultNFilesPerJob):
    nonMiniAODSamples = []
    miniAODSamples = getByLabel(procData,'miniAOD',[])
    dsetSamples = getByLabel(procData,'dset',[])
-   for s in dsetSamples: 
+   for s in dsetSamples:
       if("/MINIAOD" in s): miniAODSamples+=[s]
       else: nonMiniAODSamples+=[s]
 
    for sample in miniAODSamples:
-      
+
       instance = ""
       if(len(getByLabel(procData,'dbsURL',''))>0): instance =  "instance=prod/"+ getByLabel(procData,'dbsURL','')
       listSites = DASQuery('site dataset='+sample + ' ' + instance + ' | grep site.name,site.replica_fraction')
@@ -113,7 +113,7 @@ def getFileList(procData,DefaultNFilesPerJob):
             FractionOnLocal = float(site.split()[2].replace('%','').replace('"',''));
 
       if(FractionOnLocal == MaxFraction):
-            IsOnLocalTier=True            
+            IsOnLocalTier=True
             print ("Sample is found to be on the local grid tier %s (%f%%) for %s") %(localTier, FractionOnLocal, sample)
 
       isLocalSample = IsOnLocalTier
@@ -121,7 +121,7 @@ def getFileList(procData,DefaultNFilesPerJob):
       if(localTier != "" and not IsOnLocalTier):
          nonLocalSamples += [sample]
 
-      list = [] 
+      list = []
       if(IsOnLocalTier or "/MINIAOD" in sample):
          list = []
          if(DatasetFileDB=="DAS"):
@@ -133,21 +133,21 @@ def getFileList(procData,DefaultNFilesPerJob):
             list = commands.getstatusoutput(initialCommand + curlCommand+'"'+dbsPath+'/files?dataset='+sample+'"'+sedTheList)[1].split()
 
          list = [x for x in list if ".root" in x] #make sure that we only consider root files
-         for i in range(0,len(list)):              
+         for i in range(0,len(list)):
             if IsOnLocalTier:
                if  (hostname.find("iihe.ac.be")!=-1): list[i] = "dcap://maite.iihe.ac.be/pnfs/iihe/cms/ph/sc4"+list[i]
                elif(hostname.find("ucl.ac.be" )!=-1): list[i] = "/storage/data/cms"+list[i]
-               else:                                  list[i] = "root://eoscms//eos/cms"+list[i]            
+               else:                                  list[i] = "root://eoscms//eos/cms"+list[i]
             else:
                list[i] = "root://cms-xrd-global.cern.ch/"+list[i] #works worldwide
               #list[i] = "root://xrootd-cms.infn.it/"+list[i]    #optimal for EU side
               #list[i] = "root://cmsxrootd.fnal.gov/"+list[i]    #optimal for US side
 
       else:
-         print "Processing private local sample: " + sample 
-         list = storeTools.fillFromStore(sample,0,-1,True);                  
+         print "Processing private local sample: " + sample
+         list = storeTools.fillFromStore(sample,0,-1,True);
 
-      list = storeTools.keepOnlyFilesFromGoodRun(list, os.path.expandvars(getByLabel(procData,'lumiMask','')))       
+      list = storeTools.keepOnlyFilesFromGoodRun(list, os.path.expandvars(getByLabel(procData,'lumiMask','')))
       split=getByLabel(procData,'split',-1)
       if(split>0):
          NFilesPerJob = max(1,len(list)/split)
@@ -156,7 +156,7 @@ def getFileList(procData,DefaultNFilesPerJob):
          if(hostname.find("iihe.ac.be")!=-1): NFilesPerJob = DefaultNFilesPerJob #at iihe we don't want to have more than the defaultNFilesPerJob
          #elif((len(list)/NFilesPerJob)>100):NFilesPerJob=len(list)/100  #make sure the number of jobs isn't too big
          else: NFilesPerJob = DefaultNFilesPerJob #Hot fix to test removing the limit on the NFilesPerJob
-            
+
       for g in range(0, len(list), NFilesPerJob):
          groupList = ''
          for f in list[g:g+NFilesPerJob]:
@@ -186,7 +186,7 @@ def CacheInputs(FileList):
       NewList += '"' +  l[l.rfind('/')+1:] + '",\\n'
    return (NewList, CopyCommand, DeleteCommand)
 
-   
+
 
 
 #configure
@@ -241,7 +241,7 @@ LaunchOnCondor.Jobs_LSFRequirement = '"'+opt.requirementtoBatch+'"'
 LaunchOnCondor.Jobs_EmailReport    = opt.report
 LaunchOnCondor.Jobs_LocalNJobs     = opt.localnfiles
 LaunchOnCondor.Jobs_CRABLFN        = opt.crablfn
-LaunchOnCondor.Jobs_ProxyDir       = FarmDirectory+"/inputs/" 
+LaunchOnCondor.Jobs_ProxyDir       = FarmDirectory+"/inputs/"
 
 #open the file which describes the sample
 jsonFile = open(opt.samplesDB,'r')
@@ -263,16 +263,16 @@ for procBlock in procList :
            if(skipThisProc):continue #skip processes matching one of the skipkeyword
 
         isdata=getByLabelFromKeyword(proc,opt.onlykeyword,'isdata',False)
-        isdatadriven=getByLabelFromKeyword(proc,opt.onlykeyword,'isdatadriven',False)       
+        isdatadriven=getByLabelFromKeyword(proc,opt.onlykeyword,'isdatadriven',False)
         mctruthmode=getByLabelFromKeyword(proc,opt.onlykeyword,'mctruthmode',0)
         procSuffix=getByLabelFromKeyword(proc,opt.onlykeyword,'suffix' ,"")
         resonance=getByLabelFromKeyword(proc,opt.onlykeyword,'resonance',1);
         data = proc['data']
 
-        for procData in data : 
+        for procData in data :
             origdtag = getByLabel(procData,'dtag','')
             if(origdtag=='') : continue
-            dtag = origdtag         
+            dtag = origdtag
 
             xsec = getByLabel(procData,'xsec',-1)
             br = getByLabel(procData,'br',[])
@@ -280,7 +280,7 @@ for procBlock in procList :
             split=getByLabel(procData,'split',-1)
             if opt.onlytag!='all' and dtag.find(opt.onlytag)<0 : continue
             filt=''
-            if mctruthmode!=0 : filt='_filt'+str(mctruthmode)      
+            if mctruthmode!=0 : filt='_filt'+str(mctruthmode)
             if(xsec>0 and not isdata):
                 for ibr in br :  xsec = xsec*ibr
 
@@ -292,7 +292,7 @@ for procBlock in procList :
 
                for s in range(0,len(FileList)):
                    LaunchOnCondor.Jobs_FinalCmds= []
-                   LaunchOnCondor.Jobs_InitCmds = ['ulimit -c 0;'] 
+                   LaunchOnCondor.Jobs_InitCmds = ['ulimit -c 0;']
                    if(not isLocalSample):LaunchOnCondor.Jobs_InitCmds      += [initialCommand]
 
                    #create the cfg file
@@ -325,6 +325,7 @@ for procBlock in procList :
                    if(opt.params.find('@evEnd')<0) :           opt.params = '@evEnd=-1 '     + opt.params
             	   if(opt.params.find('@saveSummaryTree')<0) : opt.params = '@saveSummaryTree=False ' + opt.params
             	   if(opt.params.find('@runSystematics')<0) :  opt.params = '@runSystematics=False '  + opt.params
+                   if(opt.params.find('@runSVfit')<0) :  opt.params = '@runSVfit=False '  + opt.params
                    if(opt.params.find('@jacknife')<0) :        opt.params = '@jacknife=-1 ' + opt.params
                    if(opt.params.find('@jacks')<0) :           opt.params = '@jacks=-1 '    + opt.params
                    if(opt.params.find('@trig')<0) :            opt.params = '@trig=False ' + opt.params
@@ -353,7 +354,7 @@ for procBlock in procList :
                           LaunchOnCondor.Jobs_CRABname     = dtag + '_' + str(s)
                           LaunchOnCondor.Jobs_CRABInDBS    = getByLabel(procData,'dbsURL','global')
                           if(split>0):
-                              LaunchOnCondor.Jobs_CRABUnitPerJob = 100 / split 
+                              LaunchOnCondor.Jobs_CRABUnitPerJob = 100 / split
                           else:
                               LaunchOnCondor.Jobs_CRABUnitPerJob = int(opt.NFile)
                        LaunchOnCondor.SendCluster_Push(["BASH", str(opt.theExecutable + ' ' + cfgfile)])
@@ -369,7 +370,7 @@ for procBlock in procList :
 
                if(len(failedList)>0):
                   LaunchOnCondor.SendCluster_Create(FarmDirectory, JobName + '_' + dtag)
-                  for cfgfile in failedList:                  
+                  for cfgfile in failedList:
                      LaunchOnCondor.SendCluster_Push(["BASH", str(opt.theExecutable + ' ' + cfgfile)])
                   LaunchOnCondor.SendCluster_Submit()
 
