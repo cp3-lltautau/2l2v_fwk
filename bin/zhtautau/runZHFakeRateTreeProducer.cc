@@ -177,29 +177,31 @@ int main(int argc, char* argv[])
 
 
   //create a tree and related variables to save higgs candidate info for each cutIndex values
-  unsigned int treeEventId;
-  unsigned int treeLumiId;
-  unsigned int treeRunId;
-  int          treeZId;
-  int          treeLeg1Id;
-  float        treeLeg1ClosestJetPt;
-  float        treeLeg1ClosestJetEta;
-  float        treeLeg1ClosestJetPt_LepClean;
-  float        treeLeg1ClosestJetEta_LepClean;
-  float        treeLeg1Pt;
-  float        treeLeg1Eta;
-  float        treeLeg1Iso;
-  int          treeLeg1LepID_loose;
-  int          treeLeg1LepID_medium;
-  int          treeLeg1LepID_tight;
-  float        treeLeg1DeltaR;
-  int          treeLeg1TauIsoLoose3;
-  int          treeLeg1TauIsoMedium3;
-  int          treeLeg1TauIsoLooseMVA;
-  int          treeLeg1TauIsoMediumMVA;
-  float        treeWeight;
-  float        treeWeightNoLepSF;
-  float        treeLepEff1;
+  unsigned int  treeEventId;
+  unsigned int  treeLumiId;
+  unsigned int  treeRunId;
+  int           treeZId;
+  int           treeLeg1PdgId;
+  float         treeLeg1ClosestJetPt;
+  float         treeLeg1ClosestJetEta;
+  int           treeLepIsMatched;
+  float         treeTMass;
+  float         treeLeg1Pt;
+  float         treeLeg1Eta;
+  float         treeLeg1Iso;
+  unsigned char treeLeg1ID;
+  int           treeLeg1LepID_loose;
+  int           treeLeg1LepID_medium;
+  int           treeLeg1LepID_tight;
+  float         treeLeg1DeltaR;
+  int           treeLeg1TauIsoLoose3;
+  int           treeLeg1TauIsoMedium3;
+  int           treeLeg1TauIsoLooseMVA;
+  int           treeLeg1TauIsoMediumMVA;
+  float         treeWeight;
+  float         treeWeightNoLepSF;
+  float         treeLepEff1;
+  int           treeNbtag;
 
   TFile *ofile=TFile::Open("out.root", "recreate");
 
@@ -208,14 +210,17 @@ int main(int argc, char* argv[])
   tree->Branch("lumiId" , &treeLumiId  , string("lumiId/i"  ).c_str());
   tree->Branch("runId"  , &treeRunId   , string("runId/i"   ).c_str());
   tree->Branch("zId",     &treeZId     , string("zId/I" ).c_str());
-  tree->Branch("leg1Id" , &treeLeg1Id  , string("leg1Id/I"  ).c_str());
+  tree->Branch("leg1PdgId" , &treeLeg1PdgId  , string("leg1PdgId/I"  ).c_str());
+  tree->Branch("lepIsMatched" , &treeLepIsMatched , string("lepIsMatched/I").c_str());
   tree->Branch("leg1ClosestJetPt" , &treeLeg1ClosestJetPt  , string("leg1ClosestJetPt/F"  ).c_str());
   tree->Branch("leg1ClosestJetEta" , &treeLeg1ClosestJetEta  , string("leg1ClosestJetEta/F"  ).c_str());
-  tree->Branch("treeLeg1ClosestJetPt_LepClean" , &treeLeg1ClosestJetPt_LepClean  , string("treeLeg1ClosestJetPt_LepClean/F"  ).c_str());
-  tree->Branch("treeLeg1ClosestJetEta_LepClean" , &treeLeg1ClosestJetEta_LepClean  , string("treeLeg1ClosestJetEta_LepClean/F"  ).c_str());
+  tree->Branch("TMass" , &treeTMass  , string("TMass/F"  ).c_str());
+  //tree->Branch("Leg1ClosestJetEta_LepClean" , &treeLeg1ClosestJetEta_LepClean  , string("treeLeg1ClosestJetEta_LepClean/F"  ).c_str());
+  tree->Branch("leg1Pt" , &treeLeg1Pt  , string("leg1Pt/F"  ).c_str());
   tree->Branch("leg1Pt" , &treeLeg1Pt  , string("leg1Pt/F"  ).c_str());
   tree->Branch("leg1Eta", &treeLeg1Eta , string("leg1Eta/F" ).c_str());
   tree->Branch("leg1Iso", &treeLeg1Iso , string("leg1Iso/F" ).c_str());
+  tree->Branch("leg1ID", &treeLeg1ID , string("leg1ID/b" ).c_str());
   tree->Branch("leg1LepIDloose", &treeLeg1LepID_loose , string("leg1LepIDloose/I" ).c_str());
   tree->Branch("leg1LepIDmedium", &treeLeg1LepID_medium , string("leg1LepIDmedium/I" ).c_str());
   tree->Branch("leg1LepIDtight", &treeLeg1LepID_tight , string("leg1LepIDtight/I" ).c_str());
@@ -227,7 +232,7 @@ int main(int argc, char* argv[])
   tree->Branch("weight" , &treeWeight  , string("weight/F"  ).c_str());
   tree->Branch("weightNoLepSF" , &treeWeightNoLepSF  , string("weightNoLepSF/F"  ).c_str());
   tree->Branch("lepEff1" , &treeLepEff1  , string("lepEff1/F"  ).c_str());
-
+  tree->Branch("nbtag" , &treeNbtag  , string("nbtag/I"  ).c_str());
 
   //##############################################
   //######## GET READY FOR THE EVENT LOOP ########
@@ -372,12 +377,15 @@ int main(int argc, char* argv[])
   		treeLumiId=0;
   		treeRunId=0;
   		treeZId=0;
-  		treeLeg1Id=0;
+  		treeLeg1PdgId=0;
   		treeLeg1ClosestJetPt=0;
   		treeLeg1ClosestJetEta=0;
+      treeLepIsMatched=0;
+      treeTMass=0;
   		treeLeg1Pt=0;
   		treeLeg1Eta=0;
   		treeLeg1Iso=0;
+      treeLeg1ID=0;
   		treeLeg1LepID_loose=0;
       treeLeg1LepID_medium=0;
   		treeLeg1LepID_tight=0;
@@ -388,7 +396,7 @@ int main(int argc, char* argv[])
   		treeLeg1TauIsoMediumMVA=0;
   		treeWeight=0;
   		treeLepEff1=0;
-
+		treeNbtag=0;
 
 
       reco::GenParticleCollection gen;
@@ -630,10 +638,10 @@ int main(int argc, char* argv[])
                                    patUtils::passId(leptons[ilep].mu, vtx[0], patUtils::llvvMuonId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
       passIsoWPforFakeRate &= lid==11 ?  patUtils::passIso(leptons[ilep].el,  patUtils::llvvElecIso::FakeRateWP, patUtils::CutVersion::CutSet::ICHEP16Cut) :
                                         patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::FakeRateWP, patUtils::CutVersion::CutSet::ICHEP16Cut);
-
+      bool applyCorr = true;
   //     //apply muon corrections
   //     //if(abs(lid)==13 && passIso && passId)
-      if(abs(lid)==13 && passIsoWPforFakeRate && passLooseLepton ){
+      if(applyCorr && abs(lid)==13 && passIsoWPforFakeRate && passLooseLepton ){
           if(is2016MC || is2016data){
 	           if(muCorMoriond17){
 	              muDiff -= leptons[ilep].p4();
@@ -673,7 +681,7 @@ int main(int argc, char* argv[])
 
       //apply electron corrections
       //if(abs(lid)==11  && passIso && passId)
-      if(abs(lid)==11  && passIsoWPforFakeRate && passLooseLepton){
+      if(applyCorr && abs(lid)==11  && passIsoWPforFakeRate && passLooseLepton){
         //std::cout<<"START ---- "<<std::endl;
         elDiff -= leptons[ilep].p4();
         //const EcalRecHitCollection* recHits = (leptons[ilep].el.isEB()) ? recHitCollectionEBHandle.product() : recHitCollectionEEHandle.product();
@@ -776,7 +784,7 @@ int main(int argc, char* argv[])
       for(size_t ijet=0; ijet<jets.size(); ijet++){
         pat::Jet jet = jets[ijet]; //copy the jet, such that we can update it
 
-        if(jet.pt()<15 || fabs(jet.eta())>4.7 ) continue;
+        if(jet.pt()<20 || fabs(jet.eta())>4.7 ) continue;
 
         //jet id
         bool passPFloose = patUtils::passPFJetID("Loose", jet);
@@ -784,6 +792,15 @@ int main(int argc, char* argv[])
         //bool passLooseSimplePuId = jet.userInt("pileupJetId:fullId") & (1 << 2);
         if(!passPFloose || !passLooseSimplePuId) continue;
 
+        bool overlapWithTau(false);
+        for(int l1=0; l1<(int)selTaus.size();++l1){
+          if(deltaR(jet, selTaus[l1])< 0.5  ){overlapWithTau=true; break;}
+        }
+
+        if(!overlapWithTau && jet.pt()>30 && fabs(jet.eta())<2.5){
+          bool hasCSVtag = (jet.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags")>btagMedium);
+	  if (hasCSVtag) treeNbtag++;
+	}
         selJets.push_back(jet);
       }
       //sort all jet collection by pT
@@ -797,8 +814,8 @@ int main(int argc, char* argv[])
         std::vector<TString> chTags;
         TString evCat;
         int dilId(1);
-        patUtils::GenericLepton dilLep1;
-        patUtils::GenericLepton dilLep2;
+        patUtils::GenericLepton *dilLep1=nullptr;
+        patUtils::GenericLepton *dilLep2=nullptr;
         double BestMass;
         LorentzVector leadingLep, trailerLep, zll, zlltmp;
         //get the Z candidate
@@ -817,6 +834,7 @@ int main(int argc, char* argv[])
                                         patUtils::passId(lep1.mu, vtx[0], patUtils::llvvMuonId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut)) ) continue;
 
           for(auto& lep2: selLeptons){
+            //cout << " lep1 : " << &lep1 << " lep2 : " << &lep2 << " - check: " << (&lep1 == &lep2 ? "True" : "False") << endl;
             if ( &lep1 == &lep2 || abs(lep2.pdgId())==15)continue;
 
             double trailPtCutValue = abs(lep2.pdgId())==11 ? 13.0 : 10.0;
@@ -832,8 +850,8 @@ int main(int argc, char* argv[])
 
             zlltmp = (lep1.p4()+lep2.p4());
             if( fabs(zlltmp.mass() - 91.2) < fabs(zll.mass()-91.2) ){    //BEST MASS [76.2,106.2]
-              dilLep1 = patUtils::GenericLepton(lep1);
-              dilLep2 = patUtils::GenericLepton(lep2);
+              dilLep1 = &lep1;
+              dilLep2 = &lep2;
               zll=zlltmp;
               leadingLep=lep1.p4();
               trailerLep=lep2.p4();
@@ -854,22 +872,22 @@ int main(int argc, char* argv[])
 
           if(is2016MC) {
             if(abs(dilId)==121){
-              weight *= lepEff.getRecoEfficiency( dilLep1.el.superCluster()->eta(), abs(dilLep1.pdgId())).first; //Reconstruction eff
-              weight *= lepEff.getRecoEfficiency( dilLep2.el.superCluster()->eta(), abs(dilLep2.pdgId())).first; //Reconstruction eff
+              weight *= lepEff.getRecoEfficiency( dilLep1->el.superCluster()->eta(), abs(dilLep1->pdgId())).first; //Reconstruction eff
+              weight *= lepEff.getRecoEfficiency( dilLep2->el.superCluster()->eta(), abs(dilLep2->pdgId())).first; //Reconstruction eff
             }
             else if(abs(dilId)==169){
-              weight *= lepEff.getTrackingEfficiency( dilLep1.eta(), abs( dilLep1.pdgId())).first; //Tracking eff
-              weight *= lepEff.getTrackingEfficiency( dilLep2.eta(), abs( dilLep2.pdgId())).first; //Tracking eff
+              weight *= lepEff.getTrackingEfficiency( dilLep1->eta(), abs( dilLep1->pdgId())).first; //Tracking eff
+              weight *= lepEff.getTrackingEfficiency( dilLep2->eta(), abs( dilLep2->pdgId())).first; //Tracking eff
 
-              weight *= isMC ? lepEff.getLeptonEfficiency( dilLep1.pt(), dilLep1.eta(), abs(dilLep1.pdgId()), "tightiso_tightid",patUtils::CutVersion::Moriond17Cut ).first : 1.0; //ISO w.r.t ID
-              weight *= isMC ? lepEff.getLeptonEfficiency( dilLep2.pt(), dilLep2.eta(), abs(dilLep2.pdgId()), "tightiso_tightid",patUtils::CutVersion::Moriond17Cut ).first : 1.0;
+              weight *= isMC ? lepEff.getLeptonEfficiency( dilLep1->pt(), dilLep1->eta(), abs(dilLep1->pdgId()), "tightiso_tightid",patUtils::CutVersion::Moriond17Cut ).first : 1.0; //ISO w.r.t ID
+              weight *= isMC ? lepEff.getLeptonEfficiency( dilLep2->pt(), dilLep2->eta(), abs(dilLep2->pdgId()), "tightiso_tightid",patUtils::CutVersion::Moriond17Cut ).first : 1.0;
             }
-              weight *= isMC ? lepEff.getLeptonEfficiency( dilLep1.pt(), dilLep1.eta(), abs( dilLep1.pdgId()),  abs( dilLep1.pdgId()) ==11 ? "tight"    : "tight"   ,patUtils::CutVersion::Moriond17Cut ).first : 1.0; //ID
-              weight *= isMC ? lepEff.getLeptonEfficiency( dilLep2.pt(), dilLep2.eta(), abs( dilLep2.pdgId()),  abs( dilLep2.pdgId()) ==11 ? "tight"    : "tight"   ,patUtils::CutVersion::Moriond17Cut ).first : 1.0; //ID
+              weight *= isMC ? lepEff.getLeptonEfficiency( dilLep1->pt(), dilLep1->eta(), abs( dilLep1->pdgId()),  abs( dilLep1->pdgId()) ==11 ? "tight"    : "tight"   ,patUtils::CutVersion::Moriond17Cut ).first : 1.0; //ID
+              weight *= isMC ? lepEff.getLeptonEfficiency( dilLep2->pt(), dilLep2->eta(), abs( dilLep2->pdgId()),  abs( dilLep2->pdgId()) ==11 ? "tight"    : "tight"   ,patUtils::CutVersion::Moriond17Cut ).first : 1.0; //ID
 
             // Trigger Eff
-            if(isMC && abs(dilId)==169)weight *= lepEff.getTriggerEfficiencySF( dilLep1.pt(), dilLep1.eta(), dilLep2.pt(), dilLep2.eta(), dilId,is2016MC).first;
-       		  if(isMC && abs(dilId)==121)weight *= lepEff.getTriggerEfficiencySF( dilLep1.pt(), dilLep1.el.superCluster()->eta(), dilLep2.pt(), dilLep2.el.superCluster()->eta(), dilId,is2016MC).first;
+            if(isMC && abs(dilId)==169)weight *= lepEff.getTriggerEfficiencySF( dilLep1->pt(), dilLep1->eta(), dilLep2->pt(), dilLep2->eta(), dilId,is2016MC).first;
+       		  if(isMC && abs(dilId)==121)weight *= lepEff.getTriggerEfficiencySF( dilLep1->pt(), dilLep1->el.superCluster()->eta(), dilLep2->pt(), dilLep2->el.superCluster()->eta(), dilId,is2016MC).first;
          }
 
         }
@@ -889,9 +907,12 @@ int main(int argc, char* argv[])
     			treeLumiId    = ev.eventAuxiliary().luminosityBlock();
     			treeRunId     = ev.eventAuxiliary().run();
           treeZId       = dilId;
+         // cout<< " EventiD : "<< treeEventId << endl;
           for(auto& fakeLepton: selLeptons){
-            if( ( &fakeLepton == &dilLep1 ) || ( &fakeLepton == &dilLep2 ) ) continue;
-            if( deltaR( fakeLepton,  dilLep1 )<0.1 || deltaR( fakeLepton, dilLep2)<0.1 ) continue;
+            if( ( &fakeLepton == dilLep1 ) || ( &fakeLepton == dilLep2 ) ) continue;
+           // cout << "   -  fakeLepton:  "<< &fakeLepton << " pt: "<< fakeLepton.pt()<<endl;
+            if( deltaR( fakeLepton,  *dilLep1 )<0.1 || deltaR( fakeLepton, *dilLep2)<0.1 ) continue;
+           // cout << "      -  fakeLepton:  "<< &fakeLepton << " pt: "<< fakeLepton.pt()<<endl;
             if(abs( fakeLepton.pdgId() ) == 11 || abs( fakeLepton.pdgId() ) == 13 || abs( fakeLepton.pdgId() ) == 15 ){
               tmass = TMath::Sqrt(2* fakeLepton.pt()*met.pt()*(1-TMath::Cos(deltaPhi(met.phi(), fakeLepton.phi()))));
             }
@@ -901,16 +922,21 @@ int main(int argc, char* argv[])
               bool jetFound = closestJetIndexL1>=0 && dRminL1<0.5;
               if(jetFound){pTL1=selJets[closestJetIndexL1].pt(); etaL1=abs(selJets[closestJetIndexL1].eta());}
               else{pTL1=fakeLepton.pt(); etaL1=abs(fakeLepton.eta());}
+              unsigned char lepIDmap = 0xF; // 1111
+              //cout << " Muon ID: "<< (int) muonIDmap << endl;
               treeLeg1ClosestJetPt   = pTL1;
         			treeLeg1ClosestJetEta  = etaL1;
-              treeLeg1ClosestJetPt_LepClean   = jetFound ? pTL1  : -999;
-        			treeLeg1ClosestJetEta_LepClean  = jetFound ? etaL1 : -999;
-        			treeLeg1Pt             = fakeLepton.pt();
-        			treeLeg1DeltaR         = dRminL1;
+              treeLepIsMatched       = jetFound;
+              // treeLeg1ClosestJetPt_LepClean   = jetFound ? pTL1  : -999;
+        			// treeLeg1ClosestJetEta_LepClean  = jetFound ? etaL1 : -999;
 
+              treeLeg1Pt             = fakeLepton.pt();
+        			treeLeg1DeltaR         = dRminL1;
+              treeTMass              = tmass;
               treeLeg1Eta  = fakeLepton.eta();
-        			treeLeg1Id   = fakeLepton.pdgId();
-        			treeLeg1Iso  = (abs(treeLeg1Id)!=15)?patUtils::relIso(fakeLepton,rho):-999.;
+        			treeLeg1PdgId   = fakeLepton.pdgId();
+
+              treeLeg1Iso  = (abs(treeLeg1PdgId)!=15)?patUtils::relIso(fakeLepton,rho):-999.;
 
               TString PartName = "FR_";//+chTags.at(1)+"_";
               if     (abs(fakeLepton.pdgId())==11)PartName += "El";
@@ -923,8 +949,25 @@ int main(int argc, char* argv[])
 
               if(abs(fakeLepton.pdgId())==11 || abs(fakeLepton.pdgId())==13){
                 bool passId = false;
-                if(abs(fakeLepton.pdgId())==11) passId = patUtils::passId(fakeLepton.el, vtx[0], patUtils::llvvElecId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
-                if(abs(fakeLepton.pdgId())==13) passId = patUtils::passId(fakeLepton.mu, vtx[0], patUtils::llvvMuonId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
+                bool passIDloose(false),  passIDtight(false);
+                bool passIDsoft(false); // Muon WP
+                bool passIDmedium(false); // Ele WP
+
+                if(abs(fakeLepton.pdgId())==11) {
+                  passId = patUtils::passId(fakeLepton.el, vtx[0], patUtils::llvvElecId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
+                  passIDloose  = patUtils::passId(fakeLepton.el, vtx[0], patUtils::llvvElecId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
+                  passIDmedium = patUtils::passId(fakeLepton.el, vtx[0], patUtils::llvvElecId::Medium, patUtils::CutVersion::CutSet::ICHEP16Cut);
+                  passIDtight  = patUtils::passId(fakeLepton.el, vtx[0], patUtils::llvvElecId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut);
+                  lepIDmap &= (passIDloose? 1 : 0) | (passIDmedium? 1 << 1 : 0 << 1) | (passIDtight ? 1 << 2 : 0 << 2);
+                }
+                if(abs(fakeLepton.pdgId())==13) {
+                  passId = patUtils::passId(fakeLepton.mu, vtx[0], patUtils::llvvMuonId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
+                  passIDloose = patUtils::passId(fakeLepton.mu, vtx[0], patUtils::llvvMuonId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
+                  passIDsoft  = patUtils::passId(fakeLepton.mu, vtx[0], patUtils::llvvMuonId::Soft, patUtils::CutVersion::CutSet::ICHEP16Cut);
+                  passIDtight = patUtils::passId(fakeLepton.mu, vtx[0], patUtils::llvvMuonId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut);
+                  lepIDmap &= (passIDloose? 1 : 0) | (passIDsoft? 1 << 1 : 0 << 1) | (passIDtight ? 1 << 2 : 0 << 2);
+                  //cout << " (After checking) Muon ID: "<< (int) ( (passIDloose? 1 : 0) | (passIDsoft? 1 << 1 : 0 << 1) | (passIDtight ? 1 << 2 : 0 << 2) ) << endl;
+                }
                 float relIso = patUtils::relIso(fakeLepton, rho);
 
                 if(true                 )TagsFR.push_back(PartName);
@@ -943,14 +986,18 @@ int main(int argc, char* argv[])
               }else{
                 bool IdL         = fakeLepton.tau.tauID("byLooseCombinedIsolationDeltaBetaCorr3Hits");
                 bool IdM         = fakeLepton.tau.tauID("byMediumCombinedIsolationDeltaBetaCorr3Hits");
+                bool IdVL_MVA    = fakeLepton.tau.tauID("byVLooseIsolationMVArun2v1DBoldDMwLT");
                 bool IdL_MVA     = fakeLepton.tau.tauID("byLooseIsolationMVArun2v1DBoldDMwLT");
                 bool IdM_MVA     = fakeLepton.tau.tauID("byMediumIsolationMVArun2v1DBoldDMwLT");
+                bool IdT_MVA     = fakeLepton.tau.tauID("byTightIsolationMVArun2v1DBoldDMwLT");
                 bool IdL_MVA_R03 = fakeLepton.tau.tauID("byLooseIsolationMVArun2v1DBdR03oldDMwLT");
                 bool IdM_MVA_R03 = fakeLepton.tau.tauID("byMediumIsolationMVArun2v1DBdR03oldDMwLT");
 
+                lepIDmap &= (IdVL_MVA? 1 : 0) | (IdL_MVA ? 1 << 1 : 0 << 1)| (IdM_MVA? 1 << 2 : 0 << 2) | (IdT_MVA ? 1 << 3 : 0 << 3);
+
                 if(true                 )TagsFR.push_back(PartName);
-                if(IdL                  )TagsFR.push_back(PartName+("_Id_IsoLo"));
-                if(IdM                  )TagsFR.push_back(PartName+("_Id_IsoMe"));
+                // if(IdL                  )TagsFR.push_back(PartName+("_Id_IsoLo"));
+                // if(IdM                  )TagsFR.push_back(PartName+("_Id_IsoMe"));
                 if(IdL_MVA              ){
                   TagsFR.push_back(PartName+("_Id_IsoLo_MVA"));
                   treeLeg1TauIsoLooseMVA = 1;
@@ -959,9 +1006,10 @@ int main(int argc, char* argv[])
                   TagsFR.push_back(PartName+("_Id_IsoMe_MVA"));
                   treeLeg1TauIsoMediumMVA = 1;
                 }
-                if(IdL_MVA_R03          )TagsFR.push_back(PartName+("_Id_IsoLo_MVAR03"));
-                if(IdM_MVA_R03          )TagsFR.push_back(PartName+("_Id_IsoMe_MVAR03"));
+                // if(IdL_MVA_R03          )TagsFR.push_back(PartName+("_Id_IsoLo_MVAR03"));
+                // if(IdM_MVA_R03          )TagsFR.push_back(PartName+("_Id_IsoMe_MVAR03"));
               }
+              treeLeg1ID = lepIDmap;
 
               if(tmass<30){
                 int NTags = TagsFR.size();
@@ -983,11 +1031,13 @@ int main(int argc, char* argv[])
               mon.fillHisto("wrtLepPt", TagsFRLep, fakeLepton.pt(), weight);
             }
           }//close loop on leptons
-          treeWeightNoLepSF = weightNoLepSF;
-          treeWeight = weight;
-          if(tree) tree->Fill();
+
         }//close FR study Zmass
 
+        treeWeightNoLepSF = weightNoLepSF;
+        treeWeight = weight;
+
+        if(tree) tree->Fill();
     }
     printf("\n");
     delete file;
