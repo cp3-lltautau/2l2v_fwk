@@ -1,6 +1,7 @@
 #include "UserCode/llvv_fwk/interface/MacroUtils.h"
 #include "TH1F.h"
 #include "TSystem.h"
+#include "DataFormats/FWLite/interface/Handle.h"
 
 namespace utils
 {

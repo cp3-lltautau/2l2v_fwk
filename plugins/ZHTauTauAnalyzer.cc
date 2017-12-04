@@ -404,6 +404,11 @@ ZHTauTauAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   iEvent.getByLabel("slimmedElectrons",electronsHandle);
   if(electronsHandle.isValid()){ electrons = *electronsHandle;}
   
+  pat::PackedCandidateCollection pfCandidates;
+  edm::Handle<pat::PackedCandidateCollection> pfCandidatesHandle;
+  iEvent.getByLabel("packedPFCandidates",pfCandidatesHandle);
+  if (pfCandidatesHandle.isValid()) { pfCandidates = *pfCandidatesHandle; }
+
   EcalRecHitCollection recHitCollectionEB;
   EcalRecHitCollection recHitCollectionEE;
   edm::Handle<EcalRecHitCollection> recHitCollectionEBHandle;
@@ -565,10 +570,10 @@ ZHTauTauAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
     metFilterValue = metFilter.passMetFilterInt( iEvent, is2016data );
     // Apply Bad Charged Hadron and Bad Muon Filters from MiniAOD (for Run II 2016 only )
-    filterbadChCandidate = metFilter.passBadChargedCandidateFilter(iEvent); if (!filterbadChCandidate) {  metFilterValue=9; }
-    filterbadPFMuon = metFilter.passBadPFMuonFilter(iEvent); if (!filterbadPFMuon) { metFilterValue=8; }
-    filterbadMuonHIP = metFilter.BadGlobalMuonTaggerFilter(iEvent,outbadMuon,false); if (!filterbadMuonHIP) { metFilterValue=10; }
-    filterduplicateMuonHIP = metFilter.BadGlobalMuonTaggerFilter(iEvent,outduplicateMuon,true); if (!filterduplicateMuonHIP) { metFilterValue=11; }
+    filterbadChCandidate = metFilter.passBadChargedCandidateFilter(muons,pfCandidates); if (!filterbadChCandidate) {  metFilterValue=9; }
+    filterbadPFMuon = metFilter.passBadPFMuonFilter(muons,pfCandidates); if (!filterbadPFMuon) { metFilterValue=8; }
+    filterbadMuonHIP = metFilter.BadGlobalMuonTaggerFilter(vtx,muons,outbadMuon,false); if (!filterbadMuonHIP) { metFilterValue=10; }
+    filterduplicateMuonHIP = metFilter.BadGlobalMuonTaggerFilter(vtx,muons,outduplicateMuon,true); if (!filterduplicateMuonHIP) { metFilterValue=11; }
     
   }
 

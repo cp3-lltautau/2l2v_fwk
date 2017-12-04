@@ -1,8 +1,6 @@
 #ifndef lumiutils_h
 #define lumiutils_h
 
-
-#include "DataFormats/FWLite/interface/Handle.h"
 #include "DataFormats/FWLite/interface/Event.h"
 #include "DataFormats/FWLite/interface/ChainEvent.h"
 #include "DataFormats/Common/interface/MergeableCounter.h"

@@ -1,6 +1,7 @@
 #ifndef metfilter_h
 #define metfilter_h
 
+#include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/FWLite/interface/Handle.h"
 #include "DataFormats/FWLite/interface/Event.h"
 #include "DataFormats/FWLite/interface/ChainEvent.h"
@@ -55,7 +56,6 @@
 #include "TGraph.h"
 #include <Math/VectorUtil.h>
 
-
 namespace metf
 {
 
@@ -81,15 +81,27 @@ namespace metf
     void FillBadEvents(std::string path);
     
     //     New Met Filters for 2016 Run II: 
-     bool passBadPFMuonFilter(const edm::Event& ev);
-     bool passBadChargedCandidateFilter(const edm::Event& ev);
+    bool passBadPFMuonFilter(const pat::MuonCollection& muons, const pat::PackedCandidateCollection& pfCandidates);
+
+    bool passBadChargedCandidateFilter(const pat::MuonCollection& muons, const pat::PackedCandidateCollection& pfCandidates);
     
-     int  passMetFilterInt(const edm::Event& ev);
-     int  passMetFilterInt(const edm::Event& ev, bool is2016);
-     bool passMetFilter(const edm::Event& ev);
-     bool BadGlobalMuonTaggerFilter(const edm::Event& ev,std::unique_ptr<edm::PtrVector<reco::Muon>> &out, bool selectClones=false);
-     bool BadGlobalMuonTaggerFilter(const edm::Event& ev,std::unique_ptr<std::vector<reco::Muon*>> &out, bool selectClones=false);
+    template <class T>
+      int  passMetFilterInt(const T& ev);
+
+    template <class T>
+      int  passMetFilterInt(const T& ev, bool is2016);
+
+    template <class T>
+      bool passMetFilter(const T& ev);
+
+    bool BadGlobalMuonTaggerFilter(const reco::VertexCollection& vtx,pat::MuonCollection& muons,std::unique_ptr<edm::PtrVector<reco::Muon>> &out, bool selectClones=false);
+
+    bool BadGlobalMuonTaggerFilter(const reco::VertexCollection& vtx,pat::MuonCollection& muons,std::unique_ptr<std::vector<reco::Muon*>> &out, bool selectClones=false);
   };
+
+  /* 
+     starts here method concrete implementation
+  */
 
   void MetFilter::FillBadEvents(std::string path){
     unsigned int Run=0; unsigned int Lumi=1; unsigned int Event=2;
@@ -111,8 +123,8 @@ namespace metf
     File.close();
   }
   
-  
-    bool MetFilter::passBadPFMuonFilter(const edm::Event& ev) {
+
+  bool MetFilter::passBadPFMuonFilter(const pat::MuonCollection& muons, const pat::PackedCandidateCollection& pfCandidates) {
 
     const bool debug_ = false;
 
@@ -120,19 +132,7 @@ namespace metf
     //    const double minDZ_ = 0.1;
     const double minTrkPtError_ = 0.5;
     const double minMuPt_ = 100.;
-
-    pat::MuonCollection muons;
-    pat::PackedCandidateCollection pfCandidates;
-
-      
-    edm::Handle<pat::MuonCollection> muonsHandle;
-    ev.getByLabel(edm::InputTag("slimmedMuons"),muonsHandle);
-    if(muonsHandle.isValid()){ muons = *muonsHandle;}
-
-    edm::Handle<pat::PackedCandidateCollection> pfCandidatesHandle;
-    ev.getByLabel(edm::InputTag("packedPFCandidates"),pfCandidatesHandle);
-    if (pfCandidatesHandle.isValid()) { pfCandidates = *pfCandidatesHandle; }
-
+ 
     bool foundBadPFMuon = false;
 
     for ( unsigned i=0; i < muons.size(); ++i ) { // loop over all muons
@@ -194,8 +194,7 @@ namespace metf
 
   }
 
-  
-    bool MetFilter::passBadChargedCandidateFilter(const edm::Event& ev) {
+  bool MetFilter::passBadChargedCandidateFilter(const pat::MuonCollection& muons, const pat::PackedCandidateCollection& pfCandidates) {
 
     const bool debug_ = false;
 
@@ -204,17 +203,6 @@ namespace metf
     const double minMuonTrackRelErr_ = 0.5;
     const double minMuonPt_ = 100.;
 
-    pat::MuonCollection muons;
-    pat::PackedCandidateCollection pfCandidates;
-
-    edm::Handle<pat::MuonCollection> muonsHandle;
-    ev.getByLabel(edm::InputTag("slimmedMuons"),muonsHandle);
-    if(muonsHandle.isValid()){ muons = *muonsHandle;}
-    
-    edm::Handle<pat::PackedCandidateCollection> pfCandidatesHandle;
-    ev.getByLabel(edm::InputTag("packedPFCandidates"),pfCandidatesHandle);
-    if (pfCandidatesHandle.isValid()) { pfCandidates = *pfCandidatesHandle; }
-      
     bool foundBadChargedCandidate = false;
 
     for ( unsigned i=0; i < muons.size(); ++i ) { // loop over all muons
@@ -266,8 +254,8 @@ namespace metf
 
   }
 
-  
-    int MetFilter::passMetFilterInt(const edm::Event& ev, bool is2016){
+  template <class T>  
+    int MetFilter::passMetFilterInt(const T& ev, bool is2016){
 
     if(map.find( RuLuEv(ev.eventAuxiliary().run(), ev.eventAuxiliary().luminosityBlock(), ev.eventAuxiliary().event()))!=map.end())return 1;
     
@@ -287,8 +275,8 @@ namespace metf
     return 0;
   }
 
-  
-    int MetFilter::passMetFilterInt(const edm::Event& ev){
+  template <class T>  
+    int MetFilter::passMetFilterInt(const T& ev){
     if(map.find( RuLuEv(ev.eventAuxiliary().run(), ev.eventAuxiliary().luminosityBlock(), ev.eventAuxiliary().event()))!=map.end())return 1;
 
     // Legacy: the different collection name was necessary with the early 2015B prompt reco
@@ -357,8 +345,8 @@ namespace metf
     return 0;
   }
 
-  
-    bool MetFilter::passMetFilter(const edm::Event& ev){
+  template <class T>  
+    bool MetFilter::passMetFilter(const T& ev){
     return passMetFilterInt(ev)==0;
   }
 
@@ -383,20 +371,8 @@ namespace metf
             return mu.pt() >= 10 && mu.numberOfMatchedStations() >= 1;
   }
 
-  
-    bool MetFilter::BadGlobalMuonTaggerFilter(const edm::Event& ev,std::unique_ptr<std::vector<reco::Muon*>> &out1, bool selectClones_){
+  bool MetFilter::BadGlobalMuonTaggerFilter(const reco::VertexCollection& vtx,pat::MuonCollection& muons,std::unique_ptr<std::vector<reco::Muon*>> &out1, bool selectClones_){
     
-    reco::VertexCollection vtx;
-    pat::MuonCollection muons;
-
-    edm::Handle< reco::VertexCollection > vtxHandle;
-    ev.getByLabel(edm::InputTag("offlineSlimmedPrimaryVertices"),vtxHandle);
-    if(vtxHandle.isValid()){ vtx = *vtxHandle;}
-
-    edm::Handle< pat::MuonCollection > muonsHandle;
-    ev.getByLabel(edm::InputTag("slimmedMuons"),muonsHandle);
-    if(muonsHandle.isValid()){ muons = *muonsHandle;}
-      
     std::vector<int> goodMuon;
     const auto &PV = vtx.front().position();
     std::unique_ptr<std::vector<reco::Muon*>> out(new std::vector<reco::Muon*>());
