@@ -45,6 +45,7 @@
 #include "UserCode/llvv_fwk/interface/BtagUncertaintyComputer.h"
 
 #include "UserCode/llvv_fwk/interface/PatUtils.h"
+#include "UserCode/llvv_fwk/interface/METFilter.h"
 #include "UserCode/llvv_fwk/interface/TrigUtils.h"
 #include "UserCode/llvv_fwk/interface/EwkCorrections.h"
 #include "UserCode/llvv_fwk/interface/ZZatNNLO.h"

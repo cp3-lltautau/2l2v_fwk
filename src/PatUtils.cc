@@ -640,80 +640,80 @@ namespace patUtils
           case CutVersion::Spring15Cut25ns :
       	  // Spring15 selection, conditions: PU20 bx25
                 switch(IsoLevel){
-                     case llvvElecIso::Veto :
-                        if( barrel && relIso < 0.126    ) return true;
-                        if( endcap && relIso < 0.144    ) return true;
-                        break;
+		case llvvElecIso::Veto :
+		  if( barrel && relIso < 0.126    ) return true;
+		  if( endcap && relIso < 0.144    ) return true;
+		  break;
 
-                     case llvvElecIso::FakeRateWP :
-                        if ( relIso < 0.5 ) return true;
-                          break;
+		case llvvElecIso::FakeRateWP :
+		  if ( relIso < 0.5 ) return true;
+		  break;
+			  
+		case llvvElecIso::VeryLoose :
+		  if ( relIso < 0.3 ) return true;
+		  break;
 
-		                 case llvvElecIso::VeryLoose :
-		                   if ( relIso < 0.3 ) return true;
-			                    break;
+		case llvvElecIso::Loose :
+		  if( barrel && relIso < 0.0893   ) return true;
+		  if( endcap && relIso < 0.121    ) return true;
+		  break;
 
-                     case llvvElecIso::Loose :
-                        if( barrel && relIso < 0.0893   ) return true;
-                        if( endcap && relIso < 0.121    ) return true;
-                        break;
-
-                     case llvvElecIso::Medium :
-                        if( barrel && relIso < 0.0766   ) return true;
-                        if( endcap && relIso < 0.0678   ) return true;
-                        break;
-
-                     case llvvElecIso::Tight :
-                        if( barrel && relIso < 0.0354   ) return true;
-                        if( endcap && relIso < 0.0646   ) return true;
-                        break;
-
-                     default:
-                        printf("FIXME ElectronIso llvvElectronIso::%i is unkown\n", IsoLevel);
-                        return false;
-                        break;
+		case llvvElecIso::Medium :
+		  if( barrel && relIso < 0.0766   ) return true;
+		  if( endcap && relIso < 0.0678   ) return true;
+		  break;
+		  
+		case llvvElecIso::Tight :
+		  if( barrel && relIso < 0.0354   ) return true;
+		  if( endcap && relIso < 0.0646   ) return true;
+		  break;
+		  
+		default:
+		  printf("FIXME ElectronIso llvvElectronIso::%i is unkown\n", IsoLevel);
+		  return false;
+		  break;
                 }
-             break;
+		break;
 
           case CutVersion::Moriond17Cut :
           case CutVersion::ICHEP16Cut :
       	  // ICHEP16 or Moriond17 selection, conditions: PU20 bx25
                switch(IsoLevel){
 
-	             case llvvElecIso::Veto :
-		       if( barrel && relIso < 0.175    ) return true;
-		       if( endcap && relIso < 0.159    ) return true;
-		       break;
+	       case llvvElecIso::Veto :
+		 if( barrel && relIso < 0.175    ) return true;
+		 if( endcap && relIso < 0.159    ) return true;
+		 break;
+		 
+	       case llvvElecIso::FakeRateWP :
+		 if ( relIso < 0.5 ) return true;
+		 break;
+		 
+	       case llvvElecIso::VeryLoose :
+		 if ( relIso < 0.3 ) return true;
+		 break;
+		 
+	       case llvvElecIso::Loose :
+		 if( barrel && relIso < 0.0994   ) return true;
+		 if( endcap && relIso < 0.107    ) return true;
+		 break;
+		 
+	       case llvvElecIso::Medium :
+		 if( barrel && relIso < 0.0695   ) return true;
+		 if( endcap && relIso < 0.0821   ) return true;
+		 break;
+		 
+	       case llvvElecIso::Tight :
+		 if( barrel && relIso < 0.0588   ) return true;
+		 if( endcap && relIso < 0.0571   ) return true;
+		 break;
 
-                     case llvvElecIso::FakeRateWP :
-                        if ( relIso < 0.5 ) return true;
-                          break;
-
-                     case llvvElecIso::VeryLoose :
-		                   if ( relIso < 0.3 ) return true;
-		                     break;
-
-                     case llvvElecIso::Loose :
-                        if( barrel && relIso < 0.0994   ) return true;
-                        if( endcap && relIso < 0.107    ) return true;
-                        break;
-
-                     case llvvElecIso::Medium :
-                        if( barrel && relIso < 0.0695   ) return true;
-                        if( endcap && relIso < 0.0821   ) return true;
-                        break;
-
-                     case llvvElecIso::Tight :
-                        if( barrel && relIso < 0.0588   ) return true;
-                        if( endcap && relIso < 0.0571   ) return true;
-                        break;
-
-                     default:
-                        printf("FIXME ElectronIso llvvElectronIso::%i is unkown\n", IsoLevel);
-                        return false;
-                        break;
-                }
-             break;
+	       default:
+		 printf("FIXME ElectronIso llvvElectronIso::%i is unkown\n", IsoLevel);
+		 return false;
+		 break;
+	       }
+	       break;
 
           default:
              printf("FIXME ElectronIsolation  CutVersion::%i is unkown\n", cutVersion);
@@ -746,9 +746,9 @@ namespace patUtils
                if ( relIso < 0.5 ) return true;
                  break;
 
-	            case llvvMuonIso::VeryLoose :
-		            if ( relIso < 0.3 ) return true;
-		              break;
+	   case llvvMuonIso::VeryLoose :
+	     if ( relIso < 0.3 ) return true;
+	     break;
 
               case llvvMuonIso::Loose :
                  if( relIso < 0.20 ) return true;
@@ -1562,7 +1562,6 @@ bool MetFilter::BadGlobalMuonTaggerFilter(const fwlite::Event& ev,std::unique_pt
 	return found;
 }
 
-
 std::pair<double, double> scaleVariation(const fwlite::Event& ev){
 	//std::cout << " " << std::endl;
 	//std::cout << "STARTING SCALE-VARIATION Estimation" << std::endl;
@@ -1599,6 +1598,46 @@ std::pair<double, double> scaleVariation(const fwlite::Event& ev){
          }
 	 //std::cout << "ScaleUp Value: " << scaleUp << "; ScaleDwn Value: " << scaleDw << std::endl;
 	 return std::make_pair(scaleUp, scaleDw);
+}
+
+
+// overload the method to be able to run with regular cmsRun
+std::pair<double, double> scaleVariationCMSSW(const edm::Event& iEvent){
+  //std::cout << " " << std::endl;
+  //std::cout << "STARTING SCALE-VARIATION Estimation" << std::endl;
+  edm::Handle<LHEEventProduct> lheEPHandle;
+  iEvent.getByLabel("externalLHEProducer",lheEPHandle);
+  double scaleUp = 1.;
+  double scaleDw = 1.;
+  bool check_in = false;
+  std::vector<int> idVect;
+  std::vector<int>::iterator it;
+  if( lheEPHandle.isValid() ){
+    for (unsigned int i=0; i<lheEPHandle->weights().size(); i++) {
+      std::string::size_type sz;
+      double id = std::stod( lheEPHandle->weights()[i].id, &sz);
+      idVect.push_back( id );
+    }
+    for( unsigned int k=1001; k<1010; k++){
+      it = find( idVect.begin(), idVect.end(), k);
+      if( it != idVect.end() ){ check_in = true; }
+      else{ check_in = false; }
+    }
+    if( check_in ){
+      for (unsigned int i=0; i<lheEPHandle->weights().size(); i++) {
+	if( lheEPHandle->weights()[i].id != "1001" || lheEPHandle->weights()[i].id != "1006" || lheEPHandle->weights()[i].id != "1008" ){
+	  double local_weight = 0;
+	  local_weight = ( lheEPHandle->weights()[i].wgt / lheEPHandle->originalXWGTUP() );
+	  //std::cout << "Local weight: " << local_weight << std::endl;
+	  scaleUp = std::max(scaleUp, local_weight);
+	  scaleDw = std::min(scaleDw, local_weight);
+	}
+      }
+      
+    } else { scaleUp = 1.;  scaleDw = 1.;}
+  }
+  //std::cout << "ScaleUp Value: " << scaleUp << "; ScaleDwn Value: " << scaleDw << std::endl;
+  return std::make_pair(scaleUp, scaleDw);
 }
 
 double pdfVariation(const fwlite::Event& ev){
@@ -1676,6 +1715,80 @@ double alphaVariation(const fwlite::Event& ev){
 }
 
 
+double pdfVariationCMSSW(const edm::Event& iEvent){
+  //std::cout << "  " << std::endl;
+  //std::cout << "STARTING PDF Estimation" << std::endl;
+  edm::Handle<LHEEventProduct> lheEPHandle;
+  iEvent.getByLabel("externalLHEProducer",lheEPHandle);
+  int N = 0;
+  double pdfVar = 0;
+  double sum = 0;
+  bool check_in = false;
+  std::vector<int> idVect;
+  std::vector<int>::iterator it;
+  if( lheEPHandle.isValid() ){
+    for (unsigned int i=0; i<lheEPHandle->weights().size(); i++) {
+      std::string::size_type sz;
+      double id = std::stod( lheEPHandle->weights()[i].id, &sz);
+      idVect.push_back( id );
+    }
+    for( unsigned int k=2001; k<2101; k++){
+      it = find( idVect.begin(), idVect.end(), k);
+      if( it != idVect.end() ){ check_in = true; }
+      else{ check_in = false; }
+    }
+    if( check_in ){
+      for (unsigned int i=0; i<lheEPHandle->weights().size(); i++) {
+	std::string::size_type sz;
+	double id = std::stod( lheEPHandle->weights()[i].id, &sz);
+	if( id<2001 || id>2100 ) continue;
+	//std::cout << "Weight: " << lheEPHandle->weights()[i].wgt << "; Nominal Weight: " << lheEPHandle->originalXWGTUP() << std::endl;
+	sum += std::pow( (lheEPHandle->weights()[i].wgt / lheEPHandle->originalXWGTUP() - 1 ), 2);
+	N++;
+	
+      }
+      pdfVar = 1+ std::sqrt( sum/ ( N -1 ) ); //+1 variation
+    } else { pdfVar = 1.; }
+  }
+  return pdfVar;
+}
+
+double alphaVariationCMSSW(const edm::Event& iEvent){
+  //std::cout << "  " << std::endl;
+  //std::cout << "STARTING ALPHA Estimation" << std::endl;
+  edm::Handle<LHEEventProduct> lheEPHandle;
+  iEvent.getByLabel("externalLHEProducer",lheEPHandle);
+  double alphaVar = 0;
+  double local_alpha_one = 0;
+  double local_alpha_two = 0;
+  std::vector<int> idVect;
+  std::vector<int>::iterator itone, ittwo;
+  if( lheEPHandle.isValid() ){
+    for (unsigned int i=0; i<lheEPHandle->weights().size(); i++) {
+      std::string::size_type sz;
+      double id = std::stod( lheEPHandle->weights()[i].id, &sz);
+      idVect.push_back( id );
+    }
+    itone = find( idVect.begin(), idVect.end(), 2101);
+    ittwo = find( idVect.begin(), idVect.end(), 2102);
+    if( itone != idVect.end() && ittwo != idVect.end() ){
+      for (unsigned int i=0; i<lheEPHandle->weights().size(); i++) {
+	std::string::size_type sz;
+	double id = std::stod( lheEPHandle->weights()[i].id, &sz);
+	if( ( id == 2101 ) ){
+	  local_alpha_one = ( lheEPHandle->weights()[i].wgt / lheEPHandle->originalXWGTUP() );
+	} else if( ( id == 2102 ) ){
+	  local_alpha_two = ( lheEPHandle->weights()[i].wgt / lheEPHandle->originalXWGTUP() );
+	}
+	//std::cout << "alpha one: " << local_alpha_one << "; alpha two: " << local_alpha_two << "; Nominal: " << lheEPHandle->originalXWGTUP() << std::endl;
+      }
+			alphaVar = 1+std::sqrt(0.75)*std::abs( local_alpha_one - local_alpha_two )*0.5; //+1 variation
+    } else { alphaVar = 1; }
+  }
+  //std::cout << "Alpha Uncertainties: " << alphaVar << std::endl;
+  return alphaVar;
+}
+  
   double getHTScaleFactor(TString dtag, double lheHt)
   {
     // NNLO per-event weights as a function of generator level HT

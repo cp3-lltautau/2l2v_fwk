@@ -101,8 +101,11 @@ namespace patUtils
    bool exclusiveDataEventFilter(const double&run, const bool& isMC, const bool& isPromptReco);
 
    std::pair<double, double> scaleVariation(const fwlite::Event& ev);
+   std::pair<double, double> scaleVariationCMSSW(const edm::Event& iEvent);
    double alphaVariation(const fwlite::Event& ev);
+   double alphaVariationCMSSW(const edm::Event& iEvent);
    double pdfVariation(const fwlite::Event& ev);
+   double pdfVariationCMSSW(const edm::Event& iEvent);
 
    double getHTScaleFactor(TString dtag, double lheHt);
   bool outInOnly(const reco::Muon &mu)  ;
@@ -114,26 +117,23 @@ namespace patUtils
   float computePFphotonIsolation(std::vector<pat::PackedCandidate>, float , float , const pat::Muon &, pat::MuonCollection , reco::Vertex& vertex);
   float makeTkIsoCloseBySafe( float coneSize, float initialValue, const pat::Muon &theMuon, pat::MuonCollection muons);
 
-
-
-
-   class MetFilter{
-    private :
-     struct RuLuEv {
-        unsigned int Run;  unsigned int Lumi;  unsigned int Event;
-        RuLuEv(unsigned int Run_, unsigned int Lumi_, unsigned int Event_){ Run = Run_; Lumi = Lumi_; Event = Event_;}
-        bool operator==(const RuLuEv &other) const { return (Run == other.Run && Lumi == other.Lumi && Event == other.Event); }
+  class MetFilter{
+  private :
+    struct RuLuEv {
+      unsigned int Run;  unsigned int Lumi;  unsigned int Event;
+      RuLuEv(unsigned int Run_, unsigned int Lumi_, unsigned int Event_){ Run = Run_; Lumi = Lumi_; Event = Event_;}
+      bool operator==(const RuLuEv &other) const { return (Run == other.Run && Lumi == other.Lumi && Event == other.Event); }
      };
-     struct RuLuEvHasher{
-         std::size_t operator()(const RuLuEv& k) const{ using std::size_t; using std::hash;  using std::string;
-            return ((hash<unsigned int>()(k.Run) ^ (hash<unsigned int>()(k.Lumi) << 1)) >> 1) ^ (hash<unsigned int>()(k.Event) << 1);
-         }
+    struct RuLuEvHasher{
+      std::size_t operator()(const RuLuEv& k) const{ using std::size_t; using std::hash;  using std::string;
+	return ((hash<unsigned int>()(k.Run) ^ (hash<unsigned int>()(k.Lumi) << 1)) >> 1) ^ (hash<unsigned int>()(k.Event) << 1);
+      }
      };
-
-     typedef std::unordered_map<RuLuEv, int, RuLuEvHasher> MetFilterMap;
-     MetFilterMap map;
-    public :
-     MetFilter(){}
+    
+    typedef std::unordered_map<RuLuEv, int, RuLuEvHasher> MetFilterMap;
+    MetFilterMap map;
+  public :
+    MetFilter(){}
      ~MetFilter(){}
      void Clear(){map.clear();}
      void FillBadEvents(std::string path);
@@ -148,7 +148,6 @@ namespace patUtils
      bool BadGlobalMuonTaggerFilter(const fwlite::Event& ev,std::unique_ptr<edm::PtrVector<reco::Muon>> &out, bool selectClones=false);
      bool BadGlobalMuonTaggerFilter(const fwlite::Event& ev,std::unique_ptr<std::vector<reco::Muon*>> &out, bool selectClones=false);
    };
-
 }
 
 #endif
