@@ -95,6 +95,7 @@ int main(int argc, char* argv[]){
   for(unsigned int w=0;w<wrt.size();w++){
      string& DataFile             = DataFilePath;
      std::vector<string>& DataDir = fDataDir;
+     std::vector<string>& MCDir = tDataDir;
 
 
 
@@ -133,6 +134,38 @@ int main(int argc, char* argv[]){
 
 
      }
+
+
+     for(unsigned int d=0;d<MCDir.size();d++){
+        TH1D* hist = (TH1D*) File->Get((MCDir[d]+"/"+cat[c]+var[v]+bin[b]+wrt[w]).c_str());
+        if(!hist)continue;
+
+
+
+        hist->GetSumw2();
+        if(rbin>1){ hist->Rebin(rbin);  hist->Scale(1.0, "width"); }
+        hist->GetXaxis()->SetTitleSize(.055);
+        hist->GetYaxis()->SetTitleSize(.055);
+        hist->GetXaxis()->SetLabelSize(.05);
+        hist->GetYaxis()->SetLabelSize(.05);
+        hist->SetFillColor(0);
+        hist->SetLineColor(catColor[c]);
+        hist->SetMarkerColor(catColor[c]);
+        hist->SetStats(kFALSE);
+
+
+        //
+        // if(DataHistos.find(cat[c]+var[v]+bin[b]+wrt[w])==DataHistos.end()){
+        //    gROOT->cd(); //make sure that the file is saved in memory and not in file
+        //    DataHistos[cat[c]+var[v]+bin[b]+wrt[w]] = (TH1D*)hist->Clone(); //create a new histo, since it's not found
+        // }else{
+        DataHistos[cat[c]+var[v]+bin[b]+wrt[w]]->Add(hist,-1); //add to existing histogram
+        //}
+
+
+
+     }
+
      File->Close();
   }}}}//all histos are now loaded
 
