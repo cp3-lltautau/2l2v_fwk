@@ -950,7 +950,7 @@ int main(int argc, char* argv[])
               if(abs(fakeLepton.pdgId())==11 || abs(fakeLepton.pdgId())==13){
                 bool passId = false;
                 bool passIDloose(false),  passIDtight(false);
-                bool passIDsoft(false); // Muon WP
+                bool passIDvloose(false), passIDsoft(false); // Muon WP
                 bool passIDmedium(false); // Ele WP
 
                 if(abs(fakeLepton.pdgId())==11) {
@@ -962,10 +962,11 @@ int main(int argc, char* argv[])
                 }
                 if(abs(fakeLepton.pdgId())==13) {
                   passId = patUtils::passId(fakeLepton.mu, vtx[0], patUtils::llvvMuonId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
+                  passIDvloose = patUtils::passId(fakeLepton.mu, vtx[0], patUtils::llvvMuonId::FRLoose, patUtils::CutVersion::CutSet::ICHEP16Cut);
                   passIDloose = patUtils::passId(fakeLepton.mu, vtx[0], patUtils::llvvMuonId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
                   passIDsoft  = patUtils::passId(fakeLepton.mu, vtx[0], patUtils::llvvMuonId::Soft, patUtils::CutVersion::CutSet::ICHEP16Cut);
                   passIDtight = patUtils::passId(fakeLepton.mu, vtx[0], patUtils::llvvMuonId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut);
-                  lepIDmap &= (passIDloose? 1 : 0) | (passIDsoft? 1 << 1 : 0 << 1) | (passIDtight ? 1 << 2 : 0 << 2);
+                  lepIDmap &= (passIDvloose? 1 : 0) | (passIDloose? 1 << 1 : 0 << 1) | (passIDsoft ? 1 << 2 : 0 << 2) | (passIDtight? 1 << 3 : 0 << 3) ;
                   //cout << " (After checking) Muon ID: "<< (int) ( (passIDloose? 1 : 0) | (passIDsoft? 1 << 1 : 0 << 1) | (passIDtight ? 1 << 2 : 0 << 2) ) << endl;
                 }
                 float relIso = patUtils::relIso(fakeLepton, rho);

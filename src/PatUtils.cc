@@ -419,6 +419,10 @@ namespace patUtils
 
             switch(IdLevel){
 
+             case llvvMuonId::FRLoose :
+              if((mu.isGlobalMuon() || mu.isTrackerMuon()))return true;
+              break;
+
             case llvvMuonId::Loose :
               if(mu.isPFMuon() && (mu.isGlobalMuon() || mu.isTrackerMuon()))return true;
               break;

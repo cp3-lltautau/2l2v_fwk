@@ -206,6 +206,7 @@ parser.add_option('-c', '--cfg'        ,    dest='cfg_file'           , help='ba
 parser.add_option('-r', "--report"     ,    dest='report'             , help='If the report should be sent via email'    , default=False, action="store_true")
 parser.add_option('-D', "--db"         ,    dest='db'                 , help='DB to get file list for a given dset'      , default=DatasetFileDB)
 parser.add_option('-F', "--resubmit"   ,    dest='resubmit'           , help='resubmit jobs that failed'                 , default=False, action="store_true")
+parser.add_option('-N', "--nosubmit"   ,    dest='nosubmit'           , help='reproducing scripts without submission'    , default=False, action="store_true")
 if(commands.getstatusoutput("hostname -f")[1].find("iihe.ac.be")!=-1): parser.add_option('-S', "--NFile"      ,    dest='NFile'              , help='default #Files per job (for autosplit)'    , default=6)
 else: parser.add_option('-S', "--NFile"      ,    dest='NFile'              , help='default #Files per job (for autosplit)'    , default=8)
 parser.add_option('-f', "--localnfiles",    dest='localnfiles'        , help='number of parallel jobs to run locally'    , default=8)
@@ -359,7 +360,8 @@ for procBlock in procList :
                               LaunchOnCondor.Jobs_CRABUnitPerJob = int(opt.NFile)
                        LaunchOnCondor.SendCluster_Push(["BASH", str(opt.theExecutable + ' ' + cfgfile)])
 
-               LaunchOnCondor.SendCluster_Submit()
+               if(opt.nosubmit==False):
+	            LaunchOnCondor.SendCluster_Submit()
 
             else:
                configList = commands.getstatusoutput('ls ' + opt.outdir +'/'+ dtag + suffix + '*_cfg.py')[1].split('\n')
@@ -372,7 +374,8 @@ for procBlock in procList :
                   LaunchOnCondor.SendCluster_Create(FarmDirectory, JobName + '_' + dtag)
                   for cfgfile in failedList:
                      LaunchOnCondor.SendCluster_Push(["BASH", str(opt.theExecutable + ' ' + cfgfile)])
-                  LaunchOnCondor.SendCluster_Submit()
+                  if(opt.nosubmit==False):
+		     LaunchOnCondor.SendCluster_Submit()
 
 
 if(LaunchOnCondor.subTool=='criminal'):

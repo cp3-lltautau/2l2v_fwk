@@ -48,7 +48,7 @@ Jobs_LocalNJobs = 8
 
 # for slurm, set them to whatever you want to suit your job best
 Jobs_Requeue     = True
-Jobs_Memory      = '2000'
+Jobs_Memory      = '3000'
 Jobs_Time        = '3-00:00:00'
 
 
@@ -373,7 +373,7 @@ def AddJobToCmdFile():
         if(not os.path.isabs(absoluteShellPath)): absoluteShellPath= os.getcwd() + "/"+absoluteShellPath
         Jobs_List.extend([absoluteShellPath])
     elif subTool=='slurm':
-        cmd_file.write('sbatch --partition=Def,cp3 --qos=normal --wckey=cms %s\n'      % Path_Shell) 
+        cmd_file.write('sbatch --partition=Def,cp3 --licenses=cms_storage:4 --qos=normal --wckey=cms %s\n'      % Path_Shell) 
     else:
         os.system('rm -f ' +os.path.relpath(Path_Log) + '.log') #delete log file to be sure there is no overlap
         cmd_file.write('\n')

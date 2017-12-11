@@ -508,13 +508,14 @@ double closestJet(const LorentzVector& obj, pat::JetCollection& selJets, int& cl
 }
 
  //**********************************************************************************************//
-float getTheFRWeight(std::vector<patUtils::GenericLepton>& selLeptons, pat::JetCollection& selJets, int higgsCandL1, int higgsCandL2, FRWeights theFRWeightTool,double isoElCut, double isoMuCut, std::string isoHaCut, float sumPtCut,std::string CRType)
+float getTheFRWeight(std::vector<patUtils::GenericLepton>& selLeptons, pat::JetCollection& selJets, int higgsCandL1, int higgsCandL2, FRWeights theFRWeightTool,double isoElCut, double isoMuCut, std::string isoHaCut, float sumPtCut,std::string CRType, std::string ptSpectrum = "_wrtLepPt")
 //**********************************************************************************************//
 {
   float theFinalWeight=1;
 
   std::vector<patUtils::GenericLepton*> HiggsLegs = {&(selLeptons[higgsCandL1]), &(selLeptons[higgsCandL2])};
   std::vector<float> theWeights;
+
 
   for(auto& lep: HiggsLegs){
     //patUtils::GenericLepton* lep = (*lepIt);
@@ -525,7 +526,8 @@ float getTheFRWeight(std::vector<patUtils::GenericLepton>& selLeptons, pat::JetC
 
     double dRmin = closestJet(lep->p4(), selJets, closestJetIndex);
     if(closestJetIndex>=0 && dRmin<0.5){pTclosestJet=selJets[closestJetIndex].pt(); etaclosestJet=abs(selJets[closestJetIndex].eta());}
-
+    pTclosestJet  = lep->pt();
+    etaclosestJet = lep->eta();
     if(sumPtCut<30){
       etabin = etaclosestJet <1.4 ? "_B" : "_E";
     } else {
@@ -540,7 +542,7 @@ float getTheFRWeight(std::vector<patUtils::GenericLepton>& selLeptons, pat::JetC
       if(isoElCut<=0.2) isobin= "_Id_Iso02weight";
       if(isoElCut<=0.1) isobin= "_Id_Iso01weight";
 
-      theWeights.push_back(theFRWeightTool.getWeight("FR_El",etabin,isobin,"_wrtJetPt",pTclosestJet));
+      theWeights.push_back(theFRWeightTool.getWeight("FR_El",etabin,isobin,ptSpectrum,pTclosestJet));
 
     } else if (abs(lep->pdgId())==13){
 
@@ -548,7 +550,7 @@ float getTheFRWeight(std::vector<patUtils::GenericLepton>& selLeptons, pat::JetC
       if(isoMuCut<=0.2) isobin= "_Id_Iso02weight";
       if(isoMuCut<=0.1) isobin= "_Id_Iso01weight";
 
-      theWeights.push_back(theFRWeightTool.getWeight("FR_Mu",etabin,isobin,"_wrtJetPt",pTclosestJet));
+      theWeights.push_back(theFRWeightTool.getWeight("FR_Mu",etabin,isobin,ptSpectrum,pTclosestJet));
 
      } else if(abs(lep->pdgId())==15){
 
@@ -560,7 +562,7 @@ float getTheFRWeight(std::vector<patUtils::GenericLepton>& selLeptons, pat::JetC
         if(isoHaCut.find("byLooseIsolationMVArun2v1DBoldDMwLT") != std::string::npos)    isobin = "_Id_IsoLo_MVAweight";
         if(isoHaCut.find("byMediumIsolationMVArun2v1DBoldDMwLT")!= std::string::npos) isobin = "_Id_IsoMe_MVAweight";
       }
-      theWeights.push_back(theFRWeightTool.getWeight("FR_Ta",etabin,isobin,"_wrtJetPt",pTclosestJet));
+      theWeights.push_back(theFRWeightTool.getWeight("FR_Ta",etabin,isobin,ptSpectrum,pTclosestJet));
 
     }
   }
@@ -905,7 +907,7 @@ int main(int argc, char* argv[])
   mon.addHistogram( new TH1F( "Apt",              ";p_{T}^{#tau#tau} (GeV);Events/10 GeV",50,0,500));
   mon.addHistogram( new TH1F( "Hpt",              ";p_{T}^{ll#tau#tau} (GeV);Events/10 GeV",50,0,500));
 
-  double bins[]={5, 30,70,110,190,300,550,1800};
+  double bins[]={0, 10, 20, 30, 50, 70, 90, 110, 130, 160, 190, 245, 300, 400, 550, 1800};
   int nbins=sizeof(bins)/sizeof(double) - 1;
   mon.addHistogram( new TH1F( "AmassFine",        ";M_{#tau#tau} (GeV);Events",100,0,500));
   mon.addHistogram( new TH1F( "AmassFineCollinear",        ";M_{#tau#tau} (GeV);Events",100,0,500));
@@ -2274,11 +2276,12 @@ int main(int argc, char* argv[])
          // std::cout<<"START SVFIT\n";
          // cout<<"============================================================="<<endl;
          // cout<<"    Higgs mass = "<<higgsCand.M()<<"   Higgs pt = "<<higgsCand.Pt()<<endl;
-         higgsCand_SVFitMass = getSVFit(met, selLeptons, higgsCandL1, higgsCandL2);  //compute svfit mass in a smart way
-         //  higgsCand_ClassicSVFit = getClassicSVFit(met, selLeptons, higgsCandL1, higgsCandL2);
-        //  higgsCand_SVFit = higgsCand_ClassicSVFit;
-        //  classiSVFit_mass = higgsCand_ClassicSVFit.mass();
-         // cout<<"============================================================="<<endl;
+         //higgsCand_SVFitMass = getSVFit(met, selLeptons, higgsCandL1, higgsCandL2);  //compute svfit mass in a smart way
+           higgsCand_ClassicSVFit = getClassicSVFit(met, selLeptons, higgsCandL1, higgsCandL2);
+           higgsCand_SVFit = higgsCand_ClassicSVFit;
+           classiSVFit_mass = higgsCand_ClassicSVFit.mass();
+           higgsCand_SVFitMass = classiSVFit_mass; 
+	// cout<<"============================================================="<<endl;
          // std::cout<<"END SVFIT\n";
         }
 
