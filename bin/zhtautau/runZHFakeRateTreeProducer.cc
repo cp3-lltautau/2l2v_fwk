@@ -1,5 +1,7 @@
 #include <iostream>
 #include <boost/shared_ptr.hpp>
+#include <boost/regex.hpp>
+#include <boost/format.hpp>
 
 #include "DataFormats/FWLite/interface/Handle.h"
 #include "DataFormats/FWLite/interface/Event.h"
@@ -80,6 +82,19 @@ double closestJet(const LorentzVector& obj, pat::JetCollection& selJets, int& cl
     if(dR<dRMin){dRMin=dR; closestJetIndex=j;}
   }
   return dRMin;
+}
+
+pat::JetCollection  skimJetsCollection (const std::vector<patUtils::GenericLepton> diLeptons, pat::JetCollection& selJets){
+
+  pat::JetCollection  jetCollection;
+  auto firstLepton  = diLeptons.at(0);
+  auto secondLepton = diLeptons.at(1);
+
+  for(auto& jet: selJets){
+    if (deltaR( jet,  firstLepton )<0.4 || deltaR( jet, secondLepton )<0.4 ) continue;
+    else jetCollection.push_back(jet);
+  }
+  return jetCollection;
 }
 
 
@@ -175,12 +190,18 @@ int main(int argc, char* argv[])
   mon.addHistogram( new TH1F( "wrtJetPt_v2",  ";Jet p_{T} (GeV);Events",sizeof(ptbinsJets)/sizeof(float)-1,ptbinsJets));
   mon.addHistogram( new TH1F( "wrtLepPt",  ";Lep p_{T} (GeV);Events",sizeof(ptbinsJets)/sizeof(float)-1,ptbinsJets));
 
+  TH2 *h_jetID = (TH2*) mon.addHistogram( new TH2F ("jetId",";JetPUID;pt" , 2, 0, 2, 50, 0, 250) );
+  h_jetID->GetXaxis()->SetBinLabel(1,"LooseSimplePUId");
+  h_jetID->GetXaxis()->SetBinLabel(2,"LooseSimplePUId_NEW");
+
+  mon.addHistogram( new TH1F( "nlep",      	";Number of Leptons;Events", 10,0,10) );
 
   //create a tree and related variables to save higgs candidate info for each cutIndex values
   unsigned int  treeEventId;
   unsigned int  treeLumiId;
   unsigned int  treeRunId;
   int           treeZId;
+  int           treeDoubleTriggerMatch;
   int           treeLeg1PdgId;
   float         treeLeg1ClosestJetPt;
   float         treeLeg1ClosestJetEta;
@@ -189,6 +210,10 @@ int main(int argc, char* argv[])
   float         treeLeg1Pt;
   float         treeLeg1Eta;
   float         treeLeg1Iso;
+  float         treeChIso;
+  float         treeNhIso;
+  float         treeGIso;
+  float         treePUchIso;
   unsigned char treeLeg1ID;
   int           treeLeg1LepID_loose;
   int           treeLeg1LepID_medium;
@@ -210,6 +235,7 @@ int main(int argc, char* argv[])
   tree->Branch("lumiId" , &treeLumiId  , string("lumiId/i"  ).c_str());
   tree->Branch("runId"  , &treeRunId   , string("runId/i"   ).c_str());
   tree->Branch("zId",     &treeZId     , string("zId/I" ).c_str());
+  tree->Branch("doubleTriggerMatch",     &treeDoubleTriggerMatch    , string("doubleTriggerMatch/I" ).c_str());
   tree->Branch("leg1PdgId" , &treeLeg1PdgId  , string("leg1PdgId/I"  ).c_str());
   tree->Branch("lepIsMatched" , &treeLepIsMatched , string("lepIsMatched/I").c_str());
   tree->Branch("leg1ClosestJetPt" , &treeLeg1ClosestJetPt  , string("leg1ClosestJetPt/F"  ).c_str());
@@ -217,9 +243,12 @@ int main(int argc, char* argv[])
   tree->Branch("TMass" , &treeTMass  , string("TMass/F"  ).c_str());
   //tree->Branch("Leg1ClosestJetEta_LepClean" , &treeLeg1ClosestJetEta_LepClean  , string("treeLeg1ClosestJetEta_LepClean/F"  ).c_str());
   tree->Branch("leg1Pt" , &treeLeg1Pt  , string("leg1Pt/F"  ).c_str());
-  tree->Branch("leg1Pt" , &treeLeg1Pt  , string("leg1Pt/F"  ).c_str());
   tree->Branch("leg1Eta", &treeLeg1Eta , string("leg1Eta/F" ).c_str());
   tree->Branch("leg1Iso", &treeLeg1Iso , string("leg1Iso/F" ).c_str());
+  tree->Branch("leg1ChIso", &treeChIso , string("leg1ChIso/F" ).c_str());
+  tree->Branch("leg1NhIso", &treeNhIso , string("leg1NhIso/F" ).c_str());
+  tree->Branch("leg1GIso", &treeGIso , string("leg1GIso/F" ).c_str());
+  tree->Branch("leg1PUchIso", &treePUchIso , string("leg1PUchIso/F" ).c_str());
   tree->Branch("leg1ID", &treeLeg1ID , string("leg1ID/b" ).c_str());
   tree->Branch("leg1LepIDloose", &treeLeg1LepID_loose , string("leg1LepIDloose/I" ).c_str());
   tree->Branch("leg1LepIDmedium", &treeLeg1LepID_medium , string("leg1LepIDmedium/I" ).c_str());
@@ -377,6 +406,7 @@ int main(int argc, char* argv[])
   		treeLumiId=0;
   		treeRunId=0;
   		treeZId=0;
+      treeDoubleTriggerMatch=0;
   		treeLeg1PdgId=0;
   		treeLeg1ClosestJetPt=0;
   		treeLeg1ClosestJetEta=0;
@@ -385,6 +415,10 @@ int main(int argc, char* argv[])
   		treeLeg1Pt=0;
   		treeLeg1Eta=0;
   		treeLeg1Iso=0;
+      treeChIso=0;
+      treeNhIso=0;
+      treeGIso=0;
+      treePUchIso=0;
       treeLeg1ID=0;
   		treeLeg1LepID_loose=0;
       treeLeg1LepID_medium=0;
@@ -396,7 +430,7 @@ int main(int argc, char* argv[])
   		treeLeg1TauIsoMediumMVA=0;
   		treeWeight=0;
   		treeLepEff1=0;
-		treeNbtag=0;
+		  treeNbtag=0;
 
 
       reco::GenParticleCollection gen;
@@ -641,7 +675,7 @@ int main(int argc, char* argv[])
       bool applyCorr = true;
   //     //apply muon corrections
   //     //if(abs(lid)==13 && passIso && passId)
-      if(applyCorr && abs(lid)==13 && passIsoWPforFakeRate && passLooseLepton ){
+      if(applyCorr && abs(lid)==13 && passIsoWPforFakeRate && passLooseLepton && leptons[ilep].pt()>20 ){
           if(is2016MC || is2016data){
 	           if(muCorMoriond17){
 	              muDiff -= leptons[ilep].p4();
@@ -763,11 +797,14 @@ int main(int argc, char* argv[])
       std::sort(selTaus.begin(), selTaus.end(), utils::sort_CandidatesByPt);
       std::sort(selLeptons.begin(),   selLeptons.end(), utils::sort_CandidatesByPt);
 
+      mon.fillHisto("nlep"           ,   "controlPlots", selLeptons.size(), weight);
+      mon.fillHisto("nlep"           ,   "controlPlots_Int", (int)selLeptons.size(), weight);
 
-      if ( selLeptons.size() != 3 ) continue;
+      if ( !(selLeptons.size() == 3) ) continue;
       /*******************************************************************************/
       /***    Cut on number of selLeptons     **/
-
+      mon.fillHisto("nlep"           ,   "controlPlots_AfterCut", selLeptons.size(), weight);
+      mon.fillHisto("nlep"           ,   "controlPlots_AfterCut", (int)selLeptons.size(), weight);
 
 
       //
@@ -786,10 +823,16 @@ int main(int argc, char* argv[])
 
         if(jet.pt()<20 || fabs(jet.eta())>4.7 ) continue;
 
+        //TString jetType( jet.genJet() && (jet.genJet())->pt()>0 ? "truejetsid" : "pujetsid" );
+
         //jet id
         bool passPFloose = patUtils::passPFJetID("Loose", jet);
         bool passLooseSimplePuId = patUtils::passPUJetID(jet); //FIXME Broken in miniAOD V2 : waiting for JetMET fix. (Hugo)
-        //bool passLooseSimplePuId = jet.userInt("pileupJetId:fullId") & (1 << 2);
+        bool passLooseSimplePuId_new = jet.userInt("pileupJetId:fullId") & (1 << 2);
+        if(passLooseSimplePuId)          mon.fillHisto( "jetId", "controlPlots", 0, jet.pt(), weight);
+        if(passLooseSimplePuId_new)      mon.fillHisto( "jetId", "controlPlots", 1, jet.pt(), weight);
+        // cout << "passLooseSimplePuId: "<< passLooseSimplePuId <<endl;
+        // cout << "Passes loose: " << bool(jet.userInt("pileupJetId:fullId") & (1 << 2)) << " - medium: " << bool(jet.userInt("pileupJetId:fullId") & (1 << 1)) <<" - tight: "<< bool(jet.userInt("pileupJetId:fullId") & (1 << 0)) << endl;
         if(!passPFloose || !passLooseSimplePuId) continue;
 
         bool overlapWithTau(false);
@@ -896,12 +939,99 @@ int main(int argc, char* argv[])
         bool passZmass = (fabs(zll.mass()-91.2)<30.0);
         bool passZpt   = (zll.pt()>20);
 
-        if( !isDileptonCandidate && !passZmass ) continue;
+        if( !isDileptonCandidate || !passZmass ) continue;
         /************************* EVENT HAS a Z-like candidate ***************************/
 
+        // cout<<"  ##RECO##  Z Lepton 1:  pt = "<<(*dilLep1).pt()<<"  eta = "<<(*dilLep1).eta()<<"  phi = "<<(*dilLep1).phi()<<endl;
+        // // if ( selLeptons[dilLep1].genParticle() ) cout<<"    ##RECO (GEN Match)##  Z Lepton 1:  pt = "<<(selLeptons[dilLep1].genParticle())->pt()<<"  eta = "<<(selLeptons[dilLep1].genParticle())->eta()<<"  phi = "<<(selLeptons[dilLep1].genParticle())->phi()<<endl;
+        // cout<<"  ##RECO##  Z Lepton 2:  pt = "<<(*dilLep2).pt()<<"  eta = "<<(*dilLep2).eta()<<"  phi = "<<(*dilLep2).phi()<<endl;
+        // if ( selLeptons[dilLep2].genParticle() ) cout<<"    ##RECO (GEN Match)##  Z Lepton 2:  pt = "<<(selLeptons[dilLep2].genParticle())->pt()<<"  eta = "<<(selLeptons[dilLep2].genParticle())->eta()<<"  phi = "<<(selLeptons[dilLep2].genParticle())->phi()<<endl;
+        //
+        // int triggerType = abs(dilId)==121 ? 82 : 83;
+        // std::cout << "\n TRIGGER OBJECTS " << std::endl;
+        std::vector<patUtils::GenericLepton> diLeptons;
+        diLeptons.push_back(*dilLep1);
+        diLeptons.push_back(*dilLep2);
+
+        // Removing jets that match with leptons from Z boson
+        auto selJetsSkimmed = skimJetsCollection(diLeptons,selJets);
+
+        std::map <std::string,std::vector<std::string> > muonTriggerToFilter = { {"HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v",{"hltDiMuonGlb17Glb8RelTrkIsoFiltered0p4DzFiltered0p2"}},
+                                                                                  {"HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v", {"hltDiMuonGlb17Trk8RelTrkIsoFiltered0p4DzFiltered0p2"}}
+                                                                                };
+        std::map <std::string,std::vector<std::string> > eleTriggerToFilter  = { {"HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v",{"hltEle23Ele12CaloIdLTrackIdLIsoVLDZFilter"}}
+                                                                                };
+        auto triggerToFilterMap = abs(dilId)==121? eleTriggerToFilter: muonTriggerToFilter;
+        std::vector<pat::TriggerObjectStandAlone> triggerObjectMatchedCollection;
+
+        for (auto lepton: diLeptons){
+        for (pat::TriggerObjectStandAlone obj : *triggerObjectsHandle) { // note: not "const &" since we want to call unpackPathNames
+            obj.unpackPathNames(names);
+
+            // bool typeMatched = false;
+            // for (unsigned h = 0; h < obj.filterIds().size(); ++h) {
+            //   typeMatched |= (obj.filterIds()[h] == triggerType) ;
+            // }
+            // if (!typeMatched) continue;
+            bool filterPass = true;
+            if(deltaR( obj,  lepton )>0.5 ) continue;
+            for(std::map<std::string,std::vector<std::string> >::iterator iter = triggerToFilterMap.begin(); iter != triggerToFilterMap.end(); ++iter)
+            {
+              auto k =  iter->first;
+              for (auto& filter : iter->second){
+                if(!obj.hasFilterLabel(filter)) filterPass &= false;
+              }
+            if (!filterPass) continue;
+            // std::cout << "---- " << k << endl;
+
+            // // Print trigger object collection and type
+            // std::cout << "\t   Collection: " << obj.collection() << std::endl;
+            // std::cout << "\t   Type IDs:   ";
+            // for (unsigned h = 0; h < obj.filterIds().size(); ++h) std::cout << " " << obj.filterIds()[h] ;
+            // std::cout << std::endl;
+            // // Print associated trigger filters
+            // std::cout << "\t   Filters:    ";
+            // for (unsigned h = 0; h < obj.filterLabels().size(); ++h) std::cout << " " << obj.filterLabels()[h];
+            // std::cout << std::endl;
+            std::vector< std::string > pathNamesAll = obj.pathNames(false);
+            std::vector< std::string > pathNamesLast = obj.pathNames(true);
+            // Print all trigger paths, for each one record also if the object is associated to a 'l3' filter (always true for the
+            // definition used in the PAT trigger producer) and if it's associated to the last filter of a successfull path (which
+            // means that this object did cause this trigger to succeed; however, it doesn't work on some multi-object triggers)
+            // std::cout << "\t   Paths (" << pathNamesAll.size()<<"/"<<pathNamesLast.size()<<"):    ";
+              for (unsigned h = 0, n = pathNamesAll.size(); h < n; ++h) {
+
+                 bool isBoth = obj.hasPathName( pathNamesAll[h], true, true );
+                 if (!isBoth) continue;
+                 static const std::string regex_format = "^%1%[0-9]+$";
+                 const std::string regex_str = boost::str(boost::format(regex_format) % k);
+                 boost::regex regex = boost::regex(regex_str);
+                 bool matched = boost::regex_match(pathNamesAll[h], regex);
+                 if (matched) {
+                   triggerObjectMatchedCollection.push_back(obj);
+                   // cout << " ------>>  Trigger Path: "<<pathNamesAll[h]<<" (L,3) "<<endl;
+                   // std::cout << std::endl;
+                   // std::cout << "\tTrigger object:  pt " << obj.pt() << ", eta " << obj.eta() << ", phi " << obj.phi() << ", pdgId "<< obj.pdgId() << std::endl;
+                 }
+            //     bool isL3   = obj.hasPathName( pathNamesAll[h], false, true );
+            //     bool isLF   = obj.hasPathName( pathNamesAll[h], true, false );
+            //     bool isNone = obj.hasPathName( pathNamesAll[h], false, false );
+            //     std::cout << "   " << pathNamesAll[h];
+            //     if (isBoth) std::cout << "(L,3)";
+            //     if (isL3 && !isBoth) std::cout << "(*,3)";
+            //     if (isLF && !isBoth) std::cout << "(L,*)";
+            //     if (isNone && !isBoth && !isL3 && !isLF) std::cout << "(*,*)";
+             }
+           }
+          // std::cout << std::endl;
+        }
+      }
+
+      if( triggerObjectMatchedCollection.size()==2 ) treeDoubleTriggerMatch =1;
+        // std::cout << std::endl;
 
         //LEPTON FAKE RATE ANALYSIS Z+1jets  (no systematics taken into account here)
-        if( passZmass && (int)selLeptons.size()==3){  //Request exactly one Z + 1 additional lepton
+        if( passZmass ){//&& (int)selLeptons.size()==3){  //Request exactly one Z + 1 additional lepton
           double tmass=-999;
           treeEventId   = ev.eventAuxiliary().event();
     			treeLumiId    = ev.eventAuxiliary().luminosityBlock();
@@ -918,9 +1048,12 @@ int main(int argc, char* argv[])
             }
             if(abs(fakeLepton.pdgId())==11 || abs(fakeLepton.pdgId())==13 || abs(fakeLepton.pdgId())==15){
               int closestJetIndexL1=-1; double pTL1=-1; double etaL1=-1;
-              double dRminL1 = closestJet(fakeLepton.p4(), selJets, closestJetIndexL1);
+              double dRminL1 = closestJet(fakeLepton.p4(), selJetsSkimmed, closestJetIndexL1);
               bool jetFound = closestJetIndexL1>=0 && dRminL1<0.5;
-              if(jetFound){pTL1=selJets[closestJetIndexL1].pt(); etaL1=abs(selJets[closestJetIndexL1].eta());}
+              if(jetFound){
+		              pTL1=selJetsSkimmed[closestJetIndexL1].pt();
+		              etaL1=abs(selJetsSkimmed[closestJetIndexL1].eta());
+	            }
               else{pTL1=fakeLepton.pt(); etaL1=abs(fakeLepton.eta());}
               unsigned char lepIDmap = 0xF; // 1111
               //cout << " Muon ID: "<< (int) muonIDmap << endl;
@@ -967,6 +1100,11 @@ int main(int argc, char* argv[])
                   passIDsoft  = patUtils::passId(fakeLepton.mu, vtx[0], patUtils::llvvMuonId::Soft, patUtils::CutVersion::CutSet::ICHEP16Cut);
                   passIDtight = patUtils::passId(fakeLepton.mu, vtx[0], patUtils::llvvMuonId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut);
                   lepIDmap &= (passIDvloose? 1 : 0) | (passIDloose? 1 << 1 : 0 << 1) | (passIDsoft ? 1 << 2 : 0 << 2) | (passIDtight? 1 << 3 : 0 << 3) ;
+
+                  treeChIso   = fakeLepton.mu.pfIsolationR04().sumChargedHadronPt;
+                  treeNhIso   = fakeLepton.mu.pfIsolationR04().sumNeutralHadronEt;
+                  treeGIso    = fakeLepton.mu.pfIsolationR04().sumPhotonEt;
+                  treePUchIso = fakeLepton.mu.pfIsolationR04().sumPUPt;
                   //cout << " (After checking) Muon ID: "<< (int) ( (passIDloose? 1 : 0) | (passIDsoft? 1 << 1 : 0 << 1) | (passIDtight ? 1 << 2 : 0 << 2) ) << endl;
                 }
                 float relIso = patUtils::relIso(fakeLepton, rho);

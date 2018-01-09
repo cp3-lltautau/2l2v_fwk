@@ -12,6 +12,7 @@ if [[ $# -eq 0 ]]; then
     printf "\n\t%-5s  %-40s\n"  "0"  "completely clean up the directory"
     printf "\n\t%-5s  %-40s\n"  "1"  "run 'runZHTauTauAnalysis' on samples.json"
     printf "\n\t%-5s  %-40s\n"  "1.1"  "run 'runZHTauTauAnalysis' on photon_samples.json"
+    printf "\n\t%-5s  %-40s\n"  "1.2"  "run 'runZHFakeRateTreeProducer' on samples_FR.json"
     printf "\n\t%-5s  %-40s\n"  "2"  "compute integrated luminosity from processed samples"
     printf "\n\t%-5s  %-40s\n"  "2.1"  "compute integrated luminosity from processed samples connecting to lxplus (ssh)"
     printf "\n\t%-5s  %-40s\n"  "3"  "make plots and combine root files"
@@ -27,10 +28,10 @@ if [[ $# -ge 4 ]]; then echo "Additional arguments will be considered: "$argumen
 #--------------------------------------------------
 # Global Variables
 #--------------------------------------------------
-SUFFIX=_2017_12_03_FR
+SUFFIX=_2017_01_08_FR
 #SUFFIX=$(date +"_%Y_%m_%d")
 MAINDIR=$CMSSW_BASE/src/UserCode/llvv_fwk/test/zhtautau
-JSON=$MAINDIR/samples.json
+JSON=$MAINDIR/samples_FR.json
 RESULTSDIR=$MAINDIR/results$SUFFIX
 PLOTSDIR=$MAINDIR/plots${SUFFIX}
 PLOTTER=$MAINDIR/plotter${SUFFIX}
@@ -198,7 +199,7 @@ case $step in
            echo "WARNING: $RESULTSDIR/LUMI.txt file is missing so use fixed integrated luminosity value, this might be different than the dataset you ran on"
         fi
 	echo "MAKE PLOTS AND SUMMARY ROOT FILE, BASED ON AN INTEGRATED LUMINOSITY OF $INTLUMI"
-	runPlotter --iEcm 13 --iLumi $INTLUMI --inDir $RESULTSDIR/ --outDir $PLOTSDIR/ --outFile $PLOTTER.root --no2D --json $JSON $arguments
+	runPlotter --iEcm 13 --iLumi $INTLUMI --inDir $RESULTSDIR/ --outDir $PLOTSDIR/ --outFile $PLOTTER.root  --json $JSON $arguments
 	ln -s -f $PLOTTER.root $MAINDIR/plotter.root
 	;;
 

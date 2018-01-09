@@ -2,6 +2,7 @@
 <use name="roottmva"/>
 <use name="roofit"/>
 <use name="roostats"/>
+<use name="boost"/>
 <use name="PhysicsTools/FWLite"/>
 <use name="UserCode/llvv_fwk"/>
 <use name="TauAnalysis/SVfitStandalone"/>

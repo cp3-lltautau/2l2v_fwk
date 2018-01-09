@@ -507,6 +507,32 @@ double closestJet(const LorentzVector& obj, pat::JetCollection& selJets, int& cl
   return dRMin;
 }
 
+//**************************************************************************************************************************//
+std::pair<int,pat::JetCollection>  skimJetsCollectionInfo (const std::vector<patUtils::GenericLepton> diLeptons, pat::JetCollection& selJets, pat::TauCollection selTaus)
+//**************************************************************************************************************************//
+{
+  std::pair<int,pat::JetCollection> jetCollentionInfo;
+  //pat::JetCollection  jetCollection;
+  auto firstLepton  = diLeptons.at(0);
+  auto secondLepton = diLeptons.at(1);
+
+  for(auto& jet: selJets){
+    if (deltaR( jet,  firstLepton )<0.4 || deltaR( jet, secondLepton )<0.4 ) continue;
+    else jetCollentionInfo.second.push_back(jet);
+
+    bool overlapWithTau(false);
+    for(int l1=0; l1<(int)selTaus.size();++l1){
+      if(deltaR(jet, selTaus[l1])< 0.5  ){overlapWithTau=true; break;}
+    }
+
+    if(!overlapWithTau && jet.pt()>30 && fabs(jet.eta())<2.5){
+      bool hasCSVtag = (jet.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags")>0.8484);
+      if (hasCSVtag) jetCollentionInfo.first++;
+    }
+  }
+  return jetCollentionInfo;
+}
+
  //**********************************************************************************************//
 float getTheFRWeight(std::vector<patUtils::GenericLepton>& selLeptons, pat::JetCollection& selJets, int higgsCandL1, int higgsCandL2, FRWeights theFRWeightTool,double isoElCut, double isoMuCut, std::string isoHaCut, float sumPtCut,std::string CRType, std::string ptSpectrum = "_wrtLepPt")
 //**********************************************************************************************//
@@ -1612,7 +1638,7 @@ int main(int argc, char* argv[])
       patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::FakeRateWP, patUtils::CutVersion::CutSet::ICHEP16Cut);
 
       //apply muon corrections
-      if(abs(lid)==13 && passVeryLooseLepton){
+      if(abs(lid)==13 && passVeryLooseLepton && leptons[ilep].pt()>20 ){
       //if(abs(lid)==13 && passIsoWPforFakeRate){
         passSoftMuon=false;
           if(is2016MC || is2016data){
@@ -1772,7 +1798,7 @@ int main(int argc, char* argv[])
       for(size_t ijet=0; ijet<jets.size(); ijet++){
         pat::Jet jet = jets[ijet]; //copy the jet, such that we can update it
 
-        if(jet.pt()<15 || fabs(jet.eta())>4.7 ) continue;
+        if(jet.pt()<20 || fabs(jet.eta())>4.7 ) continue;
 
         //mc truth for this jet
         //const reco::GenJet* genJet=jet.genJet();
@@ -1923,6 +1949,8 @@ int main(int argc, char* argv[])
         TString evCat;
         int dilId(1);
         int dilLep1, dilLep2;
+        patUtils::GenericLepton *dilLep1Ptr=nullptr;
+        patUtils::GenericLepton *dilLep2Ptr=nullptr;
         double BestMass;
         LorentzVector leadingLep, trailerLep, zll, zlltmp;
         //get the Z candidate
@@ -1957,6 +1985,8 @@ int main(int argc, char* argv[])
             if( fabs(zlltmp.mass() - 91.2) < fabs(zll.mass()-91.2) ){    //BEST MASS [76.2,106.2]
               dilLep1 = l1;
               dilLep2 = l2;
+              dilLep1Ptr = &selLeptons[l1];
+              dilLep2Ptr = &selLeptons[l2];
               zll=zlltmp;
               leadingLep=selLeptons[l1].p4();
               trailerLep=selLeptons[l2].p4();
@@ -2000,54 +2030,13 @@ int main(int argc, char* argv[])
 
         if(!isDileptonCandidate) continue;
         /************************* EVENT HAS a Z-like candidate ***************************/
+        std::vector<patUtils::GenericLepton> diLeptonsSystem;
+        diLeptonsSystem.push_back(*dilLep1Ptr);
+        diLeptonsSystem.push_back(*dilLep2Ptr);
 
-
-        // cout<<"  ##RECO##  Z Lepton 1:  pt = "<<selLeptons[dilLep1].pt()<<"  eta = "<<selLeptons[dilLep1].eta()<<"  phi = "<<selLeptons[dilLep1].phi()<<endl;
-        // if ( selLeptons[dilLep1].genParticle() ) cout<<"    ##RECO (GEN Match)##  Z Lepton 1:  pt = "<<(selLeptons[dilLep1].genParticle())->pt()<<"  eta = "<<(selLeptons[dilLep1].genParticle())->eta()<<"  phi = "<<(selLeptons[dilLep1].genParticle())->phi()<<endl;
-        // cout<<"  ##RECO##  Z Lepton 2:  pt = "<<selLeptons[dilLep2].pt()<<"  eta = "<<selLeptons[dilLep2].eta()<<"  phi = "<<selLeptons[dilLep2].phi()<<endl;
-        // if ( selLeptons[dilLep2].genParticle() ) cout<<"    ##RECO (GEN Match)##  Z Lepton 2:  pt = "<<(selLeptons[dilLep2].genParticle())->pt()<<"  eta = "<<(selLeptons[dilLep2].genParticle())->eta()<<"  phi = "<<(selLeptons[dilLep2].genParticle())->phi()<<endl;
-        //
-        // int triggerType = abs(dilId)==121 ? 82 : 83;
-        // std::cout << "\n TRIGGER OBJECTS " << std::endl;
-        // for (pat::TriggerObjectStandAlone obj : *triggerObjectsHandle) { // note: not "const &" since we want to call unpackPathNames
-        //     obj.unpackPathNames(names);
-        //
-        //     bool typeMatched = false;
-        //     for (unsigned h = 0; h < obj.filterIds().size(); ++h) {
-        //       typeMatched |= (obj.filterIds()[h] == triggerType) ;
-        //     }
-        //     if (!typeMatched) continue;
-        //
-        //     std::cout << "\tTrigger object:  pt " << obj.pt() << ", eta " << obj.eta() << ", phi " << obj.phi() << ", pdgId "<< obj.pdgId() << std::endl;
-        //     // Print trigger object collection and type
-        //     std::cout << "\t   Collection: " << obj.collection() << std::endl;
-        //     std::cout << "\t   Type IDs:   ";
-        //     for (unsigned h = 0; h < obj.filterIds().size(); ++h) std::cout << " " << obj.filterIds()[h] ;
-        //     std::cout << std::endl;
-        //     // Print associated trigger filters
-        //     std::cout << "\t   Filters:    ";
-        //     for (unsigned h = 0; h < obj.filterLabels().size(); ++h) std::cout << " " << obj.filterLabels()[h];
-        //     std::cout << std::endl;
-        //     std::vector< std::string > pathNamesAll = obj.pathNames(false);
-        //     std::vector< std::string > pathNamesLast = obj.pathNames(true);
-        //     // Print all trigger paths, for each one record also if the object is associated to a 'l3' filter (always true for the
-        //     // definition used in the PAT trigger producer) and if it's associated to the last filter of a successfull path (which
-        //     // means that this object did cause this trigger to succeed; however, it doesn't work on some multi-object triggers)
-        //     std::cout << "\t   Paths (" << pathNamesAll.size()<<"/"<<pathNamesLast.size()<<"):    ";
-        //     for (unsigned h = 0, n = pathNamesAll.size(); h < n; ++h) {
-        //         bool isBoth = obj.hasPathName( pathNamesAll[h], true, true );
-        //         bool isL3   = obj.hasPathName( pathNamesAll[h], false, true );
-        //         bool isLF   = obj.hasPathName( pathNamesAll[h], true, false );
-        //         bool isNone = obj.hasPathName( pathNamesAll[h], false, false );
-        //         std::cout << "   " << pathNamesAll[h];
-        //         if (isBoth) std::cout << "(L,3)";
-        //         if (isL3 && !isBoth) std::cout << "(*,3)";
-        //         if (isLF && !isBoth) std::cout << "(L,*)";
-        //         if (isNone && !isBoth && !isL3 && !isLF) std::cout << "(*,*)";
-        //     }
-        //     std::cout << std::endl;
-        // }
-        // std::cout << std::endl;
+        auto selJetsSkimmedInfo = skimJetsCollectionInfo(diLeptonsSystem,selJets,selTaus);
+        auto selJetsSkimmed     = selJetsSkimmedInfo.second;
+        auto nbtagSkimmed       = selJetsSkimmedInfo.first;
 
 
         if (ivar == 0 ){
@@ -2063,7 +2052,7 @@ int main(int argc, char* argv[])
   	bool passZmass = (fabs(zll.mass()-91.2)<30.0);
         bool passZpt   = (zll.pt()>20);
         bool passMass = passZmass;
-        bool passBJetVetoMain = (nbtags ==0);
+        bool passBJetVetoMain = (nbtagSkimmed ==0);
         bool passLepVetoMain = true;
 
         int higgsCandL1=-1, higgsCandL2=-1;
@@ -2097,8 +2086,8 @@ int main(int argc, char* argv[])
             }
             if(abs(extraLeptons[i].pdgId())==11 || abs(extraLeptons[i].pdgId())==13 || abs(extraLeptons[i].pdgId())==15){
               int closestJetIndexL1=-1; double pTL1=-1; double etaL1=-1;
-              double dRminL1 = closestJet(extraLeptons[i].p4(), selJets, closestJetIndexL1);
-              if(closestJetIndexL1>=0 && dRminL1<0.5){pTL1=selJets[closestJetIndexL1].pt(); etaL1=abs(selJets[closestJetIndexL1].eta());}
+              double dRminL1 = closestJet(extraLeptons[i].p4(), selJetsSkimmed, closestJetIndexL1);
+              if(closestJetIndexL1>=0 && dRminL1<0.5){pTL1=selJetsSkimmed[closestJetIndexL1].pt(); etaL1=abs(selJetsSkimmed[closestJetIndexL1].eta());}
               else{pTL1=extraLeptons[i].pt(); etaL1=abs(extraLeptons[i].eta());}
 
 
@@ -2280,7 +2269,7 @@ int main(int argc, char* argv[])
            higgsCand_ClassicSVFit = getClassicSVFit(met, selLeptons, higgsCandL1, higgsCandL2);
            higgsCand_SVFit = higgsCand_ClassicSVFit;
            classiSVFit_mass = higgsCand_ClassicSVFit.mass();
-           higgsCand_SVFitMass = classiSVFit_mass; 
+           higgsCand_SVFitMass = classiSVFit_mass;
 	// cout<<"============================================================="<<endl;
          // std::cout<<"END SVFIT\n";
         }
