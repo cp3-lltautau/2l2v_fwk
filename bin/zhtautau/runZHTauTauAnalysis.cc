@@ -52,6 +52,8 @@
 #include "UserCode/llvv_fwk/interface/BtagUncertaintyComputer.h"
 
 #include "UserCode/llvv_fwk/interface/PatUtils.h"
+#include "UserCode/llvv_fwk/interface/NTupleUtils.h"
+#include "UserCode/llvv_fwk/interface/LinkDef.h"
 #include "UserCode/llvv_fwk/interface/TrigUtils.h"
 #include "UserCode/llvv_fwk/interface/EwkCorrections.h"
 #include "UserCode/llvv_fwk/interface/ZZatNNLO.h"
@@ -78,10 +80,10 @@ using namespace std;
 // Additional functions
 
 enum CRTypes {
-  CR10,
-  CR01,
-  CR11,
-  DEFAULT
+  CR10 = 0,
+  CR01 = 1,
+  CR11 = 2,
+  DEFAULT = 3
 };
 
 
@@ -411,7 +413,7 @@ LorentzVector getClassicSVFit(pat::MET met, std::vector<patUtils::GenericLepton>
 }
 
 //**********************************************************************************************//
-CRTypes checkBkgCR(std::vector<patUtils::GenericLepton> selLeptons, int higgsCandL1, int higgsCandL2, double isoElCut, double isoMuCut, std::string isoHaCut, float sumPtCut, reco::VertexCollection vtx){
+CRTypes checkBkgCR(std::vector<patUtils::GenericLepton> selLeptons, int higgsCandL1, int higgsCandL2, double isoElCut, double isoMuCut, std::string isoHaCut, double sumPtCut, reco::VertexCollection vtx){
 //**********************************************************************************************//
 
   using namespace patUtils; //<---- needed for the cut version
@@ -421,7 +423,7 @@ CRTypes checkBkgCR(std::vector<patUtils::GenericLepton> selLeptons, int higgsCan
 
   std::vector<bool> passId;
   std::vector<bool> passIso;
-  float sumpt = 0;
+  double sumpt = 0;
 
 
   for(auto lepIt=HiggsLegs.begin();lepIt!=HiggsLegs.end();lepIt++){
@@ -453,12 +455,13 @@ CRTypes checkBkgCR(std::vector<patUtils::GenericLepton> selLeptons, int higgsCan
       theCR=CRTypes::CR11;
     }
   }
+
   return theCR;
 
 }
 
 //**********************************************************************************************//
-bool passHiggsCuts(std::vector<patUtils::GenericLepton> selLeptons, int higgsCandL1, int higgsCandL2, double isoElCut, double isoMuCut, std::string isoHaCut, float sumPtCut, bool requireId, reco::VertexCollection vtx)
+bool passHiggsCuts(std::vector<patUtils::GenericLepton> selLeptons, int higgsCandL1, int higgsCandL2, double isoElCut, double isoMuCut, std::string isoHaCut, double sumPtCut, bool requireId, reco::VertexCollection vtx)
 //**********************************************************************************************//
 {
   if(higgsCandL1<0 || higgsCandL2<0)return false;
@@ -470,7 +473,7 @@ bool passHiggsCuts(std::vector<patUtils::GenericLepton> selLeptons, int higgsCan
 
   bool passId=true;
   bool passIso=true;
-  float sumpt = 0;
+  double sumpt = 0;
   for(auto& lep: HiggsLegs){
     //patUtils::GenericLepton* lep = (*lepIt);
 
@@ -534,7 +537,7 @@ std::pair<int,pat::JetCollection>  skimJetsCollectionInfo (const std::vector<pat
 }
 
  //**********************************************************************************************//
-float getTheFRWeight(std::vector<patUtils::GenericLepton>& selLeptons, pat::JetCollection& selJets, int higgsCandL1, int higgsCandL2, FRWeights theFRWeightTool,double isoElCut, double isoMuCut, std::string isoHaCut, float sumPtCut,std::string CRType, std::string ptSpectrum = "_wrtLepPt")
+float getTheFRWeight(std::vector<patUtils::GenericLepton>& selLeptons, pat::JetCollection& selJets, int higgsCandL1, int higgsCandL2, FRWeights theFRWeightTool,double isoElCut, double isoMuCut, std::string isoHaCut, double sumPtCut,std::string CRType, std::string ptSpectrum = "_wrtLepPt_v2")
 //**********************************************************************************************//
 {
   float theFinalWeight=1;
@@ -554,7 +557,7 @@ float getTheFRWeight(std::vector<patUtils::GenericLepton>& selLeptons, pat::JetC
     if(closestJetIndex>=0 && dRmin<0.5){pTclosestJet=selJets[closestJetIndex].pt(); etaclosestJet=abs(selJets[closestJetIndex].eta());}
     pTclosestJet  = lep->pt();
     etaclosestJet = lep->eta();
-    if(sumPtCut<30){
+    if(sumPtCut<30.){
       etabin = etaclosestJet <1.4 ? "_B" : "_E";
     } else {
       etabin = etaclosestJet <1.4 ? "_TMCut_B" : "_TMCut_E";
@@ -978,13 +981,17 @@ int main(int argc, char* argv[])
 
   TH1 *hbtags=mon.addHistogram( new TH1F("nbtags",   ";b-tag multiplicity;Events",5,0,5) );
   TH1 *hjets=mon.addHistogram( new TH1F("njets",  ";Jet multiplicity;Events",5,0,5) );
+  TH1 *hbtagSkimmed=mon.addHistogram( new TH1F("nbtagSkimmed",   ";b-tag multiplicity after Z leptons x-cleaning;Events",5,0,5) );
+  TH1 *hjetSkimmed=mon.addHistogram( new TH1F("njetSkimmed",  ";Jet multiplicity after Z leptons x-cleaning;Events",5,0,5) );
   for(int ibin=1; ibin<=hjets->GetXaxis()->GetNbins(); ibin++){
     TString label("");
     if(ibin==hjets->GetXaxis()->GetNbins()) label +="#geq";
     else                                    label +="=";
     label += (ibin-1);
     hjets->GetXaxis()->SetBinLabel(ibin,label);
+    hjetSkimmed->GetXaxis()->SetBinLabel(ibin,label);
     hbtags->GetXaxis()->SetBinLabel(ibin,label);
+    hbtagSkimmed->GetXaxis()->SetBinLabel(ibin,label);
   }
 
   //fake rate histograms
@@ -1008,11 +1015,12 @@ int main(int argc, char* argv[])
 
   std::vector<double> eleIsoValues = {0.3, 0.2, 0.1};
   std::vector<double> muIsoValues  = {0.3, 0.2, 0.1};
+  std::vector<double> sumPtValues  = {0.0, 20.0, 40.0, 60.0, 80.0, 100.0, 120.0, 140.0, 160.0, 180.0, 200.0 };
   std::vector<std::string> tauIDiso = {"byLooseIsolationMVArun2v1DBoldDMwLT","byMediumIsolationMVArun2v1DBoldDMwLT"};
   // std::vector<std::string> tauIDiso = {"byLooseCombinedIsolationDeltaBetaCorr3Hits","byLooseIsolationMVArun2v1DBoldDMwLT",
   //                                       "byLooseIsolationMVArun2v1DBdR03oldDMwLT"};
 
-  std::vector<float>    optim_Cuts_sumPt;
+  std::vector<double>    optim_Cuts_sumPt;
   std::vector<int>      optim_Cuts_taIso;
   std::vector<double>    optim_Cuts_muIso;
   std::vector<double>    optim_Cuts_elIso;
@@ -1020,11 +1028,11 @@ int main(int argc, char* argv[])
   for(int elIso=0; elIso<eleIsoValues.size(); elIso++){
     for(int muIso=0; muIso<muIsoValues.size(); muIso++){
       for(int taIso=0; taIso<tauIDiso.size(); taIso++){
-        for(float sumPt=0;sumPt<=200;sumPt+=20){
+        for(int sumPt=0; sumPt<sumPtValues.size(); sumPt++){
           optim_Cuts_elIso.push_back( eleIsoValues.at(elIso) );
           optim_Cuts_muIso.push_back( muIsoValues.at(muIso) );
           optim_Cuts_taIso.push_back(taIso);
-          optim_Cuts_sumPt.push_back(sumPt);
+          optim_Cuts_sumPt.push_back( sumPtValues.at(sumPt) );
         }
       }
     }
@@ -1072,6 +1080,17 @@ int main(int argc, char* argv[])
     mon.addHistogram( new TH1F(TString("metsys")+varNames[ivar],                   ";#slash{E}_{T} (GeV);Events/10 GeV",50,0,500));
   }
 
+
+  TFile *ofile=TFile::Open("out.root", "recreate");
+
+  using namespace ntupleutils;
+  //std::unique_ptr<ntupleutils::EventInfo> eventGlobalInfo(nullptr);
+  float         treeWeight;
+  ntupleutils::EventInfo  *eventGlobalInfo = nullptr;
+  TTree* tree = new TTree("CandTree","CandTree");
+
+  tree->Branch("EventInfo",&eventGlobalInfo);
+  tree->Branch("weight" , &treeWeight  , string("weight/F"  ).c_str());
 
   //##############################################
   //######## GET READY FOR THE EVENT LOOP ########
@@ -1256,6 +1275,8 @@ int main(int argc, char* argv[])
 
       //##############################################   EVENT LOOP STARTS   ##############################################
       //if(!isMC && duplicatesChecker.isDuplicate( ev.run, ev.lumi, ev.event) ) { nDuplicates++; continue; }
+      //eventGlobalInfo = make_unique<ntupleutils::EventInfo>(ev);
+      eventGlobalInfo = new ntupleutils::EventInfo(ev);
 
       //Skip bad lumi
       if(!isMC && !goodLumiFilter.isGoodLumi(ev.eventAuxiliary().run(),ev.eventAuxiliary().luminosityBlock()))continue;
@@ -1771,6 +1792,7 @@ int main(int argc, char* argv[])
         if(!tau.tauID("againstElectronLooseMVA6")) continue;
         if(!tau.tauID("againstMuonLoose3")) continue;
         if(!tau.tauID("decayModeFinding")) continue;
+        //if(!tau.tauID("byVLooseIsolationMVArun2v1DBoldDMwLT")) continue;
 
         selTaus.push_back(tau);
         selLeptons.push_back(tau);
@@ -2036,6 +2058,7 @@ int main(int argc, char* argv[])
 
         auto selJetsSkimmedInfo = skimJetsCollectionInfo(diLeptonsSystem,selJets,selTaus);
         auto selJetsSkimmed     = selJetsSkimmedInfo.second;
+        auto njetSkimmed        = selJetsSkimmed.size();
         auto nbtagSkimmed       = selJetsSkimmedInfo.first;
 
 
@@ -2180,12 +2203,24 @@ int main(int argc, char* argv[])
             if(higgsCandId<0){HiggsShortId = 0;}else{HiggsShortId =12;}
             if(abs(selLeptons[dilLep1].pdgId())==11){HiggsShortId += 0;}else{HiggsShortId += 6;}
             switch(abs(higgsCandId)){
-              case 11*11:  ChannelName  = "elel";  HiggsShortId+= 0; break;
-              case 13*13:  ChannelName  = "mumu";  HiggsShortId+= 1; break;
-              case 11*13:  ChannelName  = "elmu";  HiggsShortId+= 2; break;
-              case 11*15:  ChannelName  = "elha";  HiggsShortId+= 3; break;
-              case 13*15:  ChannelName  = "muha";  HiggsShortId+= 4; break;
-              case 15*15:  ChannelName  = "haha";  HiggsShortId+= 5; break;
+              case 11*11:  ChannelName  = "elel";  eventGlobalInfo->SetTausPairCharge(higgsCandId<0 ? category::tausPairCharge::OS : category::tausPairCharge::SS);
+                                                   eventGlobalInfo->SetTausPairFlavour(category::tausPairFlavour::ee);
+                                                   HiggsShortId+= 0; break;
+              case 13*13:  ChannelName  = "mumu";  eventGlobalInfo->SetTausPairCharge(higgsCandId<0 ? category::tausPairCharge::OS : category::tausPairCharge::SS);
+                                                   eventGlobalInfo->SetTausPairFlavour(category::tausPairFlavour::mm);
+                                                   HiggsShortId+= 1; break;
+              case 11*13:  ChannelName  = "elmu";  eventGlobalInfo->SetTausPairCharge(higgsCandId<0 ? category::tausPairCharge::OS : category::tausPairCharge::SS);
+                                                   eventGlobalInfo->SetTausPairFlavour(category::tausPairFlavour::em);
+                                                   HiggsShortId+= 2; break;
+              case 11*15:  ChannelName  = "elha";  eventGlobalInfo->SetTausPairCharge(higgsCandId<0 ? category::tausPairCharge::OS : category::tausPairCharge::SS);
+                                                   eventGlobalInfo->SetTausPairFlavour(category::tausPairFlavour::et);
+                                                   HiggsShortId+= 3; break;
+              case 13*15:  ChannelName  = "muha";  eventGlobalInfo->SetTausPairCharge(higgsCandId<0 ? category::tausPairCharge::OS : category::tausPairCharge::SS);
+                                                   eventGlobalInfo->SetTausPairFlavour(category::tausPairFlavour::mt);
+                                                   HiggsShortId+= 4; break;
+              case 15*15:  ChannelName  = "haha";  eventGlobalInfo->SetTausPairCharge(higgsCandId<0 ? category::tausPairCharge::OS : category::tausPairCharge::SS);
+                                                   eventGlobalInfo->SetTausPairFlavour(category::tausPairFlavour::tt);
+                                                   HiggsShortId+= 5; break;
               default:     ChannelName  = "none";  HiggsShortId =-1; break;
             }
             // if (abs(higgsCandId) == 195) {
@@ -2244,11 +2279,11 @@ int main(int argc, char* argv[])
 
           //check how many additional light jets are present
           NCleanedJetMain = 0;
-          for(int j1=0;j1<(int)selJets.size();j1++){
-            if(dilLep1    !=-1 && deltaR(selJets[j1]   , selLeptons[dilLep1 ])<0.4) continue;
-            if(dilLep2    !=-1 && deltaR(selJets[j1]   , selLeptons[dilLep2 ])<0.4) continue;
-            if(higgsCandL1         !=-1 && deltaR(selJets[j1]   , selLeptons[higgsCandL1      ])<0.4) continue;
-            if(higgsCandL2         !=-1 && deltaR(selJets[j1]   , selLeptons[higgsCandL2      ])<0.4) continue;
+          for(int j1=0;j1<(int)selJetsSkimmed.size();j1++){
+            if(dilLep1    !=-1 && deltaR(selJetsSkimmed[j1]   , selLeptons[dilLep1 ])<0.4) continue;
+            if(dilLep2    !=-1 && deltaR(selJetsSkimmed[j1]   , selLeptons[dilLep2 ])<0.4) continue;
+            if(higgsCandL1         !=-1 && deltaR(selJetsSkimmed[j1]   , selLeptons[higgsCandL1      ])<0.4) continue;
+            if(higgsCandL2         !=-1 && deltaR(selJetsSkimmed[j1]   , selLeptons[higgsCandL2      ])<0.4) continue;
             NCleanedJetMain++;
           }
 
@@ -2279,12 +2314,10 @@ int main(int argc, char* argv[])
           higgsCandH_SVFit = zll + higgsCand_SVFit;
         }
 
-
-
         bool passThirdLeptonVeto( selLeptons.size()==2 && extraLeptons.size()==0 );
-        bool passBtags(nbtags==0);
-        bool passMinDphijmet( njets==0 || mindphijmet>0.5);
-        bool removeDump(false);
+
+
+
 
         //
         // NOW FOR THE CONTROL PLOTS
@@ -2292,6 +2325,14 @@ int main(int argc, char* argv[])
 
 
         if(ivar==0){//fill plots only for nominal
+
+          treeWeight = weight;
+          eventGlobalInfo->SetEventWeight(weight);
+          eventGlobalInfo->SetEventWeightNoLepSF(weightNoLepSF);
+          eventGlobalInfo->SetZFlavour( abs(dilId) == 121 ? category::ZFlavour::ee : category::ZFlavour::mm);
+          if(tree) tree->Fill();
+          delete eventGlobalInfo;
+
           // mon.fillHisto("eventflow"           , chTagsMain, 4, weight);
           // mon.fillHisto("eventflowNoWeights"  , chTagsMain, 4, 1);
           // mon.fillHisto("eventflowNoLepSF"    , chTagsMain, 4, weightNoLepSF);
@@ -2392,6 +2433,8 @@ int main(int argc, char* argv[])
 
                     mon.fillHisto("nbtags"    , chTags, nbtags,  weight);
                     mon.fillHisto("njets"     , chTags, njets,   weight);
+                    mon.fillHisto("nbtagSkimmed"    , chTags, nbtagSkimmed,  weight);
+                    mon.fillHisto("njetSkimmed"     , chTags, njetSkimmed,   weight);
 
                     if(passBJetVetoMain){
                       mon.fillHisto("eventflow"           , chTagsMain, 9, weight);
@@ -2450,54 +2493,51 @@ int main(int argc, char* argv[])
         } // end filling plots for nominal
 
 
-        if( passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain && passDPhiCut && passHiggsLoose){
+        if( runSVfit && (passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain && passDPhiCut && passHiggsLoose) ){
           for(unsigned int index=0; index<optim_Cuts_sumPt.size();index++){
+
             bool passHiggs = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],true,vtx);
             if(passHiggs){
               mon.fillHisto(TString("Hsvfit_shapes")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight);
               mon.fillHisto(TString("Asvfit_shapes")+varNames[ivar],chTagsMain,index,higgsCand_SVFitMass,weight);
-
             } else {   //if ( runSystematics ){
 
-	      // Control regions
+              // Control regions
 
-	      CRTypes theCR =  checkBkgCR(selLeptons, higgsCandL1, higgsCandL2, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],vtx);
+              CRTypes theCR =  checkBkgCR(selLeptons, higgsCandL1, higgsCandL2, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],vtx);
+              float theFRWeight=1;
+              mon.fillHisto("CRCounts","controlPlots",theCR,1);
 
-	      float theFRWeight=1;
-	      mon.fillHisto("CRCounts","controlPlots",theCR,1);
+              if(theCR==CRTypes::CR10){
+                // CR10
+                theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR10");
+                mon.fillHisto(TString("Hsvfit_shapes_CR10")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
+                mon.fillHisto(TString("Asvfit_shapes_CR10")+varNames[ivar],chTagsMain,index,higgsCand_SVFitMass,weight*theFRWeight);
+                // cout<<" CRTypes::CR10 - FR weight value = "<<theFRWeight<<endl;
+              } else if (theCR==CRTypes::CR01) {
+                // CR01
+                theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR01");
+                mon.fillHisto(TString("Hsvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
+                mon.fillHisto(TString("Asvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCand_SVFitMass,weight*theFRWeight);
+                // cout<<" CRTypes::CR01 - FR weight value = "<<theFRWeight<<endl;
+              } else {
+                // CR11
+                theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR11");
+                mon.fillHisto(TString("Hsvfit_shapes_CR11")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
+                mon.fillHisto(TString("Asvfit_shapes_CR11")+varNames[ivar],chTagsMain,index,higgsCand_SVFitMass,weight*theFRWeight);
+                // cout<<" CRTypes::CR11 - FR weight value = "<<theFRWeight<<endl;
+              }
+              // cout<<" FR weight value = "<<theFRWeight<<endl;
+            }
 
-	      if(theCR==CRTypes::CR10){
-		// CR10
-		theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR10");
+            if(index==0 && selLeptons.size()>=2 && passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain ){
+              mon.fillHisto(TString("metsys")+varNames[ivar], chTagsMain, imet.pt(), weight);
+            }
+          }//end of the loop on cutIndex
+        }
 
-		mon.fillHisto(TString("Hsvfit_shapes_CR10")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
-		mon.fillHisto(TString("Asvfit_shapes_CR10")+varNames[ivar],chTagsMain,index,higgsCand_SVFitMass,weight*theFRWeight);
-		// cout<<" CRTypes::CR10 - FR weight value = "<<theFRWeight<<endl;
-
-	      } else if (theCR==CRTypes::CR01) {
-                  // CR01
-		theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR01");
-
-		mon.fillHisto(TString("Hsvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
-		mon.fillHisto(TString("Asvfit_shapes_CR01")+varNames[ivar],chTagsMain,index,higgsCand_SVFitMass,weight*theFRWeight);
-		// cout<<" CRTypes::CR01 - FR weight value = "<<theFRWeight<<endl;
-	      } else {
-
-		// CR11
-		theFRWeight*=getTheFRWeight(selLeptons, selJets, higgsCandL1, higgsCandL2, theFRWeightTool, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],"CR11");
-		mon.fillHisto(TString("Hsvfit_shapes_CR11")+varNames[ivar],chTagsMain,index,higgsCandH_SVFit.mass(),weight*theFRWeight);
-		mon.fillHisto(TString("Asvfit_shapes_CR11")+varNames[ivar],chTagsMain,index,higgsCand_SVFitMass,weight*theFRWeight);
-		// cout<<" CRTypes::CR11 - FR weight value = "<<theFRWeight<<endl;
-	      }
-	      // cout<<" FR weight value = "<<theFRWeight<<endl;
-	    }
-
-	    if(index==0 && selLeptons.size()>=2 && passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain ){
-	      mon.fillHisto(TString("metsys")+varNames[ivar], chTagsMain, imet.pt(), weight);
-	    }
-	  }//end of the loop on cutIndex
-	}
       }//END SYSTEMATIC LOOP
+
     }
     printf("\n");
     delete file;
@@ -2512,8 +2552,10 @@ int main(int argc, char* argv[])
 
   //save all to the file
   terminationCmd += TString("mv out.root ") + outUrl + ";";
-  TFile *ofile=TFile::Open("out.root", "recreate");
+
+  ofile->cd();
   mon.Write();
+  if(tree){tree->SetDirectory(ofile); tree->Write();}
   ofile->Close();
 
   if(!isMC && debugText!=""){

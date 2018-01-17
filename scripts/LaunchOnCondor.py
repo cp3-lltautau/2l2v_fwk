@@ -49,7 +49,7 @@ Jobs_LocalNJobs = 8
 # for slurm, set them to whatever you want to suit your job best
 Jobs_Requeue     = True
 Jobs_Memory      = '3000'
-Jobs_Time        = '3-00:00:00'
+Jobs_Time        = '1-00:00:00'
 
 
 def KillProcess(processName):

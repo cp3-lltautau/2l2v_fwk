@@ -39,6 +39,8 @@ parser = optparse.OptionParser(usage)
 parser.add_option('-f', '--folder'     ,    dest='theFolder'      , help='folder containing root files'  , default=''             )
 parser.add_option('-j', '--json'       ,    dest='samplesDB'      , help='samples json file'             , default='./sample.json')
 parser.add_option('-t', '--tag'        ,    dest='onlytag'            , help='process only samples matching this tag'    , default='all')
+parser.add_option('-k', '--key'        ,    dest='onlykeyword'        , help='process only samples matching this keyword', default='')
+
 
 (opt, args) = parser.parse_args()
 
@@ -60,6 +62,10 @@ for procBlock in procList :
     #run over processes
     for proc in procBlock[1] :
         data = proc['data']
+        keywords = getByLabel(proc,'keys',[])
+        #print "{0} and {1}".format(len(keywords), opt.onlykeyword )
+        if(opt.onlykeyword!='' and len(keywords)>0 and opt.onlykeyword not in keywords): continue
+        print keywords
         if(getByLabel(proc,'nosample'      , '')!=''):continue
 	#run over samples
         for procData in data :

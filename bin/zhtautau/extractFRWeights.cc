@@ -84,7 +84,7 @@ int main(int argc, char* argv[]){
   std::vector<string> cat   = {"FR_El", "FR_Mu", "FR_Ta"};
   std::vector<string> bin   = {"","_B","_E", "_TMCut", "_TMCut_B", "_TMCut_E"};
   std::vector<string> var   = {"", "_Id_Iso01", "_Id_Iso02", "_Id_Iso03", "_Id_IsoLo", "_Id_IsoMe", "_Id_IsoLo_MVA", "_Id_IsoMe_MVA","_Id_IsoLo_MVAR03", "_Id_IsoMe_MVAR03"};
-  std::vector<string> wrt   = {"_wrtJetPt", "_wrtLepPt"};
+  std::vector<string> wrt   = {"_wrtJetPt_v2", "_wrtLepPt"};
 
 
 
