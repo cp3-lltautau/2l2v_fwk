@@ -59,7 +59,7 @@
     },
     {
       "tag":"H#rightarrow ZZ#rightarrow 4l",
-      "keys": ["zhtautau_2016MC"],
+      "keys": ["zhtautau_2016MC","FakeRate"],
       "isdata":false,
       "color":3,
       "lcolor":1,
@@ -69,7 +69,7 @@
     },
     {
       "tag":"ZZ#rightarrow 4l",
-      "keys": ["zhtautau_2016MC"],
+      "keys": ["zhtautau_2016MC","FakeRate"],
       "isdata":false,
       "color":2,
       "lcolor":1,
@@ -79,7 +79,7 @@
     },
     {
       "tag":"ZZ#rightarrow 2l+X",
-      "keys": ["zhtautau_2016MC","FakeRate"],
+      "keys": ["zhtautau_2016MC"],
       "isdata":false,
       "color":592,
       "lcolor":1,

@@ -57,7 +57,7 @@ int main(int argc, char* argv[]){
      fDataDir.push_back("data");
      tDataDir.push_back("ZH#rightarrow ll#tau#tau");
      tDataDir.push_back("ZZ#rightarrow 4l");
-     tDataDir.push_back("WZ#rightarrow 2l+X");
+     tDataDir.push_back("WZ#rightarrow 3l#nu");
      tDataDir.push_back("VVV");
   }else{
      fDataDir.push_back("ZH#rightarrow ll#tau#tau");

@@ -28,10 +28,10 @@ if [[ $# -ge 4 ]]; then echo "Additional arguments will be considered: "$argumen
 #--------------------------------------------------
 # Global Variables
 #--------------------------------------------------
-SUFFIX=_2018_01_14_DoubleMuonRunH_v2
+SUFFIX=_2018_02_22_FR
 #SUFFIX=$(date +"_%Y_%m_%d")
 MAINDIR=$CMSSW_BASE/src/UserCode/llvv_fwk/test/zhtautau
-JSON=$MAINDIR/samples.json
+JSON=$MAINDIR/samples_FR.json
 RESULTSDIR=$MAINDIR/results$SUFFIX
 PLOTSDIR=$MAINDIR/plots${SUFFIX}
 PLOTTER=$MAINDIR/plotter${SUFFIX}
@@ -192,7 +192,7 @@ case $step in
 
 	;;
     3)  # make plots and combined root files
-	if [[ $arguments == *"FakeRate"* ]]; then RESULTSDIR=$RESULTSDIR\_FakeRate ;fi
+#	if [[ $arguments == *"FakeRate"* ]]; then RESULTSDIR=$RESULTSDIR\_FakeRate ;fi
         if [ -f $RESULTSDIR/LUMI.txt ]; then
            INTLUMI=`tail -n 1 $RESULTSDIR/LUMI.txt | cut -d ',' -f 6`
         else

@@ -98,6 +98,10 @@ namespace patUtils
    bool passPFJetID(std::string label, pat::Jet jet);
    bool passPUJetID(pat::Jet j);
 
+   void printPFJetIDInfo(std::string label, pat::Jet jet);
+   void printRelIso(patUtils::GenericLepton& lep);
+
+
    bool exclusiveDataEventFilter(const double&run, const bool& isMC, const bool& isPromptReco);
 
    std::pair<double, double> scaleVariation(const fwlite::Event& ev);

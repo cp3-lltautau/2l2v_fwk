@@ -60,14 +60,17 @@ pos = 0
 
 for procBlock in procList :
     #run over processes
+    processedDataset = []
+    noProcessedDataset = []
     for proc in procBlock[1] :
         data = proc['data']
         keywords = getByLabel(proc,'keys',[])
         #print "{0} and {1}".format(len(keywords), opt.onlykeyword )
         if(opt.onlykeyword!='' and len(keywords)>0 and opt.onlykeyword not in keywords): continue
-        print keywords
+#        print keywords
         if(getByLabel(proc,'nosample'      , '')!=''):continue
 	#run over samples
+
         for procData in data :
             origdtag = getByLabel(procData,'dtag','')
             if(origdtag=='') : continue
@@ -85,13 +88,14 @@ for procBlock in procList :
             # args = shlex.split(command_line)
             # print command_line
             try:
-                jobs             = int( subprocess.check_output(command_line  , shell=True) )
+                njobsCommand     = subprocess.Popen(command_line  , stdout=subprocess.PIPE, shell=True)
                 processSqueue    = subprocess.Popen(squeueCMD, stdout=subprocess.PIPE, shell=True)
                 processSqueue_R  = subprocess.Popen(squeueCMD_R, stdout=subprocess.PIPE, shell=True)
                 processSqueue_PD = subprocess.Popen(squeueCMD_PD, stdout=subprocess.PIPE, shell=True)
                 process          = subprocess.Popen(command_line2 , stdout=subprocess.PIPE, shell=True)
                 returncode       = process.wait()
                 # print('ping returned {0}'.format(returncode))
+                jobs    = int( njobsCommand.stdout.read() )
                 onFarm  = int( processSqueue.stdout.read() )
                 running = int( processSqueue_R.stdout.read() )
                 pending = int( processSqueue_PD.stdout.read() )
@@ -111,12 +115,22 @@ for procBlock in procList :
                 # print "{0} - {1}".format(files,jobs)
                 # jobs  = int( os.system('sample='+dtag+'_[0-9]*[0-9]; echo `ls '+opt.theFolder+'/*.py | grep -c "$sample"`') )
                 # files = int( os.system('sample='+dtag+'_[0-9]*[0-9]; echo `ls '+opt.theFolder+'/*.root | grep -c "$sample"`') )
-            if jobs != files:
+            if jobs!= 0 and jobs != files:
                 print bcolors.OKGREEN + dtag + bcolors.ENDC
                 print 'Files: {0} of {1}'.format(files,jobs)
                 print bcolors.BOLD + "  Running(Pending) / FileMissing: "+bcolors.ENDC+" {0}({1}) / {2}".format(running,pending,int(jobs - files) )
-            # elif jobs == files :
-            #     print 'Dataset processed!!'
+            elif jobs!= 0 and files!=0 and jobs == files :
+                processedDataset.append(dtag)
+            elif jobs == 0:
+                noProcessedDataset.append(dtag)
+
+print bcolors.OKBLUE + 'Dataset processed' + bcolors.ENDC
+for item in processedDataset:
+    print "- "+item
+
+print bcolors.WARNING + 'Dataset NOT processed' + bcolors.ENDC
+for item in noProcessedDataset:
+    print "- "+item
 
 jobsNumberArray    = np.array(jobsNumber)
 pendingNumberArray = np.array(pendingNumber)

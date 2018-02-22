@@ -48,6 +48,7 @@
 #include "UserCode/llvv_fwk/interface/BtagUncertaintyComputer.h"
 
 #include "UserCode/llvv_fwk/interface/PatUtils.h"
+#include "UserCode/llvv_fwk/interface/NTupleUtils.h"
 #include "UserCode/llvv_fwk/interface/TrigUtils.h"
 #include "UserCode/llvv_fwk/interface/EwkCorrections.h"
 #include "UserCode/llvv_fwk/interface/ZZatNNLO.h"
@@ -97,7 +98,84 @@ pat::JetCollection  skimJetsCollection (const std::vector<patUtils::GenericLepto
   return jetCollection;
 }
 
+//**************************************************************************************************************************//
+std::pair<int,pat::JetCollection>  skimJetsCollectionInfo (const std::vector<patUtils::GenericLepton> diLeptons, pat::JetCollection& selJets, pat::TauCollection selTaus)
+//**************************************************************************************************************************//
+{
+  std::pair<int,pat::JetCollection> jetCollentionInfo;
+  //pat::JetCollection  jetCollection;
+  auto firstLepton  = diLeptons.at(0);
+  auto secondLepton = diLeptons.at(1);
 
+  LorentzVector zll = (firstLepton.p4()+secondLepton.p4());
+
+  for(auto& jetCorr: selJets){
+
+    // cout << "  Jet :  "<< jetCorr << endl;
+    const pat::Jet jet = jetCorr.correctedJet("Uncorrected");
+    //cout << "  Un Jet :  "<< jet << endl;
+//    if (deltaR( jet,  firstLepton )<0.1 || deltaR( jet, secondLepton )<0.1 ) {
+    LorentzVector zl1_jet = firstLepton.p4()+jet.p4();
+    LorentzVector zl2_jet = secondLepton.p4()+jet.p4();
+    if (abs( zl1_jet.mass() - zll.mass() )< 10. || abs( zl2_jet.mass() - zll.mass() )< 10. ) {
+      continue;
+    }
+    else jetCollentionInfo.second.push_back(jet);
+
+    bool overlapWithTau(false);
+    for(int l1=0; l1<(int)selTaus.size();++l1){
+      if(deltaR(jet, selTaus[l1])< 0.5  ){overlapWithTau=true; break;}
+    }
+
+    if(!overlapWithTau && jet.pt()>30 && fabs(jet.eta())<2.5){
+      bool hasCSVtag = (jet.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags")>0.8484);
+      if (hasCSVtag) jetCollentionInfo.first++;
+    }
+  }
+  return jetCollentionInfo;
+}
+
+
+//**************************************************************************************************************************//
+unsigned char leptonIDmap (patUtils::GenericLepton lepton, reco::Vertex& vtx)
+//**************************************************************************************************************************//
+{
+  unsigned char lepIDmap = 0xF; // 1111
+  if(abs(lepton.pdgId())==11 || abs(lepton.pdgId())==13){
+    bool passIDloose(false),  passIDtight(false);
+    bool passIDvloose(false), passIDsoft(false); // Muon WP
+    bool passIDmedium(false); // Ele WP
+
+    if(abs(lepton.pdgId())==11) {
+      passIDloose  = patUtils::passId(lepton.el, vtx, patUtils::llvvElecId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
+      passIDmedium = patUtils::passId(lepton.el, vtx, patUtils::llvvElecId::Medium, patUtils::CutVersion::CutSet::ICHEP16Cut);
+      passIDtight  = patUtils::passId(lepton.el, vtx, patUtils::llvvElecId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut);
+      lepIDmap &= (passIDloose? 1 << 1: 0 << 1) | (passIDmedium? 1 << 2 : 0 << 2) | (passIDtight ? 1 << 3 : 0 << 3);
+    }
+    if(abs(lepton.pdgId())==13) {
+      passIDvloose = patUtils::passId(lepton.mu, vtx, patUtils::llvvMuonId::FRLoose, patUtils::CutVersion::CutSet::ICHEP16Cut);
+      passIDloose  = patUtils::passId(lepton.mu, vtx, patUtils::llvvMuonId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
+      passIDsoft   = patUtils::passId(lepton.mu, vtx, patUtils::llvvMuonId::Soft, patUtils::CutVersion::CutSet::ICHEP16Cut);
+      passIDtight  = patUtils::passId(lepton.mu, vtx, patUtils::llvvMuonId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut);
+      lepIDmap &= (passIDvloose? 1 : 0) | (passIDloose? 1 << 1 : 0 << 1) | (passIDsoft ? 1 << 2 : 0 << 2) | (passIDtight? 1 << 3 : 0 << 3) ;
+    //cout << " (After checking) Muon ID: "<< (int) ( (passIDloose? 1 : 0) | (passIDsoft? 1 << 1 : 0 << 1) | (passIDtight ? 1 << 2 : 0 << 2) ) << endl;
+    }
+  }
+  else if(abs(lepton.pdgId())==15){
+    bool IdL         = lepton.tau.tauID("byLooseCombinedIsolationDeltaBetaCorr3Hits");
+    bool IdM         = lepton.tau.tauID("byMediumCombinedIsolationDeltaBetaCorr3Hits");
+    bool IdVL_MVA    = lepton.tau.tauID("byVLooseIsolationMVArun2v1DBoldDMwLT");
+    bool IdL_MVA     = lepton.tau.tauID("byLooseIsolationMVArun2v1DBoldDMwLT");
+    bool IdM_MVA     = lepton.tau.tauID("byMediumIsolationMVArun2v1DBoldDMwLT");
+    bool IdT_MVA     = lepton.tau.tauID("byTightIsolationMVArun2v1DBoldDMwLT");
+    bool IdL_MVA_R03 = lepton.tau.tauID("byLooseIsolationMVArun2v1DBdR03oldDMwLT");
+    bool IdM_MVA_R03 = lepton.tau.tauID("byMediumIsolationMVArun2v1DBdR03oldDMwLT");
+
+    lepIDmap &= (IdVL_MVA? 1 : 0) | (IdL_MVA ? 1 << 1 : 0 << 1)| (IdM_MVA? 1 << 2 : 0 << 2) | (IdT_MVA ? 1 << 3 : 0 << 3);
+  }
+
+return lepIDmap;
+}
 
 
 int main(int argc, char* argv[])
@@ -138,16 +216,11 @@ int main(int argc, char* argv[])
     if(dtag.Contains("SingleElectron"))filterOnlyE=true;
   }
   bool isV0JetsMC(false);//isMC && (dtag.Contains("DYJetsToLL_50toInf") || dtag.Contains("_WJets")));  #FIXME should be reactivated as soon as we have exclusive jet samples
-  bool isWGmc(isMC && dtag.Contains("WG"));
-  bool isZGmc(isMC && dtag.Contains("ZG"));
   bool isMC_ZZ  = isMC && ( string(dtag.Data()).find("TeV_ZZ")  != string::npos);
   bool isMC_ZZ2l2nu  = isMC && ( string(dtag.Data()).find("TeV_ZZ2l2nu")  != string::npos);
   bool isMC_WZ  = isMC && ( string(dtag.Data()).find("TeV_WZ")  != string::npos);
   bool isMC_WZ3lnu  = isMC && ( string(dtag.Data()).find("TeV_WZ3lnu")  != string::npos);
-  bool isMC_QCD = (isMC && dtag.Contains("QCD"));
-  bool isMC_GJet = (isMC && dtag.Contains("GJet"));
   bool is2015data = (!isMC && dtag.Contains("2015"));
-  bool is2015MC = (isMC && dtag.Contains("2015"));
   bool is2016data = (!isMC && dtag.Contains("2016"));
   bool is2016MC = (isMC);
 
@@ -190,43 +263,48 @@ int main(int argc, char* argv[])
   mon.addHistogram( new TH1F( "wrtJetPt_v2",  ";Jet p_{T} (GeV);Events",sizeof(ptbinsJets)/sizeof(float)-1,ptbinsJets));
   mon.addHistogram( new TH1F( "wrtLepPt",  ";Lep p_{T} (GeV);Events",sizeof(ptbinsJets)/sizeof(float)-1,ptbinsJets));
 
-  TH2 *h_jetID = (TH2*) mon.addHistogram( new TH2F ("jetId",";JetPUID;pt" , 2, 0, 2, 50, 0, 250) );
-  h_jetID->GetXaxis()->SetBinLabel(1,"LooseSimplePUId");
-  h_jetID->GetXaxis()->SetBinLabel(2,"LooseSimplePUId_NEW");
-
-  mon.addHistogram( new TH1F( "nlep",      	";Number of Leptons;Events", 10,0,10) );
+  LorentzVector null_p4(0., 0., 0., 0.);
 
   //create a tree and related variables to save higgs candidate info for each cutIndex values
   unsigned int  treeEventId;
   unsigned int  treeLumiId;
   unsigned int  treeRunId;
-  int           treeZId;
+  float         treeNumEvents;
   int           treeDoubleTriggerMatch;
-  int           treeLeg1PdgId;
-  float         treeLeg1ClosestJetPt;
-  float         treeLeg1ClosestJetEta;
   int           treeLepIsMatched;
+  int           treeZId;
+  int           treeHiggsPairCharge;
+  int           treeHiggsPairFlavour;
+  float         treeWeight;
+  float         treeWeightNoLepSF;
+  float         treeLep3Eff;
+  float         treeLep4Eff;
+  int           treeNlep;
+  int           treeNbtag;
+  LorentzVector treeJetCandidate;
+  LorentzVector treeLep1Candidate;
+  int           treeLep1GenMatch;
+  int           treeLep1PdgId;
+  LorentzVector treeLep2Candidate;
+  int           treeLep2GenMatch;
+  int           treeLep2PdgId;
+  LorentzVector treeLep3Candidate;
+  int           treeLep3GenMatch;
+  int           treeLep3PdgId;
+  unsigned char treeLep3ID;
+  float         treeLep3Iso;
   float         treeTMass;
-  float         treeLeg1Pt;
-  float         treeLeg1Eta;
-  float         treeLeg1Iso;
-  float         treeChIso;
-  float         treeNhIso;
-  float         treeGIso;
-  float         treePUchIso;
-  unsigned char treeLeg1ID;
   int           treeLeg1LepID_loose;
   int           treeLeg1LepID_medium;
   int           treeLeg1LepID_tight;
-  float         treeLeg1DeltaR;
-  int           treeLeg1TauIsoLoose3;
-  int           treeLeg1TauIsoMedium3;
   int           treeLeg1TauIsoLooseMVA;
   int           treeLeg1TauIsoMediumMVA;
-  float         treeWeight;
-  float         treeWeightNoLepSF;
-  float         treeLepEff1;
-  int           treeNbtag;
+  LorentzVector treeLep4Candidate;
+  int           treeLep4GenMatch;
+  int           treeLep4PdgId;
+  unsigned char treeLep4ID;
+  float         treeLep4Iso;
+
 
   TFile *ofile=TFile::Open("out.root", "recreate");
 
@@ -234,41 +312,56 @@ int main(int argc, char* argv[])
   tree->Branch("eventId", &treeEventId , string("eventId/i" ).c_str());
   tree->Branch("lumiId" , &treeLumiId  , string("lumiId/i"  ).c_str());
   tree->Branch("runId"  , &treeRunId   , string("runId/i"   ).c_str());
-  tree->Branch("zId",     &treeZId     , string("zId/I" ).c_str());
+  tree->Branch("numEvents" , &treeNumEvents  , string("numEvents/F"  ).c_str());
   tree->Branch("doubleTriggerMatch",     &treeDoubleTriggerMatch    , string("doubleTriggerMatch/I" ).c_str());
-  tree->Branch("leg1PdgId" , &treeLeg1PdgId  , string("leg1PdgId/I"  ).c_str());
   tree->Branch("lepIsMatched" , &treeLepIsMatched , string("lepIsMatched/I").c_str());
-  tree->Branch("leg1ClosestJetPt" , &treeLeg1ClosestJetPt  , string("leg1ClosestJetPt/F"  ).c_str());
-  tree->Branch("leg1ClosestJetEta" , &treeLeg1ClosestJetEta  , string("leg1ClosestJetEta/F"  ).c_str());
+  tree->Branch("zId",     &treeZId     , string("zId/I" ).c_str());
+  tree->Branch("higgsPairCharge",     &treeHiggsPairCharge     , string("higgsPairCharge/I" ).c_str());
+  tree->Branch("higgsPairFlavour",     &treeHiggsPairFlavour     , string("higgsPairFlavour/I" ).c_str());
+  tree->Branch("weight" , &treeWeight  , string("weight/F"  ).c_str());
+  tree->Branch("weightNoLepSF" , &treeWeightNoLepSF  , string("weightNoLepSF/F"  ).c_str());
+  tree->Branch("lep3Eff" , &treeLep3Eff  , string("lep3Eff/F"  ).c_str());
+  tree->Branch("lep4Eff" , &treeLep4Eff  , string("lep4Eff/F"  ).c_str());
+  tree->Branch("nlep" , &treeNlep  , string("nlep/I"  ).c_str());
+  tree->Branch("nbtag" , &treeNbtag  , string("nbtag/I"  ).c_str());
+
+  tree->Branch("jetMatched",     &treeJetCandidate );
+  /* Lep 1 */
+  tree->Branch("lep1Candidate",     &treeLep1Candidate );
+  tree->Branch("lep1GenMatch",     &treeLep1GenMatch     , string("lep1GenMatch/I" ).c_str());
+  tree->Branch("lep1PdgId",     &treeLep1PdgId     , string("lep1PdgId/I" ).c_str());
+  /* Lep 2 */
+  tree->Branch("lep2Candidate",     &treeLep2Candidate );
+  tree->Branch("lep2GenMatch",     &treeLep2GenMatch     , string("lep2GenMatch/I" ).c_str());
+  tree->Branch("lep2PdgId",     &treeLep2PdgId     , string("lep2PdgId/I" ).c_str());
+  /* Lep 3 */
+  tree->Branch("lep3Candidate",     &treeLep3Candidate );
+  tree->Branch("lep3GenMatch",     &treeLep3GenMatch     , string("lep3GenMatch/I" ).c_str());
+  tree->Branch("lep3PdgId" , &treeLep3PdgId  , string("lep3PdgId/I"  ).c_str());
+  tree->Branch("lep3ID", &treeLep3ID , string("lep3ID/b" ).c_str());
+  tree->Branch("lep3Iso", &treeLep3Iso , string("lep3Iso/F" ).c_str());
   tree->Branch("TMass" , &treeTMass  , string("TMass/F"  ).c_str());
-  //tree->Branch("Leg1ClosestJetEta_LepClean" , &treeLeg1ClosestJetEta_LepClean  , string("treeLeg1ClosestJetEta_LepClean/F"  ).c_str());
-  tree->Branch("leg1Pt" , &treeLeg1Pt  , string("leg1Pt/F"  ).c_str());
-  tree->Branch("leg1Eta", &treeLeg1Eta , string("leg1Eta/F" ).c_str());
-  tree->Branch("leg1Iso", &treeLeg1Iso , string("leg1Iso/F" ).c_str());
-  tree->Branch("leg1ChIso", &treeChIso , string("leg1ChIso/F" ).c_str());
-  tree->Branch("leg1NhIso", &treeNhIso , string("leg1NhIso/F" ).c_str());
-  tree->Branch("leg1GIso", &treeGIso , string("leg1GIso/F" ).c_str());
-  tree->Branch("leg1PUchIso", &treePUchIso , string("leg1PUchIso/F" ).c_str());
-  tree->Branch("leg1ID", &treeLeg1ID , string("leg1ID/b" ).c_str());
   tree->Branch("leg1LepIDloose", &treeLeg1LepID_loose , string("leg1LepIDloose/I" ).c_str());
   tree->Branch("leg1LepIDmedium", &treeLeg1LepID_medium , string("leg1LepIDmedium/I" ).c_str());
   tree->Branch("leg1LepIDtight", &treeLeg1LepID_tight , string("leg1LepIDtight/I" ).c_str());
-  tree->Branch("leg1DeltaR", &treeLeg1DeltaR , string("leg1DeltaR/F" ).c_str());
-  tree->Branch("tau1Loose3", &treeLeg1TauIsoLoose3 , string("tau1Loose3/i" ).c_str());
-  tree->Branch("tau1Medium3", &treeLeg1TauIsoMedium3 , string("tau1Medium3/i" ).c_str());
   tree->Branch("tau1LooseMVA", &treeLeg1TauIsoLooseMVA , string("tau1LooseMVA/i" ).c_str());
   tree->Branch("tau1MediumMVA", &treeLeg1TauIsoMediumMVA , string("tau1MediumMVA/i" ).c_str());
-  tree->Branch("weight" , &treeWeight  , string("weight/F"  ).c_str());
-  tree->Branch("weightNoLepSF" , &treeWeightNoLepSF  , string("weightNoLepSF/F"  ).c_str());
-  tree->Branch("lepEff1" , &treeLepEff1  , string("lepEff1/F"  ).c_str());
-  tree->Branch("nbtag" , &treeNbtag  , string("nbtag/I"  ).c_str());
+  /* Lep 4 */
+  tree->Branch("lep4Candidate",     &treeLep4Candidate );
+  tree->Branch("lep4GenMatch",     &treeLep4GenMatch     , string("lep4GenMatch/I" ).c_str());
+  tree->Branch("lep4PdgId" , &treeLep4PdgId  , string("lep4PdgId/I"  ).c_str());
+  tree->Branch("lep4ID", &treeLep4ID , string("lep4ID/b" ).c_str());
+  tree->Branch("lep4Iso", &treeLep4Iso , string("lep4Iso/F" ).c_str());
+
 
   //##############################################
   //######## GET READY FOR THE EVENT LOOP ########
   //##############################################
   //MC normalization (to 1/pb)
+  treeNumEvents = 0;
   double xsecWeight = 1.0;
-  if(isMC) xsecWeight=xsec/utils::getTotalNumberOfEvents(urls, false, true);//need to use the slow method in order to take NLO negative events into account
+  treeNumEvents = utils::getTotalNumberOfEvents(urls, false, true);
+  if(isMC) xsecWeight=xsec/treeNumEvents; //utils::getTotalNumberOfEvents(urls, false, true);//need to use the slow method in order to take NLO negative events into account
 
   //MET CORRection level
   pat::MET::METCorrectionLevel metcor = pat::MET::METCorrectionLevel::Type1XY;
@@ -405,32 +498,41 @@ int main(int argc, char* argv[])
       treeEventId=0;
   		treeLumiId=0;
   		treeRunId=0;
-  		treeZId=0;
       treeDoubleTriggerMatch=0;
-  		treeLeg1PdgId=0;
-  		treeLeg1ClosestJetPt=0;
-  		treeLeg1ClosestJetEta=0;
       treeLepIsMatched=0;
-      treeTMass=0;
-  		treeLeg1Pt=0;
-  		treeLeg1Eta=0;
-  		treeLeg1Iso=0;
-      treeChIso=0;
-      treeNhIso=0;
-      treeGIso=0;
-      treePUchIso=0;
-      treeLeg1ID=0;
-  		treeLeg1LepID_loose=0;
-      treeLeg1LepID_medium=0;
-  		treeLeg1LepID_tight=0;
-  		treeLeg1DeltaR=0;
-  		treeLeg1TauIsoLoose3=0;
-  		treeLeg1TauIsoMedium3=0;
-  		treeLeg1TauIsoLooseMVA=0;
-  		treeLeg1TauIsoMediumMVA=0;
-  		treeWeight=0;
-  		treeLepEff1=0;
-		  treeNbtag=0;
+  		treeZId=0;
+      treeWeight = 0;
+      treeWeightNoLepSF = 0;
+      treeLep3Eff = 0;
+      treeLep4Eff = 0;
+      treeNlep = 0;
+      treeNbtag = 0;
+      treeHiggsPairCharge = -1;
+      treeHiggsPairFlavour = -1;
+
+      treeJetCandidate = null_p4;
+      treeLep1Candidate = null_p4;
+      treeLep1GenMatch = -1;
+      treeLep1PdgId = 0;
+      treeLep2Candidate = null_p4;
+      treeLep2GenMatch = -1;
+      treeLep2PdgId = 0;
+      treeLep3Candidate = null_p4;
+      treeLep3GenMatch = -1;
+      treeLep3PdgId = 0;
+      treeLep3ID = 0;
+      treeLep3Iso = 0;
+      treeTMass = 0;
+      treeLeg1LepID_loose = 0;
+      treeLeg1LepID_medium = 0;
+      treeLeg1LepID_tight = 0;
+      treeLeg1TauIsoLooseMVA = 0;
+      treeLeg1TauIsoMediumMVA = 0;
+      treeLep4Candidate = null_p4;
+      treeLep4GenMatch = -1;
+      treeLep4PdgId = 0;
+      treeLep4ID = 0;
+      treeLep4Iso = 0;
 
 
       reco::GenParticleCollection gen;
@@ -789,6 +891,8 @@ int main(int argc, char* argv[])
         if(!tau.tauID("againstElectronLooseMVA6")) continue;
         if(!tau.tauID("againstMuonLoose3")) continue;
         if(!tau.tauID("decayModeFinding")) continue;
+        pat::PackedCandidate const* packedLeadTauCand = dynamic_cast<pat::PackedCandidate const*>(tau.leadChargedHadrCand().get());
+        if(!(fabs(packedLeadTauCand->dz()) < 0.2)) continue;
 
         selTaus.push_back(tau);
         selLeptons.push_back(tau);
@@ -800,7 +904,7 @@ int main(int argc, char* argv[])
       mon.fillHisto("nlep"           ,   "controlPlots", selLeptons.size(), weight);
       mon.fillHisto("nlep"           ,   "controlPlots_Int", (int)selLeptons.size(), weight);
 
-      if ( !(selLeptons.size() == 3) ) continue;
+      if ( selLeptons.size() < 3 ) continue;
       /*******************************************************************************/
       /***    Cut on number of selLeptons     **/
       mon.fillHisto("nlep"           ,   "controlPlots_AfterCut", selLeptons.size(), weight);
@@ -835,15 +939,6 @@ int main(int argc, char* argv[])
         // cout << "Passes loose: " << bool(jet.userInt("pileupJetId:fullId") & (1 << 2)) << " - medium: " << bool(jet.userInt("pileupJetId:fullId") & (1 << 1)) <<" - tight: "<< bool(jet.userInt("pileupJetId:fullId") & (1 << 0)) << endl;
         if(!passPFloose || !passLooseSimplePuId) continue;
 
-        bool overlapWithTau(false);
-        for(int l1=0; l1<(int)selTaus.size();++l1){
-          if(deltaR(jet, selTaus[l1])< 0.5  ){overlapWithTau=true; break;}
-        }
-
-        if(!overlapWithTau && jet.pt()>30 && fabs(jet.eta())<2.5){
-          bool hasCSVtag = (jet.bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags")>btagMedium);
-	  if (hasCSVtag) treeNbtag++;
-	}
         selJets.push_back(jet);
       }
       //sort all jet collection by pT
@@ -954,7 +1049,25 @@ int main(int argc, char* argv[])
         diLeptons.push_back(*dilLep2);
 
         // Removing jets that match with leptons from Z boson
-        auto selJetsSkimmed = skimJetsCollection(diLeptons,selJets);
+        // auto selJetsSkimmed = skimJetsCollection(diLeptons,selJets);
+        auto selJetsSkimmedInfo = skimJetsCollectionInfo(diLeptons,selJets,selTaus);
+        auto selJetsSkimmed     = selJetsSkimmedInfo.second;
+        auto njetSkimmed        = selJetsSkimmed.size();
+        auto nbtagSkimmed       = selJetsSkimmedInfo.first;
+
+
+        treeEventId   = ev.eventAuxiliary().event();
+        treeLumiId    = ev.eventAuxiliary().luminosityBlock();
+        treeRunId     = ev.eventAuxiliary().run();
+        treeZId       = dilId;
+        treeLep1Candidate = dilLep1->p4();
+        treeLep1PdgId     = dilLep1->pdgId();
+        if (isMC) treeLep1GenMatch = (int) ntupleutils::analysis::gen_truth::LeptonGenMatch(dilLep1->p4(), gen).first;
+        treeLep2Candidate = dilLep2->p4();
+        treeLep2PdgId     = dilLep2->pdgId();
+        if (isMC) treeLep2GenMatch = (int) ntupleutils::analysis::gen_truth::LeptonGenMatch(dilLep2->p4(), gen).first;
+        treeNbtag               = nbtagSkimmed;
+        treeNlep                = selLeptons.size();
 
         std::map <std::string,std::vector<std::string> > muonTriggerToFilter = { {"HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v",{"hltDiMuonGlb17Glb8RelTrkIsoFiltered0p4DzFiltered0p2"}},
                                                                                   {"HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v", {"hltDiMuonGlb17Trk8RelTrkIsoFiltered0p4DzFiltered0p2"}}
@@ -1031,12 +1144,8 @@ int main(int argc, char* argv[])
         // std::cout << std::endl;
 
         //LEPTON FAKE RATE ANALYSIS Z+1jets  (no systematics taken into account here)
-        if( passZmass ){//&& (int)selLeptons.size()==3){  //Request exactly one Z + 1 additional lepton
+        if( passZmass && treeNlep == 3 ){ //Request exactly one Z + 1 additional lepton
           double tmass=-999;
-          treeEventId   = ev.eventAuxiliary().event();
-    			treeLumiId    = ev.eventAuxiliary().luminosityBlock();
-    			treeRunId     = ev.eventAuxiliary().run();
-          treeZId       = dilId;
          // cout<< " EventiD : "<< treeEventId << endl;
           for(auto& fakeLepton: selLeptons){
             if( ( &fakeLepton == dilLep1 ) || ( &fakeLepton == dilLep2 ) ) continue;
@@ -1053,23 +1162,19 @@ int main(int argc, char* argv[])
               if(jetFound){
 		              pTL1=selJetsSkimmed[closestJetIndexL1].pt();
 		              etaL1=abs(selJetsSkimmed[closestJetIndexL1].eta());
+                  treeJetCandidate = selJetsSkimmed[closestJetIndexL1].p4();
 	            }
               else{pTL1=fakeLepton.pt(); etaL1=abs(fakeLepton.eta());}
-              unsigned char lepIDmap = 0xF; // 1111
-              //cout << " Muon ID: "<< (int) muonIDmap << endl;
-              treeLeg1ClosestJetPt   = pTL1;
-        			treeLeg1ClosestJetEta  = etaL1;
+
+              if (isMC) treeLep3GenMatch= (int) ntupleutils::analysis::gen_truth::LeptonGenMatch(fakeLepton.p4(), gen).first;
+
               treeLepIsMatched       = jetFound;
-              // treeLeg1ClosestJetPt_LepClean   = jetFound ? pTL1  : -999;
-        			// treeLeg1ClosestJetEta_LepClean  = jetFound ? etaL1 : -999;
 
-              treeLeg1Pt             = fakeLepton.pt();
-        			treeLeg1DeltaR         = dRminL1;
+              treeLep3Candidate      = fakeLepton.p4();
               treeTMass              = tmass;
-              treeLeg1Eta  = fakeLepton.eta();
-        			treeLeg1PdgId   = fakeLepton.pdgId();
+        			treeLep3PdgId  = fakeLepton.pdgId();
 
-              treeLeg1Iso  = (abs(treeLeg1PdgId)!=15)?patUtils::relIso(fakeLepton,rho):-999.;
+              treeLep3Iso  = (abs(treeLep3PdgId)!=15)? patUtils::relIso(fakeLepton,rho): -999.;
 
               TString PartName = "FR_";//+chTags.at(1)+"_";
               if     (abs(fakeLepton.pdgId())==11)PartName += "El";
@@ -1080,6 +1185,7 @@ int main(int argc, char* argv[])
 
               std::vector<TString> TagsFR;
 
+              unsigned char lepIDmap = 0xF; // 1111
               if(abs(fakeLepton.pdgId())==11 || abs(fakeLepton.pdgId())==13){
                 bool passId = false;
                 bool passIDloose(false),  passIDtight(false);
@@ -1091,7 +1197,7 @@ int main(int argc, char* argv[])
                   passIDloose  = patUtils::passId(fakeLepton.el, vtx[0], patUtils::llvvElecId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
                   passIDmedium = patUtils::passId(fakeLepton.el, vtx[0], patUtils::llvvElecId::Medium, patUtils::CutVersion::CutSet::ICHEP16Cut);
                   passIDtight  = patUtils::passId(fakeLepton.el, vtx[0], patUtils::llvvElecId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut);
-                  lepIDmap &= (passIDloose? 1 : 0) | (passIDmedium? 1 << 1 : 0 << 1) | (passIDtight ? 1 << 2 : 0 << 2);
+                  lepIDmap &= (passIDloose? 1 << 1: 0 << 1) | (passIDmedium? 1 << 2 : 0 << 2) | (passIDtight ? 1 << 3 : 0 << 3);
                 }
                 if(abs(fakeLepton.pdgId())==13) {
                   passId = patUtils::passId(fakeLepton.mu, vtx[0], patUtils::llvvMuonId::Loose, patUtils::CutVersion::CutSet::ICHEP16Cut);
@@ -1100,11 +1206,6 @@ int main(int argc, char* argv[])
                   passIDsoft  = patUtils::passId(fakeLepton.mu, vtx[0], patUtils::llvvMuonId::Soft, patUtils::CutVersion::CutSet::ICHEP16Cut);
                   passIDtight = patUtils::passId(fakeLepton.mu, vtx[0], patUtils::llvvMuonId::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut);
                   lepIDmap &= (passIDvloose? 1 : 0) | (passIDloose? 1 << 1 : 0 << 1) | (passIDsoft ? 1 << 2 : 0 << 2) | (passIDtight? 1 << 3 : 0 << 3) ;
-
-                  treeChIso   = fakeLepton.mu.pfIsolationR04().sumChargedHadronPt;
-                  treeNhIso   = fakeLepton.mu.pfIsolationR04().sumNeutralHadronEt;
-                  treeGIso    = fakeLepton.mu.pfIsolationR04().sumPhotonEt;
-                  treePUchIso = fakeLepton.mu.pfIsolationR04().sumPUPt;
                   //cout << " (After checking) Muon ID: "<< (int) ( (passIDloose? 1 : 0) | (passIDsoft? 1 << 1 : 0 << 1) | (passIDtight ? 1 << 2 : 0 << 2) ) << endl;
                 }
                 float relIso = patUtils::relIso(fakeLepton, rho);
@@ -1148,7 +1249,7 @@ int main(int argc, char* argv[])
                 // if(IdL_MVA_R03          )TagsFR.push_back(PartName+("_Id_IsoLo_MVAR03"));
                 // if(IdM_MVA_R03          )TagsFR.push_back(PartName+("_Id_IsoMe_MVAR03"));
               }
-              treeLeg1ID = lepIDmap;
+              treeLep3ID = lepIDmap;
 
               if(tmass<30){
                 int NTags = TagsFR.size();
@@ -1172,6 +1273,99 @@ int main(int argc, char* argv[])
           }//close loop on leptons
 
         }//close FR study Zmass
+
+
+        std::vector<patUtils::GenericLepton> higgsLikePair;
+        //SIGNAL ANALYSIS Z+2Leptons  (no systematics taken into account here)
+        if(passZmass && treeNlep>=4){  //Request at least 4 leptons
+
+          using namespace ntupleutils;
+
+          //Get the Higgs candidate
+          int higgsCandId=0;
+
+          for(auto& higgsLepton: selLeptons){
+            if( ( &higgsLepton == dilLep1 ) || ( &higgsLepton == dilLep2 ) ) continue;
+            if ( higgsLikePair.size() < 1 ) {
+              higgsLikePair.push_back(higgsLepton);
+              continue;
+            }
+            if ( higgsLikePair.size() < 2 ) {
+              higgsLikePair.push_back(higgsLepton);
+              break;
+            }
+          }
+
+          if( higgsLikePair.size() == 2 ){
+            auto firstLepton  = higgsLikePair.at(0);
+            auto secondLepton = higgsLikePair.at(1);
+
+            higgsCandId=firstLepton.pdgId()*secondLepton.pdgId();
+            treeHiggsPairCharge = (int) (higgsCandId<0 ? category::tausPairCharge::OS : category::tausPairCharge::SS);
+
+            switch(abs(higgsCandId)){
+              case 11*11:  // ChannelName  = "elel";
+                          treeHiggsPairFlavour = (int) category::tausPairFlavour::ee ;
+                          break;
+              case 13*13:  // ChannelName  = "mumu";
+                          treeHiggsPairFlavour = (int) category::tausPairFlavour::mm;
+                          break;
+              case 11*13:  // ChannelName  = "elmu";
+                          treeHiggsPairFlavour = (int) category::tausPairFlavour::em;
+                          break;
+              case 11*15:  // ChannelName  = "elha";
+                          treeHiggsPairFlavour = (int) category::tausPairFlavour::et;
+                          break;
+              case 13*15:  // ChannelName  = "muha";
+                          treeHiggsPairFlavour = (int) category::tausPairFlavour::mt;
+                          break;
+              case 15*15:  // ChannelName  = "haha";
+                          treeHiggsPairFlavour = (int) category::tausPairFlavour::tt;
+                          break;
+              default:     // ChannelName  = "none";
+                          break;
+            }
+
+            treeLep3Candidate = firstLepton.p4();
+            treeLep3PdgId     = firstLepton.pdgId();
+            if (isMC) treeLep3GenMatch= (int) ntupleutils::analysis::gen_truth::LeptonGenMatch(firstLepton.p4(), gen).first;
+            treeLep3ID        = leptonIDmap(firstLepton, vtx[0]);
+            treeLep3Iso       = (abs(treeLep3PdgId)!=15)? patUtils::relIso(firstLepton,rho): -999.;
+            treeLep3Eff       = 1;
+            treeTMass         = TMath::Sqrt(2* firstLepton.pt()*met.pt()*(1-TMath::Cos(deltaPhi(met.phi(), firstLepton.phi()))));
+
+            treeLep4Candidate = secondLepton.p4();
+            treeLep4PdgId     = secondLepton.pdgId();
+            if (isMC) treeLep4GenMatch= (int) ntupleutils::analysis::gen_truth::LeptonGenMatch(secondLepton.p4(), gen).first;
+            treeLep4ID        = leptonIDmap(secondLepton, vtx[0]);
+            treeLep4Iso       = (abs(treeLep4PdgId)!=15)? patUtils::relIso(secondLepton,rho): -999.;
+            treeLep4Eff       = 1;
+
+            //reweight the event to account for lept eff.
+            if(isMC && abs(firstLepton.pdgId())<15){
+
+              int id( abs(firstLepton.pdgId()) );
+
+              if(id==11)treeLep3Eff *= lepEff.getRecoEfficiency( firstLepton.el.superCluster()->eta(), id).first; //Reconstruction eff
+              else if(id==13)treeLep3Eff *= lepEff.getTrackingEfficiency( firstLepton.eta(), id).first; //Tracking eff
+              treeLep3Eff *= isMC ? lepEff.getLeptonEfficiency( firstLepton.pt(), firstLepton.eta(), id,  id ==11 ? "loose"    : "loose"   ,patUtils::CutVersion::Moriond17Cut).first : 1.0; //ID
+              if(id==13){ treeLep3Eff *= isMC ? lepEff.getLeptonEfficiency( firstLepton.pt(), firstLepton.eta(), id, "looseiso_looseid",patUtils::CutVersion::Moriond17Cut ).first : 1.0;} //ISO w.r.t ID
+            }
+
+            if(isMC && abs(secondLepton.pdgId())<15){
+
+              int id( abs(secondLepton.pdgId()) );
+
+              if(id==11)treeLep4Eff *= lepEff.getRecoEfficiency( secondLepton.el.superCluster()->eta(), id).first; //Reconstruction eff
+              else if(id==13)treeLep4Eff *= lepEff.getTrackingEfficiency( secondLepton.eta(), id).first; //Tracking eff
+              treeLep4Eff *= isMC ? lepEff.getLeptonEfficiency( secondLepton.pt(), secondLepton.eta(), id,  id ==11 ? "loose"    : "loose"   ,patUtils::CutVersion::Moriond17Cut ).first : 1.0; //ID
+              if(id==13){ treeLep4Eff *= isMC ? lepEff.getLeptonEfficiency( secondLepton.pt(), secondLepton.eta(), id, "looseiso_looseid",patUtils::CutVersion::Moriond17Cut ).first : 1.0;} //ISO w.r.t ID
+            }
+
+	         }
+
+
+        }
 
         treeWeightNoLepSF = weightNoLepSF;
         treeWeight = weight;
