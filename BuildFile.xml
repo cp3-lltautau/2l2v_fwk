@@ -12,6 +12,7 @@
 <use name="DataFormats/PatCandidates"/>
 <use name="DataFormats/HepMCCandidate"/>
 <use name="SimDataFormats/GeneratorProducts"/>
+<use name="RecoTauTag/TauTagTools"/>
 <use name="CondFormats/JetMETObjects"/>
 <use name="RecoEcal/EgammaCoreTools"/>
 <use name="RecoEgamma/EgammaTools"/>
@@ -27,3 +28,4 @@
 <export>
   <lib name="1"/>
 </export>
+<flags CXXFLAGS="-g" />

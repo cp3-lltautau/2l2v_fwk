@@ -35,7 +35,7 @@
 #include "UserCode/llvv_fwk/interface/MacroUtils.h"
 #include "UserCode/llvv_fwk/interface/RootUtils.h"
 #include "UserCode/llvv_fwk/interface/JSONWrapper.h"
-#include "HiggsAnalysis/CombinedLimit/interface/th1fmorph.h"
+#include "UserCode/llvv_fwk/interface/th1fmorph.h"
 //#include "UserCode/llvv_fwk/interface/th1fmorph.h"
 
 using namespace std;
@@ -601,7 +601,7 @@ void SavingToFile(JSONWrapper::Object& Root, std::string RootDir, TFile* OutputF
                     outtree->SetDirectory(subdir);
 
                     TTree* weightTree = new TTree((HistoProperties.name+"_PWeight").c_str(),"plotterWeight");
-                    weightTree->Branch("plotterWeight",&weightTree,"plotterWeight/F");
+                    weightTree->Branch("plotterWeight",&Weight,"plotterWeight/F");
                     weightTree->SetDirectory(subdir);
                     for(unsigned int i=0;i<((TTree*)inobj)->GetEntries();i++){weightTree->Fill();}                       
                  }else{
@@ -1324,6 +1324,7 @@ void ConvertToTex(JSONWrapper::Object& Root, TFile* File, NameAndType& HistoProp
 
 
 int main(int argc, char* argv[]){
+   gROOT->ProcessLine( "gErrorIgnoreLevel = 1001;");
    gROOT->LoadMacro("../../src/tdrstyle.C");
    setTDRStyle();  
    gStyle->SetPadTopMargin   (0.06);

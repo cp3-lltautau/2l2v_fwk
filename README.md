@@ -1,5 +1,5 @@
 # Installation for 76X (2015)
-```bash 
+```bash
 export SCRAM_ARCH=slc6_amd64_gcc493
 scramv1 project CMSSW CMSSW_7_6_3_patch2
 cd CMSSW_7_6_3_patch2/src/
@@ -23,9 +23,17 @@ cd $CMSSW_BASE/src
 scram b -j 8
 
 
-git clone -b svFit_2015Apr03 https://github.com/veelken/SVfit_standalone.git TauAnalysis/SVfitStandalone
+#git clone -b svFit_2015Apr03 https://github.com/veelken/SVfit_standalone.git TauAnalysis/SVfitStandalone
 
-git clone https://github.com/cms2l2v/2l2v_fwk.git UserCode/llvv_fwk
+# SVFit for 2016/2017 analyses
+git clone -b HIG-16-006 git@github.com:veelken/SVfit_standalone.git TauAnalysis/SVfitStandalone
+
+# ClassicSVFit for 2016/2017 analyses
+git clone https://github.com/veelken/ClassicSVfit TauAnalysis/ClassicSVfit 
+git clone https://github.com/veelken/SVfitTF TauAnalysis/SVfitTF
+
+# Now our repo
+git clone https://github.com/cp3-lltautau/2l2v_fwk.git UserCode/llvv_fwk
 cd UserCode/llvv_fwk
 git checkout -b modified #copy the branch to a new one to host future modifications (ease pull request and code merging)
 cd ../..
@@ -35,34 +43,22 @@ wget https://raw.githubusercontent.com/cms-analysis/HiggsAnalysis-CombinedLimit/
 wget https://raw.githubusercontent.com/cms-analysis/HiggsAnalysis-CombinedLimit/74x-root6/interface/th1fmorph.h -P UserCode/llvv_fwk/interface/
 find UserCode/llvv_fwk/ -type f -name '*.cc' -exec sed -i -e 's/HiggsAnalysis\/CombinedLimit\/interface\/th1fmorph.h/UserCode\/llvv_fwk\/interface\/th1fmorph.h/g' {} \;
 
-scramv1 b -j 16 #WARNING: this won't work! You first need to do "Step to use MELA" below and then compile
-```
-
-#Step to use MELA
-```bash 
-cd CMSS_X_Y_Z/src
-git clone https://github.com/cms-analysis/HiggsAnalysis-ZZMatrixElement.git ZZMatrixElement
-cd ZZMatrixElement
-sh setup.sh -j 12
-```
-Now, ONLY after the code has finished to compile insert inside UserCode/llvv_fwk/BuildFile.xml
-``` c++
-<use name="ZZMatrixElement/MELA"/>
-scram b -j 12  
+#And compile
+scramv1 b -j 16
 ```
 
 # An important note about PR in 80X (2016)
 Please before doing your PR, be sure to:
  - test your changes
  - reverse the changes due to th1fmorph thanks to the following command (and be sure to not add those new files in your git add):
-```bash 
+```bash
 #TO DO before a PR
 cd $CMSSW_BASE/src
 find UserCode/llvv_fwk/ -type f -name '*.cc' -exec sed -i -e 's/UserCode\/llvv_fwk\/interface\/th1fmorph.h/HiggsAnalysis\/CombinedLimit\/interface\/th1fmorph.h/g' {} \;
 ```
  - then you can make your PR
  - if you want to continue developing, don't forget to reverse this once again:
-```bash 
+```bash
 #TO DO after a PR to be able to continue to work
 cd $CMSSW_BASE/src
 find UserCode/llvv_fwk/ -type f -name '*.cc' -exec sed -i -e 's/HiggsAnalysis\/CombinedLimit\/interface\/th1fmorph.h/UserCode\/llvv_fwk\/interface\/th1fmorph.h/g' {} \;
@@ -76,7 +72,7 @@ We have decided to use pull-request mode for the master development.
 - Fork the code with your personal github ID. See [details](https://help.github.com/articles/fork-a-repo/)
 - Make a clean git clone in the UserCode directory
 ```
-cd $CMSSW_BASE/src/UserCode 
+cd $CMSSW_BASE/src/UserCode
 git clone git@github.com:yourgithubid/2l2v_fwk.git llvv_fwk
 cd llvv_fwk
 git remote add upstream git@github.com:cms2l2v/2l2v_fwk.git
@@ -116,4 +112,3 @@ runLocalAnalysisOverSamples.py -e my_exe -j data/my_samples.json -d my_input_dir
  of your analysis.  The executable can also be added in the
  UserCode/llvv_fwk/test/hzz2l2nu/bin directory (also add it to the
  Buildfile there)
-

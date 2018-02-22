@@ -16,7 +16,7 @@ using namespace std;
 
 
 int main(int argc, char* argv[]){
-   setTDRStyle();  
+   setTDRStyle();
    gStyle->SetPadTopMargin   (0.06);
    gStyle->SetPadBottomMargin(0.12);
    gStyle->SetPadRightMargin (0.16);
@@ -57,7 +57,7 @@ int main(int argc, char* argv[]){
      fDataDir.push_back("data");
      tDataDir.push_back("ZH#rightarrow ll#tau#tau");
      tDataDir.push_back("ZZ#rightarrow 4l");
-     tDataDir.push_back("WZ#rightarrow 2l+X");
+     tDataDir.push_back("WZ#rightarrow 3l#nu");
      tDataDir.push_back("VVV");
   }else{
      fDataDir.push_back("ZH#rightarrow ll#tau#tau");
@@ -83,8 +83,8 @@ int main(int argc, char* argv[]){
 
   std::vector<string> cat   = {"FR_El", "FR_Mu", "FR_Ta"};
   std::vector<string> bin   = {"","_B","_E", "_TMCut", "_TMCut_B", "_TMCut_E"};
-  std::vector<string> var   = {"", "_Id_Iso01", "_Id_Iso02", "_Id_Iso03", "_Id_IsoLo", "_Id_IsoMe"};
-  std::vector<string> wrt   = {"_wrtJetPt", "_wrtLepPt"};
+  std::vector<string> var   = {"", "_Id_Iso01", "_Id_Iso02", "_Id_Iso03", "_Id_IsoLo", "_Id_IsoMe", "_Id_IsoLo_MVA", "_Id_IsoMe_MVA","_Id_IsoLo_MVAR03", "_Id_IsoMe_MVAR03"};
+  std::vector<string> wrt   = {"_wrtJetPt_v2", "_wrtLepPt"};
 
 
 
@@ -95,6 +95,7 @@ int main(int argc, char* argv[]){
   for(unsigned int w=0;w<wrt.size();w++){
      string& DataFile             = DataFilePath;
      std::vector<string>& DataDir = fDataDir;
+     std::vector<string>& MCDir = tDataDir;
 
 
 
@@ -105,7 +106,7 @@ int main(int argc, char* argv[]){
      }
 
      for(unsigned int d=0;d<DataDir.size();d++){
-        TH1D* hist = (TH1D*) File->Get((DataDir[d]+"/"+cat[c]+var[v]+bin[b]+wrt[w]).c_str());        
+        TH1D* hist = (TH1D*) File->Get((DataDir[d]+"/"+cat[c]+var[v]+bin[b]+wrt[w]).c_str());
         if(!hist)continue;
 
 
@@ -123,9 +124,9 @@ int main(int argc, char* argv[]){
 
 
 
-        if(DataHistos.find(cat[c]+var[v]+bin[b])==DataHistos.end()){
+        if(DataHistos.find(cat[c]+var[v]+bin[b]+wrt[w])==DataHistos.end()){
            gROOT->cd(); //make sure that the file is saved in memory and not in file
-           DataHistos[cat[c]+var[v]+bin[b]+wrt[w]] = (TH1D*)hist->Clone();; //create a new histo, since it's not found
+           DataHistos[cat[c]+var[v]+bin[b]+wrt[w]] = (TH1D*)hist->Clone(); //create a new histo, since it's not found
         }else{
            DataHistos[cat[c]+var[v]+bin[b]+wrt[w]]->Add(hist); //add to existing histogram
         }
@@ -133,6 +134,38 @@ int main(int argc, char* argv[]){
 
 
      }
+
+
+     for(unsigned int d=0;d<MCDir.size();d++){
+        TH1D* hist = (TH1D*) File->Get((MCDir[d]+"/"+cat[c]+var[v]+bin[b]+wrt[w]).c_str());
+        if(!hist)continue;
+
+
+
+        hist->GetSumw2();
+        if(rbin>1){ hist->Rebin(rbin);  hist->Scale(1.0, "width"); }
+        hist->GetXaxis()->SetTitleSize(.055);
+        hist->GetYaxis()->SetTitleSize(.055);
+        hist->GetXaxis()->SetLabelSize(.05);
+        hist->GetYaxis()->SetLabelSize(.05);
+        hist->SetFillColor(0);
+        hist->SetLineColor(catColor[c]);
+        hist->SetMarkerColor(catColor[c]);
+        hist->SetStats(kFALSE);
+
+
+        //
+        // if(DataHistos.find(cat[c]+var[v]+bin[b]+wrt[w])==DataHistos.end()){
+        //    gROOT->cd(); //make sure that the file is saved in memory and not in file
+        //    DataHistos[cat[c]+var[v]+bin[b]+wrt[w]] = (TH1D*)hist->Clone(); //create a new histo, since it's not found
+        // }else{
+        DataHistos[cat[c]+var[v]+bin[b]+wrt[w]]->Add(hist,-1); //add to existing histogram
+        //}
+
+
+
+     }
+
      File->Close();
   }}}}//all histos are now loaded
 
@@ -141,8 +174,8 @@ int main(int argc, char* argv[]){
   for(unsigned int w=0;w<wrt.size();w++){
   for(unsigned int v=0;v<var.size();v++){
      if(var[v]=="" || var[v].find("weight")!=std::string::npos)continue;
-     for(unsigned int b=0;b<bin.size();b++){     
-        for(unsigned int c=0;c<cat.size();c++){           
+     for(unsigned int b=0;b<bin.size();b++){
+        for(unsigned int c=0;c<cat.size();c++){
            if(DataHistos.find(cat[c]+""+bin[b]+wrt[w])==DataHistos.end()){printf("Histo missing for %s\n", (cat[c]+""+bin[b]+wrt[w]).c_str()); continue;}
            TH1D* histDen = DataHistos[cat[c]+""+bin[b]+wrt[w] ];
 
@@ -163,7 +196,7 @@ int main(int argc, char* argv[]){
   for(unsigned int v=0;v<var.size();v++){
      double xmin,xmax;
      double ymin=0.5, ymax=1E6;
-     xmin=1.; xmax=1000.0;   
+     xmin=1.; xmax=1000.0;
      if(var[v].find("weight")!=std::string::npos){ymin=0;  ymax=1.0;}
 
 //     TCanvas* c1 =new TCanvas("c1","c1",500*bin.size(), 500);
@@ -171,7 +204,7 @@ int main(int argc, char* argv[]){
 
      for(unsigned int b=0;b<bin.size();b++){
 //        c1->cd(1+b);
-        TCanvas* c1 =new TCanvas("c1","c1",500, 500);       
+        TCanvas* c1 =new TCanvas("c1","c1",500, 500);
         if(var[v].find("weight")==std::string::npos) gPad->SetLogy();
         TLegend* leg = new TLegend(0.52,0.67,0.92,0.90);
         leg->SetFillStyle(0);
@@ -189,8 +222,8 @@ int main(int argc, char* argv[]){
            hist->GetYaxis()->SetRangeUser(ymin,ymax);
 
            if(!axisDrawn){hist->Draw("AXIS"); axisDrawn=true;}
-           hist->Draw("HIST E1 same");           
-           leg->AddEntry(hist, catL[c].c_str(), "LP"); 
+           hist->Draw("HIST E1 same");
+           leg->AddEntry(hist, catL[c].c_str(), "LP");
         }
         leg->Draw("SAME");
         c1->SaveAs((outDir + "/LeptonFR"+var[v]+bin[b]+wrt[w]+".png").c_str());
@@ -203,16 +236,15 @@ int main(int argc, char* argv[]){
   for(unsigned int c=0;c<cat.size();c++){
      for(unsigned int b=0;b<bin.size();b++){
      for(unsigned int v=0;v<var.size();v++){
-     if(var[v].find("weight")==std::string::npos)continue;     
+     if(var[v].find("weight")==std::string::npos)continue;
      for(unsigned int w=0;w<wrt.size();w++){
         if(DataHistos.find(cat[c]+var[v]+bin[b]+wrt[w])==DataHistos.end()){printf("Histo missing for %s\n", (cat[c]+var[v]+bin[b]+wrt[w]).c_str()); continue;}
         TH1D* hist = DataHistos[cat[c]+var[v]+bin[b]+wrt[w]];
 
         TGraphErrors* graph = new TGraphErrors(hist);
-        graph->Write((cat[c]+"FRWeights"+bin[b]+wrt[w]).c_str());
+        graph->Write((cat[c]+"FRWeights"+var[v]+bin[b]+wrt[w]).c_str());
         }}
      }
   }
   OutputFile->Write(); OutputFile->Close();
 }
-

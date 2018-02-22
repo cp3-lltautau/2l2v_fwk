@@ -10,7 +10,7 @@
 using namespace std;
 
 int main(int argc, char* argv[]){
-  
+
   if(argc<7){
     cout<<"FRAnalyzer: Systematic plots producer!"<<endl;
     cout<<"  Usage   : ./Analyser "<<endl;
@@ -27,7 +27,7 @@ int main(int argc, char* argv[]){
     cout<<"                   --path ]"<<endl;
     exit(0);
   };
-  
+
   string File1, File2, Dir;
   int Index;
   int Ntoy;
@@ -59,7 +59,7 @@ int main(int argc, char* argv[]){
       NoXserver = true;
     }
   }
-  
+
   /*debug*/
   cout<< " Options Passed:" <<endl;
   cout<< "           File1       = " << File1     << endl;
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]){
   cout<< "           Data        = " << Data      << endl;
   cout<< "           Dir         = " << Dir       << endl;
   cout<< "           NoXserver   = " << NoXserver << endl;
-  
+
 #ifdef WITHRINT
   TRint *myApp;
   if(!NoXserver){
@@ -83,7 +83,7 @@ int main(int argc, char* argv[]){
     cout<<" Using TApplication: Gui will be used ... " << endl;
   }
 #endif
-    
+
   FRAnalyzer *PM = new FRAnalyzer(File1,File2,Index,Ntoy,Data,Dir);
   cout << "Creating Dir..."<<endl;
   PM->CreateDir();
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]){
   PM->ReadFiles();
   cout << "Initializing..."<<endl;
   PM->Initialize();
-  cout << "After initialization.."<<endl;  
+  cout << "End Initialization..."<<endl;
   if(Data) PM->RetrieveResults();
   if(!Data) PM->RetrieveCTResults();
   if(!NoXserver)

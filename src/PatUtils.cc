@@ -11,7 +11,7 @@ namespace patUtils
   DetId seedDetId = electron.superCluster()->seed()->seed();
   EcalRecHitCollection::const_iterator seedRecHit = recHits->find(seedDetId);
   unsigned int gainSeedSC = 12;
-  if (seedRecHit != recHits->end()) { 
+  if (seedRecHit != recHits->end()) {
     if(seedRecHit->checkFlag(EcalRecHit::kHasSwitchToGain6)) gainSeedSC = 6;
     if(seedRecHit->checkFlag(EcalRecHit::kHasSwitchToGain1)) gainSeedSC = 1;
     }
@@ -24,7 +24,7 @@ namespace patUtils
   DetId seedDetId = photon.superCluster()->seed()->seed();
   EcalRecHitCollection::const_iterator seedRecHit = recHits->find(seedDetId);
   unsigned int gainSeedSC = 12;
-  if (seedRecHit != recHits->end()) { 
+  if (seedRecHit != recHits->end()) {
     if(seedRecHit->checkFlag(EcalRecHit::kHasSwitchToGain6)) gainSeedSC = 6;
     if(seedRecHit->checkFlag(EcalRecHit::kHasSwitchToGain1)) gainSeedSC = 1;
     }
@@ -245,8 +245,8 @@ namespace patUtils
             }
 	break;
 
-    case CutVersion::Moriond17Cut :
-    case CutVersion::ICHEP16Cut :
+  case CutVersion::Moriond17Cut :
+  case CutVersion::ICHEP16Cut :
 
             switch(IdLevel){
             case llvvElecId::Veto :
@@ -419,6 +419,10 @@ namespace patUtils
 
             switch(IdLevel){
 
+             case llvvMuonId::FRLoose :
+              if((mu.isGlobalMuon() || mu.isTrackerMuon()))return true;
+              break;
+
             case llvvMuonId::Loose :
               if(mu.isPFMuon() && (mu.isGlobalMuon() || mu.isTrackerMuon()))return true;
               break;
@@ -575,7 +579,7 @@ namespace patUtils
 
   float relIso(patUtils::GenericLepton& lep, double rho){
 
-    int lid=lep.pdgId();
+    int lid=abs(lep.pdgId());
     float relIso = 0.0;
 
     if(lid==13){
@@ -607,6 +611,26 @@ namespace patUtils
 
     return relIso;
 
+  }
+
+  void printRelIso(patUtils::GenericLepton& lep){
+
+    int lid=abs(lep.pdgId());
+    float relIso = 0.0;
+
+    if(lid==13){
+
+      float  chIso   = lep.mu.pfIsolationR04().sumChargedHadronPt;
+      float  nhIso   = lep.mu.pfIsolationR04().sumNeutralHadronEt;
+      float  gIso    = lep.mu.pfIsolationR04().sumPhotonEt;
+      float  puchIso = lep.mu.pfIsolationR04().sumPUPt;
+
+      relIso  = (chIso + TMath::Max(0.,nhIso+gIso-0.5*puchIso)) / lep.mu.pt();
+
+      cout << " Muon Iso variables: chIso = "<<chIso<<", nhIso = "<<nhIso<<", gIso = "<<gIso<<", puchIso = "<<puchIso<<endl;
+      cout << " Muon RelIso = "<<relIso<<endl;
+
+    }
   }
 
 
@@ -645,6 +669,14 @@ namespace patUtils
                         if( endcap && relIso < 0.144    ) return true;
                         break;
 
+                     case llvvElecIso::FakeRateWP :
+                        if ( relIso < 0.5 ) return true;
+                          break;
+
+		                 case llvvElecIso::VeryLoose :
+		                   if ( relIso < 0.3 ) return true;
+			                    break;
+
                      case llvvElecIso::Loose :
                         if( barrel && relIso < 0.0893   ) return true;
                         if( endcap && relIso < 0.121    ) return true;
@@ -671,10 +703,19 @@ namespace patUtils
           case CutVersion::ICHEP16Cut :
       	  // ICHEP16 or Moriond17 selection, conditions: PU20 bx25
                switch(IsoLevel){
-                     case llvvElecIso::Veto :
-                        if( barrel && relIso < 0.175    ) return true;
-                        if( endcap && relIso < 0.159    ) return true;
-                        break;
+
+	             case llvvElecIso::Veto :
+		       if( barrel && relIso < 0.175    ) return true;
+		       if( endcap && relIso < 0.159    ) return true;
+		       break;
+
+                     case llvvElecIso::FakeRateWP :
+                        if ( relIso < 0.5 ) return true;
+                          break;
+
+                     case llvvElecIso::VeryLoose :
+		                   if ( relIso < 0.3 ) return true;
+		                     break;
 
                      case llvvElecIso::Loose :
                         if( barrel && relIso < 0.0994   ) return true;
@@ -725,6 +766,14 @@ namespace patUtils
     switch(cutVersion){
        case CutVersion::Spring15Cut25ns :
            switch(IsoLevel){
+             case llvvMuonIso::FakeRateWP :
+               if ( relIso < 0.5 ) return true;
+                 break;
+
+	            case llvvMuonIso::VeryLoose :
+		            if ( relIso < 0.3 ) return true;
+		              break;
+
               case llvvMuonIso::Loose :
                  if( relIso < 0.20 ) return true;
                  break;
@@ -741,9 +790,17 @@ namespace patUtils
            break;
        case CutVersion::ICHEP16Cut :
            switch(IsoLevel){
+             case llvvMuonIso::FakeRateWP :
+                if ( relIso < 0.5 ) return true;
+                  break;
+
+	           case llvvMuonIso::VeryLoose :
+		           if ( relIso < 0.3 ) return true;
+		             break;
+
               case llvvMuonIso::Loose :
-                 if( relIso < 0.20 && trkrelIso < 0.1) return true;
-                 break;
+                if( relIso < 0.20 && trkrelIso < 0.1) return true;
+                break;
 
               case llvvMuonIso::Tight :
                 if( relIso < 0.15 && trkrelIso < 0.1) return true;
@@ -758,6 +815,15 @@ namespace patUtils
 
        case CutVersion::Moriond17Cut :
            switch(IsoLevel){
+
+              case llvvMuonIso::FakeRateWP :
+                if ( relIso < 0.5 ) return true;
+                  break;
+
+              case llvvMuonIso::VeryLoose :
+		            if ( relIso < 0.3 ) return true;
+		              break;
+
               case llvvMuonIso::Loose :
                  if( relIso < 0.25 ) return true;
                  break;
@@ -1069,11 +1135,12 @@ namespace patUtils
 
 
   bool passPFJetID(std::string label,
-                  pat::Jet jet){
+                  pat::Jet jetCorr){
 
     bool passID = false;
+    const pat::Jet jet = jetCorr.correctedJet("Uncorrected");
 
-    float rawJetEn(jet.correctedJet("Uncorrected").energy() );
+    float rawJetEn(jet.energy() );
     // Note: All fractions are calculated with the raw/uncorrected energy of the jet (only then they add up to unity). So the PF JetID has to be applied before the jet energy corrections.
 
     float nhf( (jet.neutralHadronEnergy() + jet.HFHadronEnergy())/rawJetEn );
@@ -1097,6 +1164,49 @@ namespace patUtils
       if( fabs(jet.eta()) > 3.0) passID = (nef<0.90 && NumNeutralParticles > 10);
     }
     return passID;
+  }
+
+  void printPFJetIDInfo(std::string label,
+                  pat::Jet jetCorr){
+
+    bool passID = false;
+    //const pat::Jet jet = jetCorr;
+
+    const pat::Jet jet = jetCorr.correctedJet("Uncorrected");
+    float rawJetEn(jet.energy() );
+    // Note: All fractions are calculated with the raw/uncorrected energy of the jet (only then they add up to unity). So the PF JetID has to be applied before the jet energy corrections.
+
+    float nhf( jet.neutralHadronEnergyFraction() );
+    float nef( jet.neutralEmEnergyFraction() );
+    float cef( jet.chargedEmEnergyFraction() );
+    float chf( jet.chargedHadronEnergy()/rawJetEn );
+    float nch    = jet.chargedMultiplicity();
+    //float muf( jet.muonEnergy()/rawJetEn);
+    float NumNeutralParticles = jet.neutralMultiplicity();
+    float nconst = nch + NumNeutralParticles;
+
+    cout << " \n\t Jet ID info Pritning \n"<< " nhf = "<<nhf<<" nef = "<< nef << " cef = "<< cef << " chf = "<< chf
+                                         << "\n nch = " << nch << "  nconst = "<< nconst << " NumNeutralParticles = " << NumNeutralParticles<<std::endl;
+
+    cout << "- Jet: " << jet << endl;
+    auto leadDaughter = jet.daughter(0);
+    for (unsigned int i=0; i<jet.numberOfDaughters(); i++){
+      auto daughter = jet.daughter(i);
+      cout<< "\t daughter "<<i+1<<" : \n \t"<< *daughter << "\n DeltaR w/ LeadDaughter = "<< deltaR(*daughter,  *leadDaughter)<< endl;
+    }
+    //https://twiki.cern.ch/twiki/bin/view/CMS/JetID13TeVRun2016 (27-dec-2016)
+    if (label == "Loose"){
+      if( fabs(jet.eta()) <= 2.7) passID = ( (nhf<0.99  && nef<0.99 && nconst>1) && ( fabs(jet.eta())>2.4 || (fabs(jet.eta()) <= 2.4 && chf>0 && nch>0 && cef<0.99) ) );
+      if( fabs(jet.eta()) > 2.7 && fabs(jet.eta()) <= 3.0) passID = ( nef>0.01 && nhf<0.98 && NumNeutralParticles > 2);
+      if( fabs(jet.eta()) > 3.0) passID = (nef<0.90 && NumNeutralParticles > 10);
+      cout<< (passID ?  " LooseId PASSED " : " LooseId NOT PASSED")<<endl;
+    }
+    if (label == "Tight"){
+      if( fabs(jet.eta()) <= 2.7) passID = ( (nhf<0.90  && nef<0.90 && nconst>1) && ( fabs(jet.eta())>2.4 || (fabs(jet.eta()) <= 2.4 && chf>0 && nch>0 && cef<0.99) ) );
+      if( fabs(jet.eta()) > 2.7 && fabs(jet.eta()) <= 3.0) passID = ( nef>0.01 && nhf<0.98 && NumNeutralParticles > 2);
+      if( fabs(jet.eta()) > 3.0) passID = (nef<0.90 && NumNeutralParticles > 10);
+      cout<< (passID ?  " TightId PASSED " : " TightId NOT PASSED")<<endl;
+    }
   }
 
 

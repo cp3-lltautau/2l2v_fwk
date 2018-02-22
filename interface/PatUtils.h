@@ -66,6 +66,7 @@ namespace patUtils
       public:
       // constructor
       ~GenericLepton(){};
+       GenericLepton(){};
        GenericLepton(pat::Electron el_) : pat::GenericParticle(el_) {el = el_; };
        GenericLepton(pat::Muon     mu_) : pat::GenericParticle(mu_) {mu = mu_; };
        GenericLepton(pat::Tau     tau_) : pat::GenericParticle(tau_){tau = tau_; };
@@ -75,11 +76,11 @@ namespace patUtils
    };
 
    namespace llvvElecId { enum ElecId  {Veto, Loose, Medium, Tight, LooseMVA, MediumMVA, TightMVA}; }
-   namespace llvvMuonId { enum MuonId  {Loose, Soft, Tight, tkHighPT, TightAndTlkHighPt, StdLoose, StdSoft, StdMedium, StdTight}; }
+   namespace llvvMuonId { enum MuonId  {FRLoose,Loose, Soft, Tight, tkHighPT, TightAndTlkHighPt, StdLoose, StdSoft, StdMedium, StdTight}; }
    namespace llvvPhotonId { enum PhotonId  {Loose, Medium, Tight}; }
-   namespace llvvElecIso{ enum ElecIso {Veto, Loose, Medium, Tight}; }
-   namespace llvvMuonIso{ enum MuonIso {Loose,Tight, H4lWP, TightBoosted, TightAndTkRelatBoosted}; }
-   namespace CutVersion { enum CutSet {Spring15Cut25ns, ICHEP16Cut, Moriond17Cut}; }
+   namespace llvvElecIso{ enum ElecIso {Veto, FakeRateWP, VeryLoose, Loose, Medium, Tight}; }
+   namespace llvvMuonIso{ enum MuonIso {FakeRateWP, VeryLoose, Loose,Tight, H4lWP, TightBoosted, TightAndTkRelatBoosted}; }
+   namespace CutVersion { enum CutSet {Spring15Cut25ns, ICHEP16Cut, Moriond17Cut, Moriond17Cut_BCDEF, Moriond17Cut_GH}; }
 
    unsigned int GainSeed (pat::Electron &electron, const EcalRecHitCollection* recHits);
    unsigned int GainSeed (pat::Photon &photon, const EcalRecHitCollection* recHits);
@@ -96,6 +97,10 @@ namespace patUtils
    bool passVBFPhotonTrigger(fwlite::Event &ev, float &triggerThreshold, float &triggerPrescale, float& triggerThresholdHigh);
    bool passPFJetID(std::string label, pat::Jet jet);
    bool passPUJetID(pat::Jet j);
+
+   void printPFJetIDInfo(std::string label, pat::Jet jet);
+   void printRelIso(patUtils::GenericLepton& lep);
+
 
    bool exclusiveDataEventFilter(const double&run, const bool& isMC, const bool& isPromptReco);
 

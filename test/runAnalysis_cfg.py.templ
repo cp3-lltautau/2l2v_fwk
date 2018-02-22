@@ -65,14 +65,15 @@ runProcess = cms.PSet(
     isMC = cms.bool(@isMC),
     triggerstudy = cms.bool(@trig),
     xsec = cms.double(@xsec),
-    suffix = cms.string("@suffix"), 
-    cprime = cms.double(@cprime),	
-    brnew = cms.double(@brnew),	
+    suffix = cms.string("@suffix"),
+    cprime = cms.double(@cprime),
+    brnew = cms.double(@brnew),
     mctruthmode = cms.int32(@mctruthmode),
     jacknife = cms.vint32(@jacknife,@jacks),
     saveSummaryTree = cms.bool(@saveSummaryTree),
     runSystematics = cms.bool(@runSystematics),
-    resonance = cms.double(@resonance), 
+    runSVfit = cms.bool(@runSVfit),
+    resonance = cms.double(@resonance),
     weightsFile = cms.vstring("@weightsFile"),
     puWeightsFile = cms.vstring("@puWeightsFile"),
     dirName = cms.string("dataAnalyzer"),
@@ -80,13 +81,13 @@ runProcess = cms.PSet(
     tmvaInput = mySignalMVA,
     muscleDir =  cms.string('${CMSSW_BASE}/src/UserCode/llvv_fwk/data/jec/'),
     jecDir = cms.string('${CMSSW_BASE}/src/UserCode/llvv_fwk/data/jec/25ns/'),
-    datapileup = @data_pileup, 
+    datapileup = @data_pileup,
     datapileupSingleLep = @data_pileup,
     debug = cms.bool(False),
     lumisToProcess = LumiList.LumiList(filename = theLumiMask).getVLuminosityBlockRange(),
     pujetidparas = cms.PSet(pu_jetid),
     electronidparas = cms.PSet(myVidElectronId),
-    maxevents = cms.int32(-1) # set to -1 when running on grid. 
+    maxevents = cms.int32(-1) # set to -1 when running on grid.
 )
 
 
@@ -102,8 +103,8 @@ def lfn_to_pfn(f):
 
 try:
     import PSet
-    fnames = [ lfn_to_pfn(f) for f in list(PSet.process.source.fileNames)]    
-    inputFilesPfn =  cms.untracked.vstring(fnames)                
+    fnames = [ lfn_to_pfn(f) for f in list(PSet.process.source.fileNames)]
+    inputFilesPfn =  cms.untracked.vstring(fnames)
     print inputFilesPfn
     runProcess.input = inputFilesPfn
     runProcess.outfile = cms.string("output.root")

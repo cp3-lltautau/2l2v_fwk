@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS=-O -Wall -fPIC
+CXXFLAGS=-O -fPIC
 RINT=-DWITHRINT
 THREAD_LIB=-lpthread
 
@@ -12,7 +12,7 @@ ROOTLDFLAGS  = $(shell root-config --ldflags)
 ROOTLIBS     = $(shell root-config --libs)
 ROOTGLIBS    = $(shell root-config --glibs)
 
-LIBS  = ${THREAD_LIB} -lcurses 
+LIBS  = ${THREAD_LIB} -lcurses
 LIBS += $(ROOTLIBS)
 
 CXXFLAGS += $(ROOTCXXFLAGS)
