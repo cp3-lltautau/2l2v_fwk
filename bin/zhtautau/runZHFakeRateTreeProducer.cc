@@ -266,6 +266,7 @@ int main(int argc, char* argv[])
   LorentzVector null_p4(0., 0., 0., 0.);
 
   //create a tree and related variables to save higgs candidate info for each cutIndex values
+  ntupleutils::Weights *eventWeights = nullptr;
   unsigned int  treeEventId;
   unsigned int  treeLumiId;
   unsigned int  treeRunId;
@@ -309,6 +310,7 @@ int main(int argc, char* argv[])
   TFile *ofile=TFile::Open("out.root", "recreate");
 
   TTree* tree = new TTree("CandTree","CandTree");
+  tree->Branch("EventWeights",&eventWeights);
   tree->Branch("eventId", &treeEventId , string("eventId/i" ).c_str());
   tree->Branch("lumiId" , &treeLumiId  , string("lumiId/i"  ).c_str());
   tree->Branch("runId"  , &treeRunId   , string("runId/i"   ).c_str());
@@ -484,6 +486,7 @@ int main(int argc, char* argv[])
     for(ev.toBegin(); !ev.atEnd(); ++ev){ iev++;
       if(iev%treeStep==0){printf(".");fflush(stdout);}
       float weight = xsecWeight;
+      eventWeights->SetXSecWeight(xsecWeight);
       float shapeWeight = 1.0;
       double puWeightUp = 1.0;
       double puWeightDown = 1.0;
@@ -551,6 +554,8 @@ int main(int argc, char* argv[])
         //WEIGHT for NLO negative interference
         weight *= eventInfo.weight();
 
+        eventWeights->SetMCWeight( eventInfo.weight() );
+
 
         //WEIGHT for Pileup
         int ngenITpu = 0;
@@ -569,9 +574,11 @@ int main(int argc, char* argv[])
         puWeightUp  = PuShifters[utils::cmssw::PUUP  ]->Eval(ngenITpu) * (PUNorm[2]/PUNorm[0]);
         puWeightDown = PuShifters[utils::cmssw::PUDOWN]->Eval(ngenITpu) * (PUNorm[1]/PUNorm[0]);
         weight *= puWeight;
+
+        eventWeights->SetPUWeights(puWeight,puWeightUp,puWeightDown);
       }
 
-    weightNoLepSF = weight;
+
 
     //apply trigger and require compatibilitiy of the event with the PD
     edm::TriggerResultsByName tr = ev.triggerResultsByName("HLT");
@@ -718,6 +725,7 @@ int main(int argc, char* argv[])
     //final event weight
     weight *= ewkCorrectionsWeight;
 
+
     //NNLO corrections on ZZ2l2nu
     double ZZ_NNLOcorrectionsWeight =1.;
     double mzz = - 404; // will be filled by getNNLOCorrections
@@ -726,6 +734,10 @@ int main(int argc, char* argv[])
     weight *= ZZ_NNLOcorrectionsWeight;
     if(isMC_ZZ2l2nu) mon.fillHisto("mzz", "qqZZ_atNNLO", mzz, weight);
 
+    eventWeights->SetEwkMCWeight(ewkCorrectionsWeight);
+    eventWeights->SetZZMCWeight(ZZ_NNLOcorrectionsWeight);
+
+    weightNoLepSF = weight;
 
     //
     // PHOTON ANALYSIS
@@ -1369,6 +1381,8 @@ int main(int argc, char* argv[])
 
         treeWeightNoLepSF = weightNoLepSF;
         treeWeight = weight;
+
+        eventWeights->SetLeptonsWeights(weight/weightNoLepSF);
 
         if(tree) tree->Fill();
     }

@@ -4,5 +4,6 @@
 namespace {
     struct dictionary {
         ntupleutils::EventInfo dummy;
+        ntupleutils::Weights dummy1;
     };
 }
