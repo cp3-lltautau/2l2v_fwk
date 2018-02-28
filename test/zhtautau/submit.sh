@@ -11,7 +11,8 @@ if [[ $# -eq 0 ]]; then
     printf "\nOPTIONS\n"
     printf "\n\t%-5s  %-40s\n"  "0"  "completely clean up the directory"
     printf "\n\t%-5s  %-40s\n"  "1"  "run 'runZHTauTauAnalysis' on samples.json"
-    printf "\n\t%-5s  %-40s\n"  "1.1"  "run 'runZHTauTauAnalysis' on photon_samples.json"
+    printf "\n\t%-5s  %-40s\n"  "1.1"  "run 'runZHTauTauAnalysis' on samples.json with the option '-k FakeRate'"
+    printf "\n\t%-5s  %-40s\n"  "1.2"  "run 'runZHFakeRateTreeProducer' on samples_FR.json"
     printf "\n\t%-5s  %-40s\n"  "2"  "compute integrated luminosity from processed samples"
     printf "\n\t%-5s  %-40s\n"  "2.1"  "compute integrated luminosity from processed samples connecting to lxplus (ssh)"
     printf "\n\t%-5s  %-40s\n"  "3"  "make plots and combine root files"
@@ -27,10 +28,10 @@ if [[ $# -ge 4 ]]; then echo "Additional arguments will be considered: "$argumen
 #--------------------------------------------------
 # Global Variables
 #--------------------------------------------------
-SUFFIX=_2017_10_10_MediumBTag
+SUFFIX=_2018_02_22_FR
 #SUFFIX=$(date +"_%Y_%m_%d")
 MAINDIR=$CMSSW_BASE/src/UserCode/llvv_fwk/test/zhtautau
-JSON=$MAINDIR/samples.json
+JSON=$MAINDIR/samples_FR.json
 RESULTSDIR=$MAINDIR/results$SUFFIX
 PLOTSDIR=$MAINDIR/plots${SUFFIX}
 PLOTTER=$MAINDIR/plotter${SUFFIX}
@@ -58,17 +59,28 @@ case $step in
 	queue='8nh'
 	#IF CRAB3 is provided in argument, use crab submissiong instead of condor/lsf
 	if [[ $arguments == *"crab3"* ]]; then queue='crab3' ;fi
-	runAnalysisOverSamples.py -e runZHTauTauAnalysis -j $JSON -o $RESULTSDIR  -c $MAINDIR/../runAnalysis_cfg.py.templ -p "@useMVA=True @saveSummaryTree=True @runSystematics=False @automaticSwitch=False @is2011=False @jacknife=0 @jacks=0 @data_pileup=datapileup_latest" -s $queue --report True $arguments
+	runAnalysisOverSamples.py -e runZHTauTauAnalysis -j $JSON -o $RESULTSDIR  -c $MAINDIR/../runAnalysis_cfg.py.templ -p "@useMVA=True @saveSummaryTree=True @runSVfit=True @runSystematics=False @automaticSwitch=False @is2011=False @jacknife=0 @jacks=0 @data_pileup=datapileup_latest" -s $queue --report True $arguments
 	;;
 
-    1.1)  #submit jobs for 2l2v photon jet analysis
+    1.1)  #submit jobs for FakeRate estimation
 	echo "JOB SUBMISSION for Photon + Jet analysis"
 	queue='8nh'
-	JSON=$MAINDIR/photon_samples.json
+	RESULTSDIR=$RESULTSDIR\_FakeRate
 	echo "Input: " $JSON
 	echo "Output: " $RESULTSDIR
 	if [[ $arguments == *"crab3"* ]]; then queue='crab3' ;fi
-	runAnalysisOverSamples.py -e runZHTauTauAnalysis -j $JSON -o $RESULTSDIR -c $MAINDIR/../runAnalysis_cfg.py.templ -p "@useMVA=True @saveSummaryTree=True @runSystematics=True @automaticSwitch=False @is2011=False @jacknife=0 @jacks=0" -s $queue --report True $arguments
+	runAnalysisOverSamples.py -e runZHTauTauAnalysis -j $JSON -o $RESULTSDIR  -c $MAINDIR/../runAnalysis_cfg.py.templ -k FakeRate -p "@useMVA=True @saveSummaryTree=True @runSVfit=False @runSystematics=False @automaticSwitch=False @is2011=False @jacknife=0 @jacks=0 @data_pileup=datapileup_latest" -s $queue --report True $arguments
+	;;
+    
+    1.2)  #submit jobs for FakeRate analysis
+	echo "JOB SUBMISSION"
+	echo "Input: " $JSON
+	echo "Output: " $RESULTSDIR
+
+	queue='8nh'
+	#IF CRAB3 is provided in argument, use crab submissiong instead of condor/lsf
+	if [[ $arguments == *"crab3"* ]]; then queue='crab3' ;fi
+	runAnalysisOverSamples.py -e runZHFakeRateTreeProducer -j $JSON -o $RESULTSDIR  -c $MAINDIR/../runAnalysis_cfg.py.templ -p "@useMVA=True @saveSummaryTree=True @runSVfit=False @runSystematics=False @automaticSwitch=False @is2011=False @jacknife=0 @jacks=0 @data_pileup=datapileup_latest" -s $queue --report True $arguments
 	;;
 
     2)  #extract integrated luminosity of the processed lumi blocks
@@ -180,6 +192,7 @@ case $step in
 
 	;;
     3)  # make plots and combined root files
+#	if [[ $arguments == *"FakeRate"* ]]; then RESULTSDIR=$RESULTSDIR\_FakeRate ;fi
         if [ -f $RESULTSDIR/LUMI.txt ]; then
            INTLUMI=`tail -n 1 $RESULTSDIR/LUMI.txt | cut -d ',' -f 6`
         else
@@ -187,7 +200,7 @@ case $step in
            echo "WARNING: $RESULTSDIR/LUMI.txt file is missing so use fixed integrated luminosity value, this might be different than the dataset you ran on"
         fi
 	echo "MAKE PLOTS AND SUMMARY ROOT FILE, BASED ON AN INTEGRATED LUMINOSITY OF $INTLUMI"
-	runPlotter --iEcm 13 --iLumi $INTLUMI --inDir $RESULTSDIR/ --outDir $PLOTSDIR/ --outFile $PLOTTER.root --json $JSON $arguments
+	runPlotter --iEcm 13 --iLumi $INTLUMI --inDir $RESULTSDIR/ --outDir $PLOTSDIR/ --outFile $PLOTTER.root  --json $JSON $arguments
 	ln -s -f $PLOTTER.root $MAINDIR/plotter.root
 	;;
 

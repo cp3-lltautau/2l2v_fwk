@@ -601,7 +601,7 @@ void SavingToFile(JSONWrapper::Object& Root, std::string RootDir, TFile* OutputF
                     outtree->SetDirectory(subdir);
 
                     TTree* weightTree = new TTree((HistoProperties.name+"_PWeight").c_str(),"plotterWeight");
-                    weightTree->Branch("plotterWeight",&weightTree,"plotterWeight/F");
+                    weightTree->Branch("plotterWeight",&Weight,"plotterWeight/F");
                     weightTree->SetDirectory(subdir);
                     for(unsigned int i=0;i<((TTree*)inobj)->GetEntries();i++){weightTree->Fill();}                       
                  }else{

@@ -3,6 +3,7 @@
     {
       "tag":"data",
       "isdata":true,
+      "keys":["Data2016","FakeRate"],
       "color":1,
       "fill":0,
       "marker":20,
@@ -48,7 +49,7 @@
     },
     {
       "tag":"ZH#rightarrow ll#tau#tau",
-      "keys": ["zhtautau_2016MC","SM_signal"],
+      "keys": ["zhtautau_2016MC","SM_signal","FakeRate"],
       "isdata":false,
       "color":4,
       "lcolor":1,
@@ -58,7 +59,7 @@
     },
     {
       "tag":"H#rightarrow ZZ#rightarrow 4l",
-      "keys": ["zhtautau_2016MC"],
+      "keys": ["zhtautau_2016MC","FakeRate"],
       "isdata":false,
       "color":3,
       "lcolor":1,
@@ -68,7 +69,7 @@
     },
     {
       "tag":"ZZ#rightarrow 4l",
-      "keys": ["zhtautau_2016MC"],
+      "keys": ["zhtautau_2016MC","FakeRate"],
       "isdata":false,
       "color":2,
       "lcolor":1,
@@ -102,7 +103,7 @@
     },
     {
       "tag":"WZ#rightarrow 2l+X",
-      "keys": ["zhtautau_2016MC"],
+      "keys": ["zhtautau_2016MC","FakeRate"],
       "isdata":false,
       "color":594,
       "lcolor":1,
@@ -126,7 +127,7 @@
     },
     {
       "tag":"VVV",
-      "keys": ["zhtautau_2016MC"],
+      "keys": ["zhtautau_2016MC","FakeRate"],
       "isdata":false,
       "color":869,
       "lcolor":1,
@@ -198,6 +199,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -210,6 +212,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -222,6 +225,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -234,6 +238,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -246,6 +251,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -258,6 +264,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -270,6 +277,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -282,6 +290,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -294,6 +303,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -306,6 +316,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -318,6 +329,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -330,6 +342,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -342,6 +355,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -354,6 +368,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -366,6 +381,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -378,6 +394,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -390,6 +407,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -402,6 +420,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -414,6 +433,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -426,6 +446,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -438,6 +459,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -450,6 +472,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[
@@ -462,6 +485,7 @@
       "isdata":false,
       "issignal":true,
       "spimpose":true,
+      "keys": ["EXO_Signal"],
       "color":"804",
       "lwidth":2,       "lstyle":1,      "fill":0,      "marker":1,
       "data":[

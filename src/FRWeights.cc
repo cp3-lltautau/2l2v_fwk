@@ -33,8 +33,9 @@ bool FRWeights::init(const string& WeightsFileName)
     std::vector<string> binL  = {"Inc.", "Barrel", "Endcap", "Inc. (m_{T}>30)", "Barrel (m_{T}>30)", "Endcap (m_{T}>30)"};
     std::vector<string> cat   = {"FR_El", "FR_Mu", "FR_Ta"};
     std::vector<string> bin   = {"","_B","_E", "_TMCut", "_TMCut_B", "_TMCut_E"};
-    std::vector<string> var   = {"", "_Id_Iso01weight", "_Id_Iso02weight", "_Id_Iso03weight", "_Id_IsoLoweight", "_Id_IsoMeweight"};
-    std::vector<string> wrt   = {"_wrtJetPt", "_wrtLepPt"};
+    std::vector<string> var   = {"", "_Id_Iso01weight", "_Id_Iso02weight", "_Id_Iso03weight", "_Id_IsoLoweight", "_Id_IsoMeweight",
+                                 "_Id_IsoLo_MVAweight", "_Id_IsoMe_MVAweight","_Id_IsoLo_MVAR03weight", "_Id_IsoMe_MVAR03weight"};
+    std::vector<string> wrt   = {"_wrtJetPt", "_wrtLepPt", "_wrtJetPt_v2"};
 
     for(unsigned int c=0;c<cat.size();c++){
       for(unsigned int b=0;b<bin.size();b++){
@@ -47,7 +48,7 @@ bool FRWeights::init(const string& WeightsFileName)
     }
 
     WeightsFile->Close();
-    
+
     return true;
   }
 }
@@ -61,7 +62,7 @@ double FRWeights::getWeight(const std::string& cat ,const std::string& bin, cons
   //TGraphErrors* graph = FRWeightGraphs[cat+var+bin+wrt];
   double result=-1.;
   if(FRWeightGraphs[name]){
-    result=(1 - FRWeightGraphs[name]->Eval(pT));
+    result=(FRWeightGraphs[name]->Eval(pT));
   } else {
     result = 1;
     //cout<<" Result = "<<result<<" -- "<<name<<endl;
