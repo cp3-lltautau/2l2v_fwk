@@ -1,3 +1,4 @@
 <lcgdict>
     <class name="ntupleutils::EventInfo"/>
+    <class name="ntupleutils::Weights"/>
 </lcgdict>

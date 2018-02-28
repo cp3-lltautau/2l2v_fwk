@@ -149,6 +149,76 @@ namespace ntupleutils{
     // Add weights
   };
 
+
+  class Weights: public TObject{
+
+  public:
+
+    Weights():
+      xsecWeight(1),puWeight(1),
+      puWeightUp(1),puWeightDown(1),
+      mcWeight(1){
+
+      ewkCorrectionsWeight     = 1;
+      ZZ_NNLOcorrectionsWeight = 1;
+
+      // lep1weight = 1;
+      // lep2weight = 1;
+      // lep3weight = 1;
+      // lep4weight = 1;
+
+      leptonsWeight = 1;
+    }
+
+    ~Weights(){}
+
+    void SetXSecWeight (const double _xsecWeight) { xsecWeight = _xsecWeight; }
+    void SetPUWeights (const double _puWeight, const double _puWeightUp = 1, const double _puWeightDown = 1) {
+      puWeight     = _puWeight;
+      puWeightUp   = _puWeightUp;
+      puWeightDown = _puWeightDown;
+    }
+    void SetMCWeight    (const double _mcWeight)  { mcWeight = _mcWeight; }
+    void SetEwkMCWeight (const double _ewkCorrectionsWeight) { ewkCorrectionsWeight = _ewkCorrectionsWeight; }
+    void SetZZMCWeight  (const double _ZZ_NNLOcorrectionsWeight) { ZZ_NNLOcorrectionsWeight = _ZZ_NNLOcorrectionsWeight; }
+
+    void SetLeptonsWeights (const double _leptonsWeight) { leptonsWeight = _leptonsWeight; }
+
+
+    double GetPUWeight     () const { return puWeight; }
+    double GetPUWeightUp   () const { return puWeightUp; }
+    double GetPUWeightDown () const { return puWeightDown; }
+    std::pair<double, double> GetPUWeightShifts () const { return std::make_pair(puWeightUp, puWeightDown); }
+
+    double GetXSecWeight   () const { return xsecWeight; }
+    double GetMCWeight     () const { return mcWeight; }
+    double GetEwkMCWeight  () const { return ewkCorrectionsWeight; }
+    double GetZZMCWeight   () const { return ZZ_NNLOcorrectionsWeight; }
+    double GetAllMCWeights () const { return mcWeight*ewkCorrectionsWeight*ZZ_NNLOcorrectionsWeight*xsecWeight;}
+
+    double GetLeptonsWeights () const { return leptonsWeight; }
+
+    double GetEventWeight () const { return mcWeight*ewkCorrectionsWeight*ZZ_NNLOcorrectionsWeight*xsecWeight*leptonsWeight*puWeight; }
+
+  private:
+    double xsecWeight;
+    double puWeight;
+    double puWeightUp;
+    double puWeightDown;
+
+    double mcWeight;
+    double ewkCorrectionsWeight;
+    double ZZ_NNLOcorrectionsWeight;
+
+    // double lep1weight;
+    // double lep2weight;
+    // double lep3weight;
+    // double lep4weight;
+
+    double leptonsWeight;
+
+      ClassDef(Weights,1);
+  };
   // class ParticleCandidate: public TObject{
   //
   // public:
