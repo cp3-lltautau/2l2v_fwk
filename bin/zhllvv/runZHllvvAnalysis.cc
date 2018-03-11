@@ -203,8 +203,7 @@ CRTypes checkBkgCR(std::vector<patUtils::GenericLepton> selLeptons, int higgsCan
   std::vector<bool> passTight;
   std::vector<int>  flavours;
 
-  passId.resize(2);
-  passIso.resize(2);
+  
 
   for(auto lepIt=HiggsLegs.begin();lepIt!=HiggsLegs.end();lepIt++){
     patUtils::GenericLepton* lep = (*lepIt);
@@ -219,6 +218,9 @@ CRTypes checkBkgCR(std::vector<patUtils::GenericLepton> selLeptons, int higgsCan
       passIso.push_back(bool(lep->tau.tauID(isoHaCut)));
     }
   }
+	
+  passId.resize(2);
+  passIso.resize(2);
 
  for(unsigned int i=0;i<=1;i++){
     passTight.push_back(passId[i]&&passIso[i]);
