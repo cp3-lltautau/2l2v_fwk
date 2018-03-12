@@ -31,6 +31,9 @@
 <use name="RecoEgamma/EgammaTools"/>
 <use name="HLTrigger/HLTcore"/>
 <use name="EgammaAnalysis/ElectronTools"/>
+<use name="TauAnalysis/SVfitStandalone"/>
+<use name="TauAnalysis/ClassicSVfit"/>
+<use name="TauAnalysis/SVfitTF"/>
 <use name="root"/>
 <use name="roottmva"/>
 <use name="rootrflx"/>

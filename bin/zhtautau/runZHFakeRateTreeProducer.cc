@@ -49,6 +49,7 @@
 
 #include "UserCode/llvv_fwk/interface/PatUtils.h"
 #include "UserCode/llvv_fwk/interface/NTupleUtils.h"
+#include "UserCode/llvv_fwk/interface/METFilter.h"
 #include "UserCode/llvv_fwk/interface/TrigUtils.h"
 #include "UserCode/llvv_fwk/interface/EwkCorrections.h"
 #include "UserCode/llvv_fwk/interface/ZZatNNLO.h"
@@ -453,7 +454,7 @@ int main(int argc, char* argv[])
 
   higgs::utils::EventCategory eventCategoryInst(higgs::utils::EventCategory::EXCLUSIVE2JETSVBF); //jet(0,>=1)+vbf binning
 
-  patUtils::MetFilter metFilter;
+  metf::MetFilter metFilter;
   if(!isMC) {
     if(is2015data){
       metFilter.FillBadEvents(string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/MetFilter/DoubleEG_RunD/DoubleEG_csc2015.txt");
@@ -584,16 +585,33 @@ int main(int argc, char* argv[])
     edm::TriggerResultsByName tr = ev.triggerResultsByName("HLT");
     if(!tr.isValid())return false;
 
+    // prefetch from event the quantities we need to apply the MET filters
+
+    reco::VertexCollection vtx;
+    fwlite::Handle< reco::VertexCollection > vtxHandle;
+    vtxHandle.getByLabel(ev, "offlineSlimmedPrimaryVertices");
+    if(vtxHandle.isValid()){ vtx = *vtxHandle;}
+    
+    pat::MuonCollection muons;
+    fwlite::Handle< pat::MuonCollection > muonsHandle;
+    muonsHandle.getByLabel(ev, "slimmedMuons");
+    if(muonsHandle.isValid()){ muons = *muonsHandle;}
+    
+    pat::PackedCandidateCollection pfCandidates;
+    fwlite::Handle<pat::PackedCandidateCollection> pfCandidatesHandle;
+    pfCandidatesHandle.getByLabel(ev,"packedPFCandidates");
+    if (pfCandidatesHandle.isValid()) { pfCandidates = *pfCandidatesHandle; }
+
     bool mumuTrigger(true); bool muTrigger(true);	bool eeTrigger(true); bool eTrigger(true); bool emuTrigger(true);
 
     int metFilterValue = 0;
 
-	  bool filterbadPFMuon = true;
-	  bool filterbadChCandidate = true;
-	  bool filterbadMuonHIP = true;
-	  bool filterduplicateMuonHIP = true;
-	  std::unique_ptr<std::vector<reco::Muon*>> outbadMuon(new std::vector<reco::Muon*>());
-	  std::unique_ptr<std::vector<reco::Muon*>> outduplicateMuon(new std::vector<reco::Muon*>());
+    bool filterbadPFMuon = true;
+    bool filterbadChCandidate = true;
+    bool filterbadMuonHIP = true;
+    bool filterduplicateMuonHIP = true;
+    std::unique_ptr<std::vector<reco::Muon*>> outbadMuon(new std::vector<reco::Muon*>());
+    std::unique_ptr<std::vector<reco::Muon*>> outduplicateMuon(new std::vector<reco::Muon*>());
 
     if(is2016data || is2016MC){
 
@@ -604,12 +622,12 @@ int main(int argc, char* argv[])
       emuTrigger         = utils::passTriggerPatterns(tr, "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_v*", "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v*");
 
       metFilterValue = metFilter.passMetFilterInt( ev, is2016data );
+      // Apply Bad Charged Hadron and Bad Muon Filters from MiniAOD (for Run II 2016 only )
+      filterbadChCandidate = metFilter.passBadChargedCandidateFilter(muons,pfCandidates); if (!filterbadChCandidate) {  metFilterValue=9; }
+      filterbadPFMuon = metFilter.passBadPFMuonFilter(muons,pfCandidates); if (!filterbadPFMuon) { metFilterValue=8; }
+      filterbadMuonHIP = metFilter.BadGlobalMuonTaggerFilter(vtx,muons,outbadMuon,false); if (!filterbadMuonHIP) { metFilterValue=10; }
+      filterduplicateMuonHIP = metFilter.BadGlobalMuonTaggerFilter(vtx,muons,outduplicateMuon,true); if (!filterduplicateMuonHIP) { metFilterValue=11; }
 
-	    // Apply Bad Charged Hadron and Bad Muon Filters from MiniAOD (for Run II 2016 only )
-	    filterbadChCandidate = metFilter.passBadChargedCandidateFilter(ev); if (!filterbadChCandidate) {  metFilterValue=9; }
-	    filterbadPFMuon = metFilter.passBadPFMuonFilter(ev); if (!filterbadPFMuon) { metFilterValue=8; }
-	    filterbadMuonHIP = metFilter.BadGlobalMuonTaggerFilter(ev,outbadMuon,false); if (!filterbadMuonHIP) { metFilterValue=10; }
-	    filterduplicateMuonHIP = metFilter.BadGlobalMuonTaggerFilter(ev,outduplicateMuon,true); if (!filterduplicateMuonHIP) { metFilterValue=11; }
     }
 
     bool passTrigger        = mumuTrigger||muTrigger||eeTrigger||eTrigger;//||emuTrigger;
@@ -658,20 +676,11 @@ int main(int argc, char* argv[])
     const edm::TriggerNames &names = ev.triggerNames(*triggerBitsHandle);
 
     //load all the objects we will need to access
-    reco::VertexCollection vtx;
-    fwlite::Handle< reco::VertexCollection > vtxHandle;
-    vtxHandle.getByLabel(ev, "offlineSlimmedPrimaryVertices");
-    if(vtxHandle.isValid()){ vtx = *vtxHandle;}
 
     double rho = 0;
     fwlite::Handle< double > rhoHandle;
     rhoHandle.getByLabel(ev, "fixedGridRhoFastjetAll");
     if(rhoHandle.isValid()){ rho = *rhoHandle;}
-
-    pat::MuonCollection muons;
-    fwlite::Handle< pat::MuonCollection > muonsHandle;
-    muonsHandle.getByLabel(ev, "slimmedMuons");
-    if(muonsHandle.isValid()){ muons = *muonsHandle;}
 
     pat::ElectronCollection electrons;
     fwlite::Handle< pat::ElectronCollection > electronsHandle;

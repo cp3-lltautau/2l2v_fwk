@@ -1,8 +1,6 @@
 #ifndef macroutils_h
 #define macroutils_h
 
-
-#include "DataFormats/FWLite/interface/Handle.h"
 #include "DataFormats/FWLite/interface/Event.h"
 #include "DataFormats/FWLite/interface/ChainEvent.h"
 #include "DataFormats/Common/interface/MergeableCounter.h"
@@ -12,16 +10,11 @@
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 
-
-
 #include "FWCore/FWLite/interface/AutoLibraryLoader.h"
 #include "FWCore/PythonParameterSet/interface/MakeParameterSets.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/RegexMatch.h"
 #include "PhysicsTools/Utilities/interface/LumiReWeighting.h"
-
-
-
 
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
@@ -129,7 +122,7 @@ namespace utils
       }
       return mt;
     }
- 
+
     std::vector<float> smearJER(float pt, float eta, float genPt);
     std::vector<float> smearJES(float pt, float eta, JetCorrectionUncertainty *jecUnc);
 
@@ -139,30 +132,30 @@ namespace utils
     Float_t getEffectiveArea(int id, float eta,TString isoSum="");
 //    double relIso(llvvLepton lep, double rho);
 
-    // Single muon trigger efficiency 
+    // Single muon trigger efficiency
     void getSingleMuTrigEff(const double&, const double&, double& );
 
     //cf. https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections#JetEnCorFWLite
     FactorizedJetCorrector *getJetCorrector(TString baseDir, bool isMC);
-  
+
 
 
     // JES/JER Smearing
       std::vector<double> smearJER(double pt, double eta, double genPt);
       std::vector<float> smearJES(double pt, double eta, JetCorrectionUncertainty *jecUnc);
-   
-//    
+
+//
 //    //set new jet energy corrections
      void updateJEC(pat::JetCollection& jets, FactorizedJetCorrector *jesCor, JetCorrectionUncertainty *totalJESUnc, float rho, int nvtx,bool isMC);
 
-     void SlewRateCorrection(const fwlite::Event& ev, pat::Electron& ele);   
- 
+     void SlewRateCorrection(const fwlite::Event& ev, pat::Electron& ele);
+
 //    //apply MET variations
 //    enum METvariations { NOMINAL, JERUP, JERDOWN, JESUP, JESDOWN, UMETUP, UMETDOWN, LESUP, LESDOWN };
 //    std::vector<LorentzVector> getMETvariations(LorentzVector &rawMETP4, pat::JetCollection &jets, std::vector<patUtils::GenericLepton> &leptons, bool isMC);
-    
+
   }
-  
+
 
   //round up and show in TeX
   std::string toLatexRounded(double value, double error, double systError=-1,bool doPowers=true);
@@ -170,7 +163,7 @@ namespace utils
   //clean up ROOT version of TeX
   void TLatexToTex(TString &expr);
 
-  inline float deltaPhi(float phi1, float phi2) { 
+  inline float deltaPhi(float phi1, float phi2) {
      float result = phi1 - phi2;
      while (result > float(M_PI)) result -= float(2*M_PI);
      while (result <= -float(M_PI)) result += float(2*M_PI);

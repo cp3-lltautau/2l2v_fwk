@@ -13,7 +13,6 @@
 #include "TFile.h"
 #include "TMath.h"
 
-#include "DataFormats/FWLite/interface/Handle.h"
 #include "DataFormats/FWLite/interface/Event.h"
 
 #include "Math/LorentzVector.h"

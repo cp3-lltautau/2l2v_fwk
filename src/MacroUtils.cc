@@ -1,6 +1,7 @@
 #include "UserCode/llvv_fwk/interface/MacroUtils.h"
 #include "TH1F.h"
 #include "TSystem.h"
+#include "DataFormats/FWLite/interface/Handle.h"
 
 namespace utils
 {
@@ -11,7 +12,7 @@ namespace utils
     {
       gSystem->ExpandPathName(baseDir);
       TString pf(isMC ? "MC" : "DATA");
-      
+
       //order matters: L1 -> L2 -> L3 (-> Residuals)
       std::vector<std::string> jetCorFiles;
       std::cout << baseDir+"/"+pf+"_L1FastJet_AK4PFchs.txt" << std::endl;
@@ -19,19 +20,19 @@ namespace utils
       jetCorFiles.push_back((baseDir+"/"+pf+"_L2Relative_AK4PFchs.txt").Data());
       jetCorFiles.push_back((baseDir+"/"+pf+"_L3Absolute_AK4PFchs.txt").Data());
       if(!isMC) jetCorFiles.push_back((baseDir+"/"+pf+"_L2L3Residual_AK4PFchs.txt").Data());
-     
+
       //init the parameters for correction
       std::vector<JetCorrectorParameters> corSteps;
       for(size_t i=0; i<jetCorFiles.size(); i++) corSteps.push_back(JetCorrectorParameters(jetCorFiles[i]));
-      
+
       //return the corrector
       return new FactorizedJetCorrector(corSteps);
     }
-    
+
      std::vector<double> smearJER(double pt, double eta, double genPt){
          std::vector<double> toReturn(3,pt);
          if(genPt<=0) return toReturn;
-         
+
          // FIXME: These are the 8 TeV values.
          //
          eta=fabs(eta);
@@ -61,7 +62,7 @@ namespace utils
          toReturn[2]=TMath::Max(0.,((genPt+(ptSF-ptSF_err)*(pt-genPt)))/pt);
          return toReturn;
      }
-     
+
      //
      std::vector<float> smearJES(double pt, double eta, JetCorrectionUncertainty *jecUnc){
          jecUnc->setJetEta(eta);
@@ -72,11 +73,11 @@ namespace utils
          toRet.push_back((1.0-relShift));
          return toRet;
      }
-     
+
      void updateJEC(pat::JetCollection& jets, FactorizedJetCorrector *jesCor, JetCorrectionUncertainty *totalJESUnc, float rho, int nvtx,bool isMC){
          for(size_t ijet=0; ijet<jets.size(); ijet++){
              pat::Jet& jet = jets[ijet];
-             
+
              //correct JES
              LorentzVector rawJet = jet.correctedP4("Uncorrected");
 
@@ -94,10 +95,10 @@ namespace utils
              if(isMC){
                  const reco::GenJet* genJet=jet.genJet();
                  if(genJet){
-                   double genjetpt( genJet ? genJet->pt(): 0.);                    
+                   double genjetpt( genJet ? genJet->pt(): 0.);
                     std::vector<double> smearJER=utils::cmssw::smearJER(jet.pt(),jet.eta(),genjetpt);
                     jet.setP4(jet.p4()*smearJER[0]);
-                
+
                     //printf("jet pt=%f gen pt = %f smearing %f %f %f\n", jet.pt(), genjetpt, smearJER[0], smearJER[1], smearJER[2]);
                     // //set the JER up/down alternatives
                     if(smearJER[0]==0) {
@@ -128,26 +129,26 @@ namespace utils
                 jet.addUserFloat("_scale_jup",    ptUnc[0] );
                 jet.addUserFloat("_scale_jdown",  ptUnc[1] );
              }
-             
+
              // FIXME: this is not to be re-set. Check that this is a desired non-feature.
              // i.e. check that the uncorrectedJet remains the same even when the corrected momentum is changed by this routine.
              //to get the raw jet again
              //jets[ijet].setVal("torawsf",1./(newJECSF*newJERSF));
          }
      }
-     
+
 //    //
 //    std::vector<LorentzVector> getMETvariations(LorentzVector &rawMETP4, pat::JetCollection &jets, std::vector<patUtils::GenericLepton> &leptons,bool isMC)
 //    {
 //      std::vector<LorentzVector> newMetsP4(9,rawMETP4);
 //      if(!isMC) return newMetsP4;
-//      
+//
 //      LorentzVector nullP4(0,0,0,0);
-//      
+//
 //      //recompute the clustered and unclustered fluxes with energy variations
 //      for(size_t ivar=1; ivar<=8; ivar++)
 //        {
-//          
+//
 //          //leptonic flux
 //          LorentzVector leptonFlux(nullP4), lepDiff(nullP4);
 //          for(size_t ilep=0; ilep<leptons.size(); ilep++) {
@@ -162,7 +163,7 @@ namespace utils
 //            leptonFlux += leptons[ilep];
 //            lepDiff += (sf-1)*leptons[ilep];
 //          }
-//      
+//
 //          //clustered flux
 //          LorentzVector jetDiff(nullP4), clusteredFlux(nullP4);
 //          for(size_t ijet=0; ijet<jets.size(); ijet++)
@@ -183,25 +184,25 @@ namespace utils
 //          if(ivar==UMETUP || ivar==UMETDOWN)
 //            {
 //              LorentzVector unclusteredFlux=-(iMet+clusteredFlux+leptonFlux);
-//              unclusteredFlux *= (ivar==UMETUP ? 1.1 : 0.9); 
+//              unclusteredFlux *= (ivar==UMETUP ? 1.1 : 0.9);
 //              iMet = -clusteredFlux -leptonFlux - unclusteredFlux;
 //            }
-//      
+//
 //          //save new met
 //          newMetsP4[ivar]=iMet;
 //        }
-//  
+//
 //      //all done here
 //      return newMetsP4;
 //    }
-//    
+//
     //
     const reco::Candidate *getGeneratorFinalStateFor(const reco::Candidate *p, bool isSherpa)
     {
       if(p==0) return 0;
-      
+
       const reco::Candidate *prevState=p;
-      do{	
+      do{
 	const reco::Candidate *nextState=0;
 	int nDaughters = prevState->numberOfDaughters();
 	for(int iDaughter=0; iDaughter<nDaughters; iDaughter++)
@@ -209,7 +210,7 @@ namespace utils
 	    const reco::Candidate *dau = prevState->daughter(iDaughter);
 	    if(dau==0) continue;
 	    if(dau->pdgId()!= p->pdgId()) continue;
-	    nextState=dau;	   
+	    nextState=dau;
 	    break;
 	  }
 	if(nextState==0) break;
@@ -225,7 +226,7 @@ namespace utils
       int absid=abs(pdgId);
       return ( (absid>= 5122 && absid<= 5554) ||    //baryons
 	       (absid>=20513 && absid<=20543) ||    //mesons
-	       (absid>=10511 && absid<=10543) || 
+	       (absid>=10511 && absid<=10543) ||
 	       (absid>=  511 && absid<=  545) ||
 	       (absid>=  551 && absid<=  557) ||    //bbar mesons
 	       (absid>=10551 && absid<=10557) ||
@@ -240,7 +241,7 @@ namespace utils
     {
       std::vector<float> toReturn(3,pt);
       if(genPt<=0) return toReturn;
-      
+
       //
       eta=fabs(eta);
       double ptSF(1.0), ptSF_err(0.06);
@@ -268,8 +269,8 @@ namespace utils
          toReturn[1]=TMath::Max(0.,((genPt+(ptSF+ptSF_err)*(pt-genPt)))/pt);
          toReturn[2]=TMath::Max(0.,((genPt+(ptSF-ptSF_err)*(pt-genPt)))/pt);
          return toReturn;
-      
-      
+
+
     }
 
     //
@@ -293,7 +294,7 @@ namespace utils
       TH1F *puup=(TH1F *)pu->Clone("puuptmp");
       TH1F *pudown=(TH1F *)pu->Clone("pudowntmp");
       for(size_t i=0; i<Lumi_distr.size(); i++)  pu->SetBinContent(i+1,Lumi_distr[i]);
-      
+
       for(int ibin=1; ibin<=pu->GetXaxis()->GetNbins(); ibin++)
 	{
 	  Double_t xval=pu->GetBinCenter(ibin);
@@ -302,7 +303,7 @@ namespace utils
 	    {
 	      if(ibin+ishift<0) continue;
 	      if(ibin+ishift>pu->GetXaxis()->GetNbins()) continue;
-	      
+
 	      gr->SetPoint(gr->GetN(),xval+ishift,pu->GetBinContent(ibin+ishift));
 	    }
 	  if(gr->GetN()>1)
@@ -316,20 +317,20 @@ namespace utils
 	}
       puup->Scale(pu->Integral()/puup->Integral());
       pudown->Scale(pu->Integral()/pudown->Integral());
-      std::cout << "getPUshifts will shift average PU by " << puup->GetMean()-pu->GetMean() << " / " << pudown->GetMean()-pu->GetMean() << std::endl; 
-      
+      std::cout << "getPUshifts will shift average PU by " << puup->GetMean()-pu->GetMean() << " / " << pudown->GetMean()-pu->GetMean() << std::endl;
+
       puup->Divide(pu);    TGraph *puupWgt = new TGraph(puup);
       pudown->Divide(pu);  TGraph *pudownWgt = new TGraph(pudown);
       delete puup;
-      delete pudown;  
+      delete pudown;
       delete pu;
-      
+
       PuShifter_t res(2);
       res[PUDOWN] = pudownWgt;
       res[PUUP]   = puupWgt;
       return res;
     }
-    
+
 
     //
     Float_t getEffectiveArea(int id,float eta,TString isoSum)
@@ -338,7 +339,7 @@ namespace utils
 
       if(abs(id)==11){ // electron
 	//Summer16 EA (Recommended for Moriond) : https://indico.cern.ch/event/482673/contributions/2187022/attachments/1282446/1905912/talk_electron_ID_spring16.pdf
-	
+
         if(fabs(eta)<1.0)				Aeff=0.1703;
         else if(fabs(eta)>1.0 && fabs(eta)<1.479)	Aeff=0.1715;
         else if(fabs(eta)>1.479 && fabs(eta)<2.0)	Aeff=0.1213;
@@ -391,10 +392,10 @@ namespace utils
 //          return -1;
 //      }
 //   }
-    
-    
+
+
     void getSingleMuTrigEff(const double& pt, const double& abseta, double& muontriggerefficiency){
-      // Muon trigger/ID/Iso scale factors for efficiency are taken from https://twiki.cern.ch/twiki/bin/viewauth/CMS/MuonReferenceEffs                                                                                                                                           
+      // Muon trigger/ID/Iso scale factors for efficiency are taken from https://twiki.cern.ch/twiki/bin/viewauth/CMS/MuonReferenceEffs
       if(abseta>=0. && abseta <0.9){ // ABCD
 	if(pt>=140. /*&& pt<500.*/) muontriggerefficiency=0.98041749810533507;
 	if(pt>=25.  && pt<30.)      muontriggerefficiency=0.98372524384334614;
@@ -426,7 +427,7 @@ namespace utils
 	if(pt>=90.  && pt<140.)     muontriggerefficiency=0.98187598993908232;
       }
     }
- 
+
 
 //___________________________________Slew Rate Effect in Electron _________________________________
 
@@ -471,7 +472,7 @@ namespace utils
 
     if(value==0.0 && error==0.0)return string("");
     if(value==0.0){value=error; ValueWasNull=true;}
-    
+
     if(!doPowers){
       char tmpchar[255];
       if(systError<0)
@@ -480,12 +481,12 @@ namespace utils
 	sprintf(tmpchar,"$%.0f\\pm%.0f\\pm%.0f$",value,error,systError);
       return string(tmpchar);
     }
-    
+
     double power = floor(log10(value));
     if(power<=-3)     {power=power+3;}
     else if(power>=2) {power=power-2;}
     else              {power=0;}
-    
+
     value = value / pow(10,power);
     error = error / pow(10,power);
     if(systError>=0)systError = systError / pow(10,power);
@@ -496,8 +497,8 @@ namespace utils
       ValueFloating = 1 + std::max(-1*log10(systError), std::max(-1*log10(error),0.0));
     }
     int ErrorFloating = ValueFloating;
-    
- 
+
+
     if(ValueWasNull){value=0.0;}
 
     char tmpchar[255];
@@ -514,7 +515,7 @@ namespace utils
          }else{
            sprintf(tmpchar,"$(%.*f\\pm%.*f\\pm%.*f)\\times 10^{%g}$",ValueFloating,value,ErrorFloating,error,ErrorFloating,systError,power);
          }
-         
+
        }else{
          if(systError<0){
            sprintf(tmpchar,"$%.*f\\pm%.*f$",ValueFloating,value,ErrorFloating,error);
@@ -531,8 +532,8 @@ namespace utils
   {
     expr = "$"+expr;
     expr += "$";
-    expr.ReplaceAll("mu","\\mu"); 
-    expr.ReplaceAll("_"," "); 
+    expr.ReplaceAll("mu","\\mu");
+    expr.ReplaceAll("_"," ");
     expr.ReplaceAll("#","\\");
   }
 
@@ -548,7 +549,7 @@ namespace utils
 	{
 	   unsigned long Total = 0;
 	   for(unsigned int f=0;f<urls.size();f++){
-	      TFile *file = TFile::Open(urls[f].c_str());      
+	      TFile *file = TFile::Open(urls[f].c_str());
 	      fwlite::LuminosityBlock ls( file );
 	      for(ls.toBegin(); !ls.atEnd(); ++ls){
 		 fwlite::Handle<edm::MergeableCounter> nEventsTotalCounter;
@@ -573,14 +574,14 @@ namespace utils
              genEventInfoHandle.getByLabel(ev, "generator");
              if(!genEventInfoHandle.isValid()){fast=true; break;} //if this object is missing, it's likely missing for the entire sample, move to the fast method
              if(weightSum){toReturn+=genEventInfoHandle->weight();
-             }else{                 
+             }else{
                if(genEventInfoHandle->weight()<0){toReturn--;}else{toReturn++;}
              }
           }
        }
 
        if(fast){
-          toReturn += ev.size();          
+          toReturn += ev.size();
        }
        delete file;
      }
@@ -647,7 +648,7 @@ namespace utils
   bool isGoodVertex(reco::Vertex& vtx)
   {
 
-    if(vtx.chi2()==0 && vtx.ndof()==0) return false; // Corresponds to the AOD method vtx->isFake()  
+    if(vtx.chi2()==0 && vtx.ndof()==0) return false; // Corresponds to the AOD method vtx->isFake()
 
     if(vtx.ndof() < 4)            return false;
     if(abs(vtx.z())>24.)          return false;
@@ -655,7 +656,7 @@ namespace utils
     // else
     return true;
   }
-  
+
 
 
   void getPileupNormalization(std::vector<float>& mcpileup, double* PUNorm, edm::LumiReWeighting* LumiWeights, utils::cmssw::PuShifter_t PuShifters){
@@ -672,7 +673,6 @@ namespace utils
     PUNorm[1]/=NEvents;
     PUNorm[2]/=NEvents;
   }
-
 
 
   bool passTriggerPatternsAndGetName(edm::TriggerResultsByName& tr, std::string& pathName, std::string pattern){
@@ -714,8 +714,8 @@ namespace utils
      }
      return false;
   }
-  
-  
+
+
    void getHiggsLineshapeFromMiniAOD(std::vector<std::string>& urls, TH1D* hGen){
       if(!hGen)return;
       hGen->Reset();
@@ -732,11 +732,11 @@ namespace utils
 	  for(size_t igen=0; igen<gen.size(); igen++){
 	     if(!gen[igen].isHardProcess()) continue;
 	     if(abs(gen[igen].pdgId())>=11 && abs(gen[igen].pdgId())<=16){ higgs += gen[igen].p4(); }
-	  }         
+	  }
           hGen->Fill(higgs.mass());
        }
        delete file;
      }
   }
- 
+
 }
