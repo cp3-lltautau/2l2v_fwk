@@ -188,11 +188,12 @@ class ZHTauTauAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> 
       int tauDecayMode(const reco::GenParticle *genParticle);
 
       // ----------member data ---------------------------
-      SmartSelectionMonitor mon;
+
 
       /// file service
       edm::Service<TFileService> fs;
 
+      SmartSelectionMonitor mon;
       // configure the process
 
       bool isMC;
@@ -202,7 +203,7 @@ class ZHTauTauAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> 
       int mctruthmode;
       TString dtag;
       TString suffix;
-      std::vector<std::string> urls;
+      //FIXME std::vector<std::string> urls;
       TString outUrl;
       TString jecDir;
       TString rocChorPath;
@@ -337,7 +338,7 @@ ZHTauTauAnalyzer::ZHTauTauAnalyzer(const edm::ParameterSet& iConfig):
   mctruthmode(iConfig.getParameter<int>("mctruthmode")),
   dtag(iConfig.getParameter<std::string>("dtag")),
   suffix(iConfig.getParameter<std::string>("suffix")),
-  urls(iConfig.getUntrackedParameter<std::vector<std::string> >("input")),
+  //FIXME urls(iConfig.getUntrackedParameter<std::vector<std::string> >("input")),
   outUrl(iConfig.getParameter<std::string>("outfile")),
   jecDir(iConfig.getParameter<std::string>("jecDir")),
   rocChorPath(iConfig.getUntrackedParameter<std::string>("rocChorPath",std::string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/rcdata.2016.v3")),
@@ -563,12 +564,12 @@ ZHTauTauAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
     if (ngenITpu == 0) return; // It prevents to fill vtxraw with -nan values
 
-    puWeight          = LumiWeights->weight(ngenITpu) * PUNorm[0];
+    puWeight          = 1; //FIXME LumiWeights->weight(ngenITpu) * PUNorm[0];
     // if ( puWeight == 0 ){
     //   std::cout<<"  Some Problem in with ngenITpu= " << ngenITpu << "vtx size= "<<vtx.size() <<std::endl;
     // }
-    puWeightUp  = PuShifters[utils::cmssw::PUUP  ]->Eval(ngenITpu) * (PUNorm[2]/PUNorm[0]);
-    puWeightDown = PuShifters[utils::cmssw::PUDOWN]->Eval(ngenITpu) * (PUNorm[1]/PUNorm[0]);
+    //FIXME puWeightUp  = PuShifters[utils::cmssw::PUUP  ]->Eval(ngenITpu) * (PUNorm[2]/PUNorm[0]);
+    //FIXME puWeightDown = PuShifters[utils::cmssw::PUDOWN]->Eval(ngenITpu) * (PUNorm[1]/PUNorm[0]);
     weight *= puWeight;
 
     //Z and Higgs GEN Level flavour
@@ -2004,7 +2005,8 @@ ZHTauTauAnalyzer::beginJob()
   //######## GET READY FOR THE EVENT LOOP ########
   //##############################################
   //MC normalization (to 1/pb)
-  if(isMC) xsecWeight=xsec/utils::getTotalNumberOfEvents(urls, false, true);//need to use the slow method in order to take NLO negative events into account
+  // if(isMC) xsecWeight=xsec/utils::getTotalNumberOfEvents(urls, false, true);//need to use the slow method in order to take NLO negative events into account
+  xsecWeight = 1;
 
   //MET CORRection level
   metcor = pat::MET::METCorrectionLevel::Type1XY;
@@ -2051,20 +2053,20 @@ ZHTauTauAnalyzer::beginJob()
   //pileup weighting
   LumiWeights = NULL;
 
-  if(isMC){
-    std::vector<float> dataPileupDistribution;
-    for(unsigned int i=0;i<dataPileupDistributionDouble.size();i++){
-      dataPileupDistribution.push_back(dataPileupDistributionDouble[i]);
-    }
-    std::vector<float> mcPileupDistribution;
-
-    utils::getMCPileupDistributionFromMiniAOD(urls,dataPileupDistribution.size(), mcPileupDistribution);
-    while(mcPileupDistribution.size()<dataPileupDistribution.size())  mcPileupDistribution.push_back(0.0);
-    while(mcPileupDistribution.size()>dataPileupDistribution.size())dataPileupDistribution.push_back(0.0);
-    LumiWeights = new edm::LumiReWeighting(mcPileupDistribution,dataPileupDistribution);
-    PuShifters=utils::cmssw::getPUshifters(dataPileupDistribution,0.05);
-    utils::getPileupNormalization(mcPileupDistribution, PUNorm, LumiWeights, PuShifters);
-  }
+  //FIXME if(isMC){
+  //   std::vector<float> dataPileupDistribution;
+  //   for(unsigned int i=0;i<dataPileupDistributionDouble.size();i++){
+  //     dataPileupDistribution.push_back(dataPileupDistributionDouble[i]);
+  //   }
+  //   std::vector<float> mcPileupDistribution;
+  //
+  //   utils::getMCPileupDistributionFromMiniAOD(urls,dataPileupDistribution.size(), mcPileupDistribution);
+  //   while(mcPileupDistribution.size()<dataPileupDistribution.size())  mcPileupDistribution.push_back(0.0);
+  //   while(mcPileupDistribution.size()>dataPileupDistribution.size())dataPileupDistribution.push_back(0.0);
+  //   LumiWeights = new edm::LumiReWeighting(mcPileupDistribution,dataPileupDistribution);
+  //   PuShifters=utils::cmssw::getPUshifters(dataPileupDistribution,0.05);
+  //   utils::getPileupNormalization(mcPileupDistribution, PUNorm, LumiWeights, PuShifters);
+  // }
 
   if(!isMC) {
     if(is2015data){
@@ -2088,6 +2090,8 @@ ZHTauTauAnalyzer::beginJob()
 void
 ZHTauTauAnalyzer::endJob()
 {
+  fs->cd();
+  mon.Write();
 }
 
 
