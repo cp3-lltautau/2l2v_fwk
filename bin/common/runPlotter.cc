@@ -80,15 +80,15 @@ std::vector<string> keywords;
 std::unordered_map<string, std::vector<string> > MissingFiles;
 std::unordered_map<string, std::vector<string> > DSetFiles;
 
-class RunInfo: public TObject{
-  float lumi;
-  int numFiles;
-
-public:
-  RunInfo():lumi(0.),numFiles(0){}
-  RunInfo( double _lumi, int _numFile ):lumi(_lumi),numFiles(_numFile){}
-
-};
+// class RunInfo: public TObject{
+//   float lumi;
+//   int numFiles;
+//
+// public:
+//   RunInfo():lumi(0.),numFiles(0){}
+//   RunInfo( double _lumi, int _numFile ):lumi(_lumi),numFiles(_numFile){}
+//
+// };
 
 struct NameAndType{
    std::string name;
@@ -592,7 +592,13 @@ void SavingToFile(JSONWrapper::Object& Root, std::string RootDir, TFile* OutputF
          std::vector<string>& fileList = DSetFiles[(Samples[j])["dtag"].toString()+filtExt];
          if(!Process[i].getBoolFromKeyword(matchingKeyword, "isdata", false) && !Process[i].getBoolFromKeyword(matchingKeyword, "isdatadriven", false)){Weight= iLumi/fileList.size();}else{Weight=1.0;}
 
-         RunInfo *info = new RunInfo(iLumi, fileList.size());
+         // RunInfo *info = new RunInfo(iLumi, fileList.size());
+         char lumiValue[30];
+         char numOfFiles[30];
+         sprintf(lumiValue, "%f", iLumi);
+         sprintf(numOfFiles, "%lu", fileList.size());
+         TObjString* LumiProcessed( new TObjString(lumiValue) );
+         TObjString* FilesProcessed( new TObjString(numOfFiles) );
          for(int f=0;f<fileList.size();f++){
            if(IndexFiles%NFilesStep==0){printf(".");fflush(stdout);} IndexFiles++;
            TFile* File = new TFile(fileList[f].c_str());
@@ -613,7 +619,8 @@ void SavingToFile(JSONWrapper::Object& Root, std::string RootDir, TFile* OutputF
                     TTree* weightTree = new TTree((HistoProperties.name+"_PWeight").c_str(),"plotterWeight");
                     weightTree->Branch("plotterWeight",&Weight,"plotterWeight/F");
                     weightTree->SetDirectory(subdir);
-                    weightTree->GetUserInfo()->Add(info);
+                    weightTree->GetUserInfo()->Add(LumiProcessed);
+                    weightTree->GetUserInfo()->Add(FilesProcessed);
                     for(unsigned int i=0;i<((TTree*)inobj)->GetEntries();i++){weightTree->Fill();}
                  }else{
                     outtree->CopyEntries(((TTree*)inobj), -1, "fast");

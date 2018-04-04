@@ -395,14 +395,14 @@ int main(int argc, char* argv[])
   mon.addHistogram( new TH1F( "traileriso"     ,  ";#I_{trail};Events", 20,0.,1.) );
   mon.addHistogram( new TH1F( "leppt"       ,  ";p_{T}^{lepton} (GeV);Events/10 GeV", 50,0,500) );
   mon.addHistogram( new TH1F( "lepeta"      ,  ";#eta_{lepton};Events", 50,-2.6,2.6) );
-  
+
   // zll control
   mon.addHistogram( new TH1F( "zlly",      		";y_{ll};Events", 50,-6,6) );
   mon.addHistogram( new TH1F( "zlleta",    		";#eta_{ll};Events", 50,-10,10) );
   mon.addHistogram( new TH1F( "zllpt",     		";p_{T}^{ll} (GeV) ;Events/10 GeV", 50,0,500) );
   mon.addHistogram( new TH1F( "zllmass",   		";M_{ll} (GeV);Events/2 GeV", 80,20,180) );
   mon.addHistogram( new TH1F( "nlep",      	";Number of Leptons;Events", 10,0,10) );
-  
+
   float ptbinsJets[] = {10, 20, 30, 40, 60, 80, 100, 125, 150, 175,250,350,1000};
   int ptbinsJetsN = sizeof(ptbinsJets)/sizeof(float)-1;
   mon.addHistogram( new TH1F( "wrtJetPt",  ";Jet p_{T} (GeV);Events",sizeof(ptbinsJets)/sizeof(float)-1,ptbinsJets));
@@ -781,11 +781,11 @@ int main(int argc, char* argv[])
       if(filterOnlyEE)       { passTrigger = eeTrigger     && !muTrigger  && !mumuTrigger;}
       if(filterOnlyE)        { passTrigger = eTrigger      && !eeTrigger  && !muTrigger && !mumuTrigger; }
       if(filterOnlyEMU)      { passTrigger = emuTrigger    && !eTrigger   && !eeTrigger && !muTrigger && !mumuTrigger; }
-  
+
       if(filterOnlyMUMU && passTrigger) treeTriggerFiredBits.set(0);
       if(filterOnlyMU && passTrigger)   treeTriggerFiredBits.set(1);
-      if(filterOnlyEE && passTrigger)   treeTriggerFiredBits.set(2); 
-      if(filterOnlyE && passTrigger)    treeTriggerFiredBits.set(3); 
+      if(filterOnlyEE && passTrigger)   treeTriggerFiredBits.set(2);
+      if(filterOnlyE && passTrigger)    treeTriggerFiredBits.set(3);
   }
 
     if(passTrigger){
@@ -1234,7 +1234,7 @@ int main(int argc, char* argv[])
               mon.fillHisto("zllpt"         ,   chTags, zll.pt(),      weight);
               mon.fillHisto("zlleta"        ,   chTags, zll.eta(),     weight);
               mon.fillHisto("zlly"          ,   chTags, zll.Rapidity(),weight);
-	mon.fillHisto("zllmass"          ,   chTags, zll.mass(),    weight);        
+	mon.fillHisto("zllmass"          ,   chTags, zll.mass(),    weight);
 // cout<<"  ##RECO##  Z Lepton 1:  pt = "<<(*dilLep1).pt()<<"  eta = "<<(*dilLep1).eta()<<"  phi = "<<(*dilLep1).phi()<<endl;
         // // if ( selLeptons[dilLep1].genParticle() ) cout<<"    ##RECO (GEN Match)##  Z Lepton 1:  pt = "<<(selLeptons[dilLep1].genParticle())->pt()<<"  eta = "<<(selLeptons[dilLep1].genParticle())->eta()<<"  phi = "<<(selLeptons[dilLep1].genParticle())->phi()<<endl;
         // cout<<"  ##RECO##  Z Lepton 2:  pt = "<<(*dilLep2).pt()<<"  eta = "<<(*dilLep2).eta()<<"  phi = "<<(*dilLep2).phi()<<endl;
