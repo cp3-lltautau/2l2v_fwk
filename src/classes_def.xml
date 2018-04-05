@@ -1,4 +1,5 @@
 <lcgdict>
     <class name="ntupleutils::EventInfo"/>
     <class name="ntupleutils::Weights"/>
+    <class name="ntupleutils::analysis::gen_truth::LheSummary"/>
 </lcgdict>

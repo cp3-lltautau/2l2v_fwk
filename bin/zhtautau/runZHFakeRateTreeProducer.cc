@@ -53,6 +53,12 @@
 #include "UserCode/llvv_fwk/interface/EwkCorrections.h"
 #include "UserCode/llvv_fwk/interface/ZZatNNLO.h"
 #include "UserCode/llvv_fwk/interface/FRWeights.h"
+//ClassicSVfit
+#include "TauAnalysis/ClassicSVfit/interface/ClassicSVfit.h"
+#include "TauAnalysis/ClassicSVfit/interface/MeasuredTauLepton.h"
+#include "TauAnalysis/ClassicSVfit/interface/svFitHistogramAdapter.h"
+#include "TauAnalysis/SVfitTF/interface/HadTauTFCrystalBall2.h"
+
 
 // root includes
 
@@ -69,8 +75,133 @@
 #include "TNtuple.h"
 #include "TLorentzVector.h"
 #include <Math/VectorUtil.h>
+#include <bits/stdc++.h>
 
 using namespace std;
+//***********************************************************************************************//
+LorentzVector getClassicSVFit(pat::MET met, patUtils::GenericLepton firstLepton, patUtils::GenericLepton secondLepton)
+//***********************************************************************************************//
+{
+  using namespace classic_svFit;
+
+  LorentzVector pEmpty(0,0,0,0);
+
+  TMatrixD covMET(2, 2); // PFMET significance matrix
+
+  covMET[0][0] = met.getSignificanceMatrix()(0,0);
+  covMET[0][1] = met.getSignificanceMatrix()(0,1);
+  covMET[1][0] = met.getSignificanceMatrix()(1,0);
+  covMET[1][1] = met.getSignificanceMatrix()(1,1);
+
+  // std::cout<<"MET MATRIX: " << covMET[0][0] << " " << covMET[0][1] << " " << covMET[1][0] << " " << covMET[1][1] << "\n";
+
+  int dlid = abs( firstLepton.pdgId() * secondLepton.pdgId() );
+
+  //std::cout<<"\n"<<firstLepton.pdgId() << "  " << secondLepton.pdgId() << " Di-Tau ID ------------> " << dlid << std::endl;
+
+  if ( dlid == 11*15 || dlid == 13*15){
+    if (abs(firstLepton.pdgId()) == 15) {
+      // Switching leptons in semileptonic pairs:
+      // e and mu should be passed as first MesuredTauLepton
+      patUtils::GenericLepton temp = firstLepton;
+      firstLepton  = secondLepton;
+      secondLepton = temp;
+    }
+  }
+
+  std::vector<classic_svFit::MeasuredTauLepton> measuredTauLeptons;
+
+  if ( dlid == 11*15 ){
+    //std::cout<< " ETau Pair --- > "<< firstLepton.pdgId() << "  " << secondLepton.pdgId() << std::endl;
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToElecDecay, firstLepton.pt(), firstLepton.eta(),
+								    firstLepton.phi(), classic_svFit::electronMass) );
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToHadDecay, secondLepton.pt(), secondLepton.eta(),
+								    secondLepton.phi(), secondLepton.mass(), secondLepton.tau.decayMode()) );
+  }
+  else if( dlid == 13*15 ){
+    //std::cout<< " MuTau Pair --- > "<< firstLepton.pdgId() << "  " << secondLepton.pdgId() << std::endl;
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToMuDecay, firstLepton.pt(), firstLepton.eta(),
+								    firstLepton.phi(), classic_svFit::muonMass) );
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToHadDecay, secondLepton.pt(), secondLepton.eta(),
+								    secondLepton.phi(), secondLepton.mass(), secondLepton.tau.decayMode()) );
+  }
+  else if ( dlid == 15*15 ){
+    //std::cout<< " TauTau Pair --- > "<< firstLepton.pdgId() << "  " << secondLepton.pdgId() << std::endl;
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToHadDecay, firstLepton.pt(), firstLepton.eta(),
+								    firstLepton.phi(), firstLepton.mass(), firstLepton.tau.decayMode()) );
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToHadDecay, secondLepton.pt(), secondLepton.eta(),
+								    secondLepton.phi(), secondLepton.mass(), secondLepton.tau.decayMode()) );
+  }
+  else if (dlid == 13*11 ){
+    //std::cout<< " EMu Pair  --->"<< firstLepton.pdgId() << "  " << secondLepton.pdgId() << std::endl;
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToElecDecay, firstLepton.pt(), firstLepton.eta(),
+								    firstLepton.phi(), classic_svFit::electronMass) );
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToMuDecay, secondLepton.pt(), secondLepton.eta(),
+								    secondLepton.phi(), classic_svFit::muonMass) );
+  }
+  else if (dlid == 13*13){
+    //std::cout<< " EE Pair  --->"<< firstLepton.pdgId() << "  " << secondLepton.pdgId() << std::endl;
+        measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToMuDecay, firstLepton.pt(), firstLepton.eta(),
+								    firstLepton.phi(), classic_svFit::muonMass) );
+	measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToMuDecay, secondLepton.pt(), secondLepton.eta(),
+								    secondLepton.phi(), classic_svFit::muonMass) );
+  }
+  else if (dlid == 11*11){
+    //std::cout<< " EE Pair  --->"<< firstLepton.pdgId() << "  " << secondLepton.pdgId() << std::endl;
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToElecDecay, firstLepton.pt(), firstLepton.eta(),
+								    firstLepton.phi(), classic_svFit::electronMass) );
+    measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToElecDecay, secondLepton.pt(), secondLepton.eta(),
+								    secondLepton.phi(), classic_svFit::electronMass) );
+  }
+  else return (firstLepton.p4()+secondLepton.p4());
+
+
+  int verbosity = 0;
+  ClassicSVfit *svFitAlgo = new ClassicSVfit(verbosity);
+#ifdef USE_SVFITTF
+  // HadTauTFCrystalBall2* hadTauTF = new HadTauTFCrystalBall2();
+  // svFitAlgo->setHadTauTF(hadTauTF);
+  // svFitAlgo->enableHadTauTF();
+#endif
+  //svFitAlgo.addLogM_fixed(false);
+  svFitAlgo->addLogM_fixed(true, 6.);
+  //svFitAlgo.addLogM_dynamic(true, "(m/1000.)*15.");
+  //svFitAlgo.setMaxObjFunctionCalls(100000); // CV: default is 100000 evaluations of integrand per event
+  //svFitAlgo.setLikelihoodFileName("testClassicSVfit.root");
+  svFitAlgo->integrate(measuredTauLeptons, met.px(), met.py() , covMET);
+  bool isValidSolution = svFitAlgo->isValidSolution();
+
+  DiTauSystemHistogramAdapter* DiTauSystemPtr = static_cast<DiTauSystemHistogramAdapter*>(svFitAlgo->getHistogramAdapter());
+
+  double mass = DiTauSystemPtr->getMass();
+  double massErr = DiTauSystemPtr->getMassErr();
+  double transverseMass = DiTauSystemPtr->getTransverseMass();
+  double transverseMassErr = DiTauSystemPtr->getTransverseMassErr();
+  double pt = DiTauSystemPtr->getPt();
+  double ptErr = DiTauSystemPtr->getPtErr();
+  double eta = DiTauSystemPtr->getEta();
+  double phi = DiTauSystemPtr->getPhi();
+
+  double p  = pt*TMath::CosH(eta);
+  double px = pt*TMath::Cos(phi);
+  double py = pt*TMath::Sin(phi);
+  double pz = pt*TMath::SinH(eta);
+  double energy = TMath::Sqrt(p*p + mass*mass);
+  LorentzVector p4(px, py, pz, energy);
+  // if ( isValidSolution ) {
+  //   std::cout << "\t-------- ClassicSVfit --------"<<endl;
+  //   std::cout << "found valid solution: mass = " << mass << " +/- " << massErr << " \n,"
+  //             << " transverse mass = " << transverseMass << " +/- " << transverseMassErr << " \n,"
+  //             << " pt = " << pt << " +/- " << ptErr << std::endl;
+  // } else {
+  //   std::cout << "sorry, failed to find valid solution !!" << std::endl;
+  // }
+  delete svFitAlgo;
+#ifdef USE_SVFITTF
+  // delete hadTauTF;
+#endif
+  return p4;
+}
 
 
 //**********************************************************************************************//
@@ -255,7 +386,22 @@ int main(int argc, char* argv[])
   printf("Definition of plots");
 
   //event selection
+  //Z leptons kinematics control
+  mon.addHistogram( new TH1F( "leadpt"      ,  ";p_{T}^{lead} (GeV);Events/10 GeV", 50,0,500) );
+  mon.addHistogram( new TH1F( "leadeta"     ,  ";#eta_{lead};Events", 50,-2.6,2.6) );
+  mon.addHistogram( new TH1F( "leadiso"     ,  ";#I_{lead};Events", 20,0.,1.) );
+  mon.addHistogram( new TH1F( "trailerpt"   ,  ";p_{T}^{trail} (GeV);Events/10 GeV", 50,0,500) );
+  mon.addHistogram( new TH1F( "trailereta"  ,  ";#eta_{trail};Events", 50,-2.6,2.6) );
+  mon.addHistogram( new TH1F( "traileriso"     ,  ";#I_{trail};Events", 20,0.,1.) );
+  mon.addHistogram( new TH1F( "leppt"       ,  ";p_{T}^{lepton} (GeV);Events/10 GeV", 50,0,500) );
+  mon.addHistogram( new TH1F( "lepeta"      ,  ";#eta_{lepton};Events", 50,-2.6,2.6) );
 
+  // zll control
+  mon.addHistogram( new TH1F( "zlly",      		";y_{ll};Events", 50,-6,6) );
+  mon.addHistogram( new TH1F( "zlleta",    		";#eta_{ll};Events", 50,-10,10) );
+  mon.addHistogram( new TH1F( "zllpt",     		";p_{T}^{ll} (GeV) ;Events/10 GeV", 50,0,500) );
+  mon.addHistogram( new TH1F( "zllmass",   		";M_{ll} (GeV);Events/2 GeV", 80,20,180) );
+  mon.addHistogram( new TH1F( "nlep",      	";Number of Leptons;Events", 10,0,10) );
 
   float ptbinsJets[] = {10, 20, 30, 40, 60, 80, 100, 125, 150, 175,250,350,1000};
   int ptbinsJetsN = sizeof(ptbinsJets)/sizeof(float)-1;
@@ -267,10 +413,12 @@ int main(int argc, char* argv[])
 
   //create a tree and related variables to save higgs candidate info for each cutIndex values
   ntupleutils::Weights *eventWeights = nullptr;
+  ntupleutils::analysis::gen_truth::LheSummary *lheSummary = nullptr;
   unsigned int  treeEventId;
   unsigned int  treeLumiId;
   unsigned int  treeRunId;
   float         treeNumEvents;
+  bitset<4>     treeTriggerFiredBits;
   int           treeDoubleTriggerMatch;
   int           treeLepIsMatched;
   int           treeZId;
@@ -305,16 +453,18 @@ int main(int argc, char* argv[])
   int           treeLep4PdgId;
   unsigned char treeLep4ID;
   float         treeLep4Iso;
-
+  LorentzVector treeDiTauSVfitCandidate;
 
   TFile *ofile=TFile::Open("out.root", "recreate");
 
   TTree* tree = new TTree("CandTree","CandTree");
   tree->Branch("EventWeights",&eventWeights);
+  tree->Branch("LHESummary",&lheSummary);
   tree->Branch("eventId", &treeEventId , string("eventId/i" ).c_str());
   tree->Branch("lumiId" , &treeLumiId  , string("lumiId/i"  ).c_str());
   tree->Branch("runId"  , &treeRunId   , string("runId/i"   ).c_str());
   tree->Branch("numEvents" , &treeNumEvents  , string("numEvents/F"  ).c_str());
+  tree->Branch("triggerFiredBits",     &treeTriggerFiredBits    , string("triggerFiredBits/b" ).c_str());
   tree->Branch("doubleTriggerMatch",     &treeDoubleTriggerMatch    , string("doubleTriggerMatch/I" ).c_str());
   tree->Branch("lepIsMatched" , &treeLepIsMatched , string("lepIsMatched/I").c_str());
   tree->Branch("zId",     &treeZId     , string("zId/I" ).c_str());
@@ -354,7 +504,8 @@ int main(int argc, char* argv[])
   tree->Branch("lep4PdgId" , &treeLep4PdgId  , string("lep4PdgId/I"  ).c_str());
   tree->Branch("lep4ID", &treeLep4ID , string("lep4ID/b" ).c_str());
   tree->Branch("lep4Iso", &treeLep4Iso , string("lep4Iso/F" ).c_str());
-
+  /* di-tau system */
+  tree->Branch("diTauSVfitCandidate",     &treeDiTauSVfitCandidate );
 
   //##############################################
   //######## GET READY FOR THE EVENT LOOP ########
@@ -486,6 +637,7 @@ int main(int argc, char* argv[])
     for(ev.toBegin(); !ev.atEnd(); ++ev){ iev++;
       if(iev%treeStep==0){printf(".");fflush(stdout);}
       float weight = xsecWeight;
+      eventWeights = new ntupleutils::Weights();
       eventWeights->SetXSecWeight(xsecWeight);
       float shapeWeight = 1.0;
       double puWeightUp = 1.0;
@@ -498,11 +650,13 @@ int main(int argc, char* argv[])
 
       //Skip bad lumi
       if(!isMC && !goodLumiFilter.isGoodLumi(ev.eventAuxiliary().run(),ev.eventAuxiliary().luminosityBlock()))continue;
+      lheSummary = new ntupleutils::analysis::gen_truth::LheSummary();
       treeEventId=0;
   		treeLumiId=0;
   		treeRunId=0;
       treeDoubleTriggerMatch=0;
       treeLepIsMatched=0;
+      treeTriggerFiredBits.reset();
   		treeZId=0;
       treeWeight = 0;
       treeWeightNoLepSF = 0;
@@ -536,7 +690,7 @@ int main(int argc, char* argv[])
       treeLep4PdgId = 0;
       treeLep4ID = 0;
       treeLep4Iso = 0;
-
+      treeDiTauSVfitCandidate = null_p4;
 
       reco::GenParticleCollection gen;
       GenEventInfoProduct eventInfo;
@@ -614,19 +768,25 @@ int main(int argc, char* argv[])
 
     bool passTrigger        = mumuTrigger||muTrigger||eeTrigger||eTrigger;//||emuTrigger;
 
-    if(  mumuTrigger)mon.fillHisto("trigger", "raw", 0 , weight);
-    if(    muTrigger)mon.fillHisto("trigger", "raw", 1 , weight);
-    if(    eeTrigger)mon.fillHisto("trigger", "raw", 2 , weight);
-    if(     eTrigger)mon.fillHisto("trigger", "raw", 3 , weight);
+    if(  mumuTrigger){treeTriggerFiredBits.set(0);mon.fillHisto("trigger", "raw", 0 , weight);}
+    if(    muTrigger){treeTriggerFiredBits.set(1);mon.fillHisto("trigger", "raw", 1 , weight);}
+    if(    eeTrigger){treeTriggerFiredBits.set(2);mon.fillHisto("trigger", "raw", 2 , weight);}
+    if(     eTrigger){treeTriggerFiredBits.set(3);mon.fillHisto("trigger", "raw", 3 , weight);}
     if(   emuTrigger)mon.fillHisto("trigger", "raw", 4 , weight);
 
     if(!isMC && passTrigger){ //avoid double counting of events from different PD
+      treeTriggerFiredBits.reset();
       if(filterOnlyMUMU)     { passTrigger = mumuTrigger;}
       if(filterOnlyMU)       { passTrigger = muTrigger     && !mumuTrigger;}
       if(filterOnlyEE)       { passTrigger = eeTrigger     && !muTrigger  && !mumuTrigger;}
       if(filterOnlyE)        { passTrigger = eTrigger      && !eeTrigger  && !muTrigger && !mumuTrigger; }
       if(filterOnlyEMU)      { passTrigger = emuTrigger    && !eTrigger   && !eeTrigger && !muTrigger && !mumuTrigger; }
-    }
+
+      if(filterOnlyMUMU && passTrigger) treeTriggerFiredBits.set(0);
+      if(filterOnlyMU && passTrigger)   treeTriggerFiredBits.set(1);
+      if(filterOnlyEE && passTrigger)   treeTriggerFiredBits.set(2);
+      if(filterOnlyE && passTrigger)    treeTriggerFiredBits.set(3);
+  }
 
     if(passTrigger){
       if(  mumuTrigger)mon.fillHisto("trigger", "cleaned", 0 , weight);
@@ -703,6 +863,19 @@ int main(int argc, char* argv[])
     tausHandle.getByLabel(ev, "slimmedTaus");
     if(tausHandle.isValid()){ taus = *tausHandle;}
 
+
+    if (isMC){
+      fwlite::Handle< LHEEventProduct > lheEPHandle;
+      lheEPHandle.getByLabel(ev, "externalLHEProducer");
+      if(lheEPHandle.isValid()){
+        auto& lheEventProduct = *lheEPHandle;
+        auto lheSummaryValue = ntupleutils::analysis::gen_truth::ExtractLheSummary(lheEventProduct);
+        lheSummary->n_partons   = lheSummaryValue.n_partons;
+        lheSummary->n_b_partons = lheSummaryValue.n_b_partons;
+        lheSummary->n_c_partons = lheSummaryValue.n_c_partons;
+        lheSummary->HT          = lheSummaryValue.HT;
+      }
+    }
     if(isV0JetsMC){
       fwlite::Handle< LHEEventProduct > lheEPHandle;
       lheEPHandle.getByLabel(ev, "externalLHEProducer");
@@ -776,7 +949,7 @@ int main(int argc, char* argv[])
       //veto leptons overlaping with other lep
       bool overlapWithLepton=false;
       for(int l1=0; l1<(int)selLeptons.size();++l1){
-        if(deltaR(leptons[ilep].p4(), selLeptons[l1])<0.1){overlapWithLepton=true; break;}
+        if(deltaR(leptons[ilep].p4(), selLeptons[l1])<0.3){overlapWithLepton=true; break;}
       }if(overlapWithLepton)continue;
 
       //Cut based identification
@@ -976,7 +1149,7 @@ int main(int argc, char* argv[])
         for(auto& lep1: selLeptons){
           if(abs(lep1.pdgId())==15)continue;
 
-          double leadPtCutValue  = abs(lep1.pdgId())==11 ? 24.0 : 18.0;
+          double leadPtCutValue  = abs(lep1.pdgId())==11 ? 27.0 : 19.0;
           if( lep1.pt()< leadPtCutValue ) continue;
           if(!( abs(lep1.pdgId())==11 ? patUtils::passIso(lep1.el,  patUtils::llvvElecIso::Tight, patUtils::CutVersion::CutSet::ICHEP16Cut) :
                                                 patUtils::passIso(lep1.mu,  patUtils::llvvMuonIso::Tight, patUtils::CutVersion::CutSet::Moriond17Cut)) ||
@@ -1048,8 +1221,21 @@ int main(int argc, char* argv[])
 
         if( !isDileptonCandidate || !passZmass ) continue;
         /************************* EVENT HAS a Z-like candidate ***************************/
+    	      mon.fillHisto("leadpt"      ,   chTags, leadingLep.pt(), weight);
+              mon.fillHisto("leadeta"     ,   chTags, leadingLep.eta(), weight);
+              mon.fillHisto("trailerpt"   ,   chTags, trailerLep.pt(), weight);
+              mon.fillHisto("trailereta"  ,   chTags, trailerLep.eta(), weight);
+              mon.fillHisto("leppt"       ,   chTags, leadingLep.pt(), weight);
+              mon.fillHisto("leppt"       ,   chTags, trailerLep.pt(), weight);
+              mon.fillHisto("lepeta"      ,   chTags, leadingLep.eta(), weight);
+              mon.fillHisto("lepeta"      ,   chTags, trailerLep.eta(), weight);
 
-        // cout<<"  ##RECO##  Z Lepton 1:  pt = "<<(*dilLep1).pt()<<"  eta = "<<(*dilLep1).eta()<<"  phi = "<<(*dilLep1).phi()<<endl;
+              //analyze dilepton kinematics
+              mon.fillHisto("zllpt"         ,   chTags, zll.pt(),      weight);
+              mon.fillHisto("zlleta"        ,   chTags, zll.eta(),     weight);
+              mon.fillHisto("zlly"          ,   chTags, zll.Rapidity(),weight);
+	mon.fillHisto("zllmass"          ,   chTags, zll.mass(),    weight);
+// cout<<"  ##RECO##  Z Lepton 1:  pt = "<<(*dilLep1).pt()<<"  eta = "<<(*dilLep1).eta()<<"  phi = "<<(*dilLep1).phi()<<endl;
         // // if ( selLeptons[dilLep1].genParticle() ) cout<<"    ##RECO (GEN Match)##  Z Lepton 1:  pt = "<<(selLeptons[dilLep1].genParticle())->pt()<<"  eta = "<<(selLeptons[dilLep1].genParticle())->eta()<<"  phi = "<<(selLeptons[dilLep1].genParticle())->phi()<<endl;
         // cout<<"  ##RECO##  Z Lepton 2:  pt = "<<(*dilLep2).pt()<<"  eta = "<<(*dilLep2).eta()<<"  phi = "<<(*dilLep2).phi()<<endl;
         // if ( selLeptons[dilLep2].genParticle() ) cout<<"    ##RECO (GEN Match)##  Z Lepton 2:  pt = "<<(selLeptons[dilLep2].genParticle())->pt()<<"  eta = "<<(selLeptons[dilLep2].genParticle())->eta()<<"  phi = "<<(selLeptons[dilLep2].genParticle())->phi()<<endl;
@@ -1186,7 +1372,7 @@ int main(int argc, char* argv[])
               treeTMass              = tmass;
         			treeLep3PdgId  = fakeLepton.pdgId();
 
-              treeLep3Iso  = (abs(treeLep3PdgId)!=15)? patUtils::relIso(fakeLepton,rho): -999.;
+              treeLep3Iso  = (abs(treeLep3PdgId)!=15)? patUtils::relIso(fakeLepton,rho): fakeLepton.tau.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
 
               TString PartName = "FR_";//+chTags.at(1)+"_";
               if     (abs(fakeLepton.pdgId())==11)PartName += "El";
@@ -1342,7 +1528,7 @@ int main(int argc, char* argv[])
             treeLep3PdgId     = firstLepton.pdgId();
             if (isMC) treeLep3GenMatch= (int) ntupleutils::analysis::gen_truth::LeptonGenMatch(firstLepton.p4(), gen).first;
             treeLep3ID        = leptonIDmap(firstLepton, vtx[0]);
-            treeLep3Iso       = (abs(treeLep3PdgId)!=15)? patUtils::relIso(firstLepton,rho): -999.;
+            treeLep3Iso       = (abs(treeLep3PdgId)!=15)? patUtils::relIso(firstLepton,rho): firstLepton.tau.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
             treeLep3Eff       = 1;
             treeTMass         = TMath::Sqrt(2* firstLepton.pt()*met.pt()*(1-TMath::Cos(deltaPhi(met.phi(), firstLepton.phi()))));
 
@@ -1350,7 +1536,7 @@ int main(int argc, char* argv[])
             treeLep4PdgId     = secondLepton.pdgId();
             if (isMC) treeLep4GenMatch= (int) ntupleutils::analysis::gen_truth::LeptonGenMatch(secondLepton.p4(), gen).first;
             treeLep4ID        = leptonIDmap(secondLepton, vtx[0]);
-            treeLep4Iso       = (abs(treeLep4PdgId)!=15)? patUtils::relIso(secondLepton,rho): -999.;
+            treeLep4Iso       = (abs(treeLep4PdgId)!=15)? patUtils::relIso(secondLepton,rho): secondLepton.tau.tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits");
             treeLep4Eff       = 1;
 
             //reweight the event to account for lept eff.
@@ -1374,6 +1560,7 @@ int main(int argc, char* argv[])
               if(id==13){ treeLep4Eff *= isMC ? lepEff.getLeptonEfficiency( secondLepton.pt(), secondLepton.eta(), id, "looseiso_looseid",patUtils::CutVersion::Moriond17Cut ).first : 1.0;} //ISO w.r.t ID
             }
 
+           treeDiTauSVfitCandidate = getClassicSVFit(met, firstLepton, secondLepton);
 	         }
 
 
@@ -1385,6 +1572,8 @@ int main(int argc, char* argv[])
         eventWeights->SetLeptonsWeights(weight/weightNoLepSF);
 
         if(tree) tree->Fill();
+        delete eventWeights;
+        delete lheSummary;
     }
     printf("\n");
     delete file;

@@ -29,8 +29,8 @@ scram b -j 8
 git clone -b HIG-16-006 git@github.com:veelken/SVfit_standalone.git TauAnalysis/SVfitStandalone
 
 # ClassicSVFit for 2016/2017 analyses
-git clone https://github.com/veelken/ClassicSVfit TauAnalysis/ClassicSVfit 
-git clone https://github.com/veelken/SVfitTF TauAnalysis/SVfitTF
+git clone https://github.com/SVfit/ClassicSVfit TauAnalysis/ClassicSVfit -b release_2018Mar20
+git clone https://github.com/SVfit/SVfitTF TauAnalysis/SVfitTF
 
 # Now our repo
 git clone https://github.com/cp3-lltautau/2l2v_fwk.git UserCode/llvv_fwk

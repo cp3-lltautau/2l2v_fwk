@@ -72,7 +72,7 @@ def initProxy():
    if(validCertificate and (not os.path.isfile(os.path.expanduser(PROXYDIR+'/x509_proxy')))):validCertificate = False
    if(validCertificate and (time.time() - os.path.getmtime(os.path.expanduser(PROXYDIR+'/x509_proxy')))>600): validCertificate = False
    # --voms cms, otherwise it does not work normally
-   if(validCertificate and int(commands.getstatusoutput('(export X509_USER_PROXY='+PROXYDIR+'/x509_proxy;voms-proxy-init --voms cms --noregen;voms-proxy-info -all) | grep timeleft | tail -n 1')[1].split(':')[2])<8 ):validCertificate = False
+   #if(validCertificate and int(commands.getstatusoutput('(export X509_USER_PROXY='+PROXYDIR+'/x509_proxy;voms-proxy-init --voms cms --noregen;voms-proxy-info -all) | grep timeleft | tail -n 1')[1].split(':')[2])<8 ):validCertificate = False
 
    if(not validCertificate):
       print "You are going to run on a sample over grid using either CRAB or the AAA protocol, it is therefore needed to initialize your grid certificate"
