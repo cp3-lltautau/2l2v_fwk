@@ -58,7 +58,7 @@ def DASQuery(query):
       return fetched[0][0]
 
    #get the result from DAS and cache it for future usage (only if there was no error with DAS)
-   outputs = commands.getstatusoutput('/cvmfs/cms.cern.ch/common/das_client --query="' + query + '" --limit=0')
+   outputs = commands.getstatusoutput('dasgoclient -query="' + query + '" --limit=0')
    result = outputs[1]
    if(outputs[0]==0):cachedQueryDBcursor.execute("""INSERT INTO queries(date, query, result) VALUES(?, ?, ?)""", (time.strftime('%Y-%m-%d %H:%M:%S'), query, result))
    cachedQueryDB.commit()  #commit changes to the DB
@@ -106,11 +106,11 @@ def getFileList(procData,DefaultNFilesPerJob):
       for site in listSites.split('\n'):
          if(localTier==""):continue;
          try:
-            MaxFraction = max(MaxFraction, float(site.split()[2].replace('%','').replace('"','')) )
+            MaxFraction = max(MaxFraction, float(site.split()[1].replace('%','').replace('"','')) )
          except:
             MaxFraction = max(MaxFraction, 0.0);
          if(localTier in site):
-            FractionOnLocal = float(site.split()[2].replace('%','').replace('"',''));
+            FractionOnLocal = float(site.split()[1].replace('%','').replace('"',''));
 
       if(FractionOnLocal == MaxFraction):
             IsOnLocalTier=True
