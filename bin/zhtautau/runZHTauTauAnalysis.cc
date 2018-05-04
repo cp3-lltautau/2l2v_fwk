@@ -1008,6 +1008,8 @@ int main(int argc, char* argv[])
     mon.addHistogram( new TH2F (TString("Asvfit_shapes_CR10")+varNames[ivar],";cut index;M_{#tau#tau};Events",optim_Cuts_sumPt.size(),0,optim_Cuts_sumPt.size(),nbins,bins) );
     mon.addHistogram( new TH2F (TString("Asvfit_shapes_CR11")+varNames[ivar],";cut index;M_{#tau#tau};Events",optim_Cuts_sumPt.size(),0,optim_Cuts_sumPt.size(),nbins,bins) );
     mon.addHistogram( new TH1F(TString("metsys")+varNames[ivar],                   ";#slash{E}_{T} (GeV);Events/10 GeV",50,0,500));
+    mon.addHistogram( new TH2F (TString("AsvfitVSHsvfit_mass")+varNames[ivar],";M_{#tau#tau};M_{ll#tau#tau};Events",nbins,bins,nbins,bins) );
+    mon.addHistogram( new TH2F (TString("AsvfitVSHsvfit_mass_alt")+varNames[ivar],";M_{#tau#tau};M_{ll#tau#tau};Events",180,0,1800,180,0,1800) );
   }
 
 
@@ -2443,6 +2445,10 @@ int main(int argc, char* argv[])
 
 
         if( runSVfit && (passZmass && passZpt && selLeptons.size()>=4 && passLepVetoMain && passBJetVetoMain && passDPhiCut && passHiggsLoose) ){
+
+          mon.fillHisto(TString("AsvfitVSHsvfit_mass")+varNames[ivar],chTagsMain,higgsCand_SVFitMass,higgsCandH_SVFit.mass(),weight);
+          mon.fillHisto(TString("AsvfitVSHsvfit_mass_alt")+varNames[ivar],chTagsMain,higgsCand_SVFitMass,higgsCandH_SVFit.mass(),weight);
+
           for(unsigned int index=0; index<optim_Cuts_sumPt.size();index++){
 
             bool passHiggs = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, optim_Cuts_elIso[index], optim_Cuts_muIso[index], tauIDiso[optim_Cuts_taIso[index]], optim_Cuts_sumPt[index],true,vtx);

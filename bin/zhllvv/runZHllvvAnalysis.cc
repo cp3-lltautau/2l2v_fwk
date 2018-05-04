@@ -40,6 +40,7 @@
 #include "UserCode/llvv_fwk/interface/LeptonEfficiencySF.h"
 #include "UserCode/llvv_fwk/interface/PDFInfo.h"
 #include "UserCode/llvv_fwk/interface/rochcor2015.h"
+#include "UserCode/llvv_fwk/interface/RoccoR_Moriond17.h"
 #include "UserCode/llvv_fwk/interface/muresolution_run2.h"
 #include "UserCode/llvv_fwk/interface/BTagCalibrationStandalone.h"
 #include "UserCode/llvv_fwk/interface/BtagUncertaintyComputer.h"
@@ -202,8 +203,7 @@ CRTypes checkBkgCR(std::vector<patUtils::GenericLepton> selLeptons, int higgsCan
   std::vector<bool> passTight;
   std::vector<int>  flavours;
 
-  passId.resize(2);
-  passIso.resize(2);
+  
 
   for(auto lepIt=HiggsLegs.begin();lepIt!=HiggsLegs.end();lepIt++){
     patUtils::GenericLepton* lep = (*lepIt);
@@ -218,6 +218,9 @@ CRTypes checkBkgCR(std::vector<patUtils::GenericLepton> selLeptons, int higgsCan
       passIso.push_back(bool(lep->tau.tauID(isoHaCut)));
     }
   }
+	
+  passId.resize(2);
+  passIso.resize(2);
 
  for(unsigned int i=0;i<=1;i++){
     passTight.push_back(passId[i]&&passIso[i]);
@@ -580,16 +583,19 @@ int main(int argc, char* argv[])
 
  //event selection 
   
-   TH1 *h1=mon.addHistogram( new TH1F ("eventflow", ";;Events", 10,0,10) );
+   TH1 *h1=mon.addHistogram( new TH1F ("eventflow", ";;Events", 13,0,13) );
    h1->GetXaxis()->SetBinLabel(1,"InitialEv");
-   h1->GetXaxis()->SetBinLabel(2,"Nlep#geq2");
-   h1->GetXaxis()->SetBinLabel(3,"Zmass");
-   h1->GetXaxis()->SetBinLabel(4,"Zkin");
-   h1->GetXaxis()->SetBinLabel(5,"Nlep+Ntau#geq4"); 
-   h1->GetXaxis()->SetBinLabel(6,"Lep Veto");
-   h1->GetXaxis()->SetBinLabel(7,"Btag Veto");
-   h1->GetXaxis()->SetBinLabel(8,"#Delta #phi Z-MET");
-   h1->GetXaxis()->SetBinLabel(9,"di-#tau Cand"); 
+   h1->GetXaxis()->SetBinLabel(2,"Trigger");
+   h1->GetXaxis()->SetBinLabel(3,"METFilter");
+   h1->GetXaxis()->SetBinLabel(4,"Zcandidate");
+   h1->GetXaxis()->SetBinLabel(5,"Nlep#geq2");
+   h1->GetXaxis()->SetBinLabel(6,"Zmass");
+   h1->GetXaxis()->SetBinLabel(7,"Zkin");
+   h1->GetXaxis()->SetBinLabel(8,"Nlep+Ntau#geq4"); 
+   h1->GetXaxis()->SetBinLabel(9,"Lep Veto");
+   h1->GetXaxis()->SetBinLabel(10,"Btag Veto");
+   h1->GetXaxis()->SetBinLabel(11,"#Delta #phi Z-MET");
+   h1->GetXaxis()->SetBinLabel(12,"di-#tau Cand"); 
 
   // zhllvv Event selection
   TH1 *h1zllvv=mon.addHistogram( new TH1F ("eventflow_zhllvv", ";;Events", 10,0,10) );
@@ -780,7 +786,8 @@ int main(int argc, char* argv[])
   TString muscleDir = runProcess.getParameter<std::string>("muscleDir");
   gSystem->ExpandPathName(muscleDir);
   rochcor2015* muCor = new rochcor2015();  //replace the MuScleFitCorrector we used at run1
-
+  std::string roccorPath = string(std::getenv("CMSSW_BASE"))+"/src/UserCode/llvv_fwk/data/rcdata.2016.v3";
+  RoccoR_Moriond17  *muCorMoriond17 = new RoccoR_Moriond17(roccorPath);
   /*
     New energy scale comment out
   */
@@ -881,6 +888,9 @@ int main(int argc, char* argv[])
   //loop on all the events
   //DuplicatesChecker duplicatesChecker;
   //int nDuplicates(0)
+
+  std::shared_ptr<TRandom3> rgenMuon_(new TRandom3(0));
+  std::shared_ptr<TRandom3> rgenEle_(new TRandom3(1));
 
   printf("Progressing Bar           :0%%       20%%       40%%       60%%       80%%       100%%\n");
   for(unsigned int f=0;f<urls.size();f++){
@@ -985,6 +995,7 @@ int main(int argc, char* argv[])
 	  
 	  bool passTrigger        = mumuTrigger||muTrigger||eeTrigger||eTrigger;//||emuTrigger;
 
+
 	  if(  mumuTrigger)mon.fillHisto("trigger", "raw", 0 , weight);
 	  if(    muTrigger)mon.fillHisto("trigger", "raw", 1 , weight);
 	  if(    eeTrigger)mon.fillHisto("trigger", "raw", 2 , weight);
@@ -1006,13 +1017,21 @@ int main(int argc, char* argv[])
 	    if(     eTrigger)mon.fillHisto("trigger", "cleaned", 3 , weight);
 	    if(   emuTrigger)mon.fillHisto("trigger", "cleaned", 4 , weight);
 	  }
-	  
+	 
+
+ 
 	  //ONLY RUN ON THE EVENTS THAT PASS OUR TRIGGERS
+	  mon.fillHisto("eventflow"           , "all", 0, weight);
+
 	  if(!passTrigger)continue;
 	  
+          mon.fillHisto("eventflow"           , "all", 1, weight);
+
          //##############################################   EVENT PASSED THE TRIGGER   ######################################
 	  if (metFilterValue==10 || metFilterValue==11) { metFilterValue=0; }
           if( metFilterValue!=0 ) continue;	 //Note this must also be applied on MC
+       
+          mon.fillHisto("eventflow"           , "all", 2, weight);
 	  
 	  // Apply Bad Charged Hadron and Bad Muon Filters from MiniAOD (for Run II 2016 only )
 	  //	  if (!filterbadPFMuon || !filterbadChCandidate) continue;
@@ -1164,21 +1183,68 @@ int main(int argc, char* argv[])
 	     patUtils::passIso(leptons[ilep].mu,  patUtils::llvvMuonIso::VeryLoose, patUtils::CutVersion::CutSet::ICHEP16Cut);
 	     
              //apply muon corrections
-             //if(abs(lid)==13 && passIso && passId){
-	     if(abs(lid)==13 && passVeryLooseLepton){ 
-                 passSoftMuon=false;
-                 if(muCor){
-                   float qter;
-                   TLorentzVector p4(leptons[ilep].px(),leptons[ilep].py(),leptons[ilep].pz(),leptons[ilep].energy());
-                   if(isMC){muCor->momcor_mc  (p4, lid<0 ? -1 :1, 0, qter);
-                   }else{   muCor->momcor_data(p4, lid<0 ? -1 :1, 0, qter);
-                   }
+             //if(abs(lid)==13 && passIso && passId) 
 
-                   muDiff -= leptons[ilep].p4();
-                   leptons[ilep].setP4(LorentzVector(p4.Px(),p4.Py(),p4.Pz(),p4.E() ) );
-                   muDiff += leptons[ilep].p4();
-                 }
-               }
+     if(abs(lid)==13 && passVeryLooseLepton){ 
+     passSoftMuon=false;
+            
+	if(is2016MC || is2016data){
+        	if(muCorMoriond17){
+
+	      muDiff -= leptons[ilep].p4();
+
+	      float qter =1.0;
+	      double pt  = leptons[ilep].pt();
+	      double eta = leptons[ilep].eta();
+	      double phi = leptons[ilep].phi();
+	      int charge = leptons[ilep].charge();
+	      TLorentzVector p4(leptons[ilep].px(),leptons[ilep].py(),leptons[ilep].pz(),leptons[ilep].energy());
+	      // cout<<"PT Befor Correction: "<< p4.Pt() << endl;
+	      int ntrk = leptons[ilep].mu.innerTrack()->hitPattern().trackerLayersWithMeasurement();
+	      if(is2016MC){
+              //muCor2016->momcor_mc  (p4, lid<0 ? -1 :1, ntrk, qter);
+            
+              double u1 = rgenMuon_->Uniform();
+	      double u2 = rgenMuon_->Uniform();
+ 
+              double mcSF = muCorMoriond17->kScaleAndSmearMC(charge, pt, eta, phi, ntrk, u1, u2, 0, 0);
+
+        	leptons[ilep].mu.setP4(LorentzVector(p4.Px()*mcSF,p4.Py()*mcSF,p4.Pz()*mcSF,p4.E()*mcSF ) );
+		leptons[ilep] = patUtils::GenericLepton(leptons[ilep].mu);
+
+
+		//cout<<"\t PT After Correction (2016): "<< p4.Pt() << " -- (Moriond17): "<< p4_2.Pt()<< endl;
+
+
+  	      }else if (is2016data){
+              double dataSF = muCorMoriond17->kScaleDT(charge, pt, eta, phi, 0, 0);
+
+		leptons[ilep].mu.setP4(LorentzVector(p4.Px()*dataSF,p4.Py()*dataSF,p4.Pz()*dataSF,p4.E()*dataSF ) );
+		leptons[ilep] = patUtils::GenericLepton(leptons[ilep].mu);
+}
+	  	      
+		muDiff += leptons[ilep].p4();
+	    }
+	 
+	 }
+      }
+
+
+
+//                 if(muCor){
+//                   float qter;
+//                   TLorentzVector p4(leptons[ilep].px(),leptons[ilep].py(),leptons[ilep].pz(),leptons[ilep].energy());
+//                   if(isMC){muCor->momcor_mc  (p4, lid<0 ? -1 :1, 0, qter);
+//                   }else{   muCor->momcor_data(p4, lid<0 ? -1 :1, 0, qter);
+//                   }
+
+//                   muDiff -= leptons[ilep].p4();
+//                   leptons[ilep].setP4(LorentzVector(p4.Px(),p4.Py(),p4.Pz(),p4.E() ) );
+//                   muDiff += leptons[ilep].p4();
+             
+               
+
+
 
              //apply electron corrections
 	     //if(abs(lid)==11  && passIso && passId){
@@ -1202,8 +1268,7 @@ int main(int argc, char* argv[])
 		 double sigma=eScaler.getSmearingSigma(ev.eventAuxiliary().run(),leptons[ilep].el.isEB(),leptons[ilep].el.r9(), leptons[ilep].el.superCluster()->eta(), leptons[ilep].el.et(),gainSeed,0,0);
 		 //Put the last two inputs at 0,0 for the nominal value of sigma
 		 //Now smear the MC energy
-		 TRandom3 *rgen_ = new TRandom3(0);
-		 double smearValue = rgen_->Gaus(1, sigma) ;
+		 double smearValue = rgenEle_->Gaus(1, sigma) ;
 		 //std::cout<<"smearing  ---- "<<smearValue<<std::endl;
 		 TLorentzVector p4(leptons[ilep].el.px(),leptons[ilep].el.py(),leptons[ilep].el.pz(),leptons[ilep].el.energy());
 		 leptons[ilep].el.setP4(LorentzVector(p4.Px()*smearValue,p4.Py()*smearValue,p4.Pz()*smearValue,p4.E()*smearValue ) );
@@ -1228,10 +1293,12 @@ int main(int argc, char* argv[])
              if(lid==13){
                if(leptons[ilep].pt()<10) passVeryLooseLepton=false;
                if(leptons[ilep].pt()<3)  passSoftMuon=false;
+               if(leptons[ilep].pt()<10) passKin=false;
              }else if(lid==11){
                if(leptons[ilep].pt()<10) passVeryLooseLepton=false;
+               if(leptons[ilep].pt()<10) passKin=false;
              }
-             if(leptons[ilep].pt()<25) passKin=false;
+    //         if(leptons[ilep].pt()<25) passKin=false;
 
              //if(passId && passIso && passKin)        selLeptons.push_back(leptons[ilep]);
              if(passVeryLooseLepton && passKin)             selLeptons.push_back(leptons[ilep]); //we need loose lepton for FR
@@ -1474,26 +1541,52 @@ int main(int argc, char* argv[])
 
             bool isDileptonCandidate = false;
             if(dilId!=-1){
+
                 //check the channel
                 if( abs(dilId)==121){ chTags.push_back("ll"); chTags.push_back("ee");   isDileptonCandidate=true; }
                 if( abs(dilId)==169){ chTags.push_back("ll"); chTags.push_back("mumu"); isDileptonCandidate=true; }
 
-                weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId()),  abs(selLeptons[dilLep1].pdgId()) ==11 ? "tight"    : "tight"    , patUtils::CutVersion::ICHEP16Cut).first : 1.0; //ID
-                weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId()),  abs(selLeptons[dilLep1].pdgId()) ==11 ? "tightiso" : "tightiso",patUtils::CutVersion::ICHEP16Cut).first : 1.0; //ISO w.r.t ID
-                weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId()),  abs(selLeptons[dilLep2].pdgId()) ==11 ? "tight"    : "tight",patUtils::CutVersion::ICHEP16Cut).first : 1.0; //ID
-                weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId()),  abs(selLeptons[dilLep2].pdgId()) ==11 ? "tightiso" : "tightiso",patUtils::CutVersion::ICHEP16Cut).first : 1.0; //ISO w.r.t ID
-            }
+                if(is2016MC) {
+                  if(abs(dilId)==121){
+                    weight *= lepEff.getRecoEfficiency( selLeptons[dilLep1].el.superCluster()->eta(), abs(selLeptons[dilLep1].pdgId())).first; //Reconstruction eff
+                    weight *= lepEff.getRecoEfficiency( selLeptons[dilLep2].el.superCluster()->eta(), abs(selLeptons[dilLep2].pdgId())).first; //Reconstruction eff
+                }
+                  else if(abs(dilId)==169){
+                    weight *= lepEff.getTrackingEfficiency( selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId())).first; //Tracking eff
+                    weight *= lepEff.getTrackingEfficiency( selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId())).first; //Tracking eff
 
-            std::vector<TString> tags(1,"all");
-            for(size_t ich=0; ich<chTags.size(); ich++){
-              tags.push_back( chTags[ich] );
-            }
+                    weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId()), "tightiso_tightid",patUtils::CutVersion::Moriond17Cut ).first : 1.0; //ISO w.r.t ID
+                    weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId()), "tightiso_tightid",patUtils::CutVersion::Moriond17Cut ).first : 1.0;
+                }
+                    weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), abs(selLeptons[dilLep1].pdgId()),  abs(selLeptons[dilLep1].pdgId()) ==11 ? "tight"    : "tight"   ,patUtils::CutVersion::Moriond17Cut ).first : 1.0; //ID
+                    weight *= isMC ? lepEff.getLeptonEfficiency( selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), abs(selLeptons[dilLep2].pdgId()),  abs(selLeptons[dilLep2].pdgId()) ==11 ? "tight"    : "tight"   ,patUtils::CutVersion::Moriond17Cut ).first : 1.0; //ID
+
+		//Trigger efficiency
+		 if(isMC && abs(dilId)==169)
+          	    weight *= lepEff.getTriggerEfficiencySF(selLeptons[dilLep1].pt(), selLeptons[dilLep1].eta(), selLeptons[dilLep2].pt(), selLeptons[dilLep2].eta(), dilId,is2016MC).first;
+       		 if(isMC && abs(dilId)==121)
+                    weight *= lepEff.getTriggerEfficiencySF(selLeptons[dilLep1].pt(), selLeptons[dilLep1].el.superCluster()->eta(), selLeptons[dilLep2].pt(), selLeptons[dilLep2].el.superCluster()->eta(), dilId,is2016MC).first;
+
+                 }
+                }   
+            
+	    //std::vector<TString> tags(1,"all");
+            //for(size_t ich=0; ich<chTags.size(); ich++){
+            //  tags.push_back( chTags[ich] );
+            // }
 
             if(!isDileptonCandidate) continue;
-            bool passZmass = (fabs(zll.mass()-91.2)<15);
+
+          if (ivar == 0 ){
+          mon.fillHisto("eventflow"           , chTags, 3, weight);
+           
+   }
+	    bool passZmass = (fabs(zll.mass()-91.2)<30.);
 	    mon.fillHisto("zllmass","controlPlots",zll.mass(),weight); 
 	    bool passZpt   = (zll.pt()>20);
 
+
+//--------------------------- Zhllvv ---------------------------------
 	   // bool passZVeto  = (fabs(zll.mass()-91.2)>15);
 	   // bool EtMiss = (met.corP4(metcor).E()>120);
 	   // bool jetCount = (njets<2);
@@ -1506,6 +1599,7 @@ int main(int argc, char* argv[])
 	   // bool pTunbalance = (pTU < 0.25);
 
             //bool passLLpt   = (zll.pt()>50);
+//--------------------------------------------------------------------
 
             bool passMass = passZmass;
             bool passBJetVetoMain = (nbtags ==0);
@@ -1772,8 +1866,8 @@ int main(int argc, char* argv[])
                }
 
                passDPhiCut    =  (fabs(deltaPhi(zll.phi(), met.phi()))>1.5);
-               passHiggsLoose = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, 0.5, 0.5, "decayModeFinding", 0., false, vtx);
-               passHiggsMain  = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, 0.3, 0.3, "byLooseCombinedIsolationDeltaBetaCorr3Hits", 20., true, vtx);
+               passHiggsLoose = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, 0.3, 0.3, "decayModeFinding", 0., false, vtx);
+               passHiggsMain  = passHiggsCuts(selLeptons, higgsCandL1, higgsCandL2, 0.1, 0.15, "byMediumIsolationMVArun2v1DBoldDMwLT", 0., true, vtx);
 
                //SVFIT MASS
                
@@ -1782,7 +1876,7 @@ int main(int argc, char* argv[])
                  //FIXME gives a lot of warning currently
 	      if(passZmass && passZpt && passDPhiCut && passHiggsLoose && passLepVetoMain && passBJetVetoMain){
 	//	std::cout<<"START SVFIT\n";
-		higgsCandMass_SVFit  =  getSVFit(met, selLeptons, higgsCandL1, higgsCandL2); 
+	//	higgsCandMass_SVFit  =  getSVFit(met, selLeptons, higgsCandL1, higgsCandL2); 
 	//	std::cout<<"END SVFIT\n";
 	    }            
 
@@ -1803,13 +1897,13 @@ int main(int argc, char* argv[])
             // NOW FOR THE CONTROL PLOTS
             //
                if(ivar==0){
-               mon.fillHisto("eventflow"       , chTagsMain,                 0, weight);
+              // mon.fillHisto("eventflow"       , chTagsMain,                 0, weight);
                 if(selLeptons.size()>=2){
                    mon.fillHisto("nlep"           ,   chTags, selLeptons.size(), weight);
-                   mon.fillHisto("eventflow"     ,   chTagsMain,                 1, weight);
+                   mon.fillHisto("eventflow"     ,   chTagsMain,                 4, weight);
                    mon.fillHisto("zllmass"          ,   chTagsMain, zll.mass(),    weight);
                    if(passZmass){
-                     mon.fillHisto("eventflow"   ,   chTagsMain,                 2, weight);
+                     mon.fillHisto("eventflow"   ,   chTagsMain,                 5, weight);
                     //pu control
                      mon.fillHisto("nvtx"        ,   chTagsMain, vtx.size(),      weight);
                      mon.fillHisto("nvtxraw"     ,   chTagsMain, vtx.size(),      weight/puWeight);
@@ -1829,7 +1923,7 @@ int main(int argc, char* argv[])
                      mon.fillHisto("zlleta"        ,   chTagsMain, zll.eta(),     weight);
                     mon.fillHisto("zlly"          ,   chTagsMain, zll.Rapidity(),weight);
                     if(passZpt){
-                      mon.fillHisto("eventflow",   chTagsMain,                 3, weight);
+                      mon.fillHisto("eventflow",   chTagsMain,                 6, weight);
                       
                       mon.fillHisto("ntaus"           ,  chTags, selTaus.size(), weight);
                        mon.fillHisto("tauleadpt"       ,  chTagsMain,   selTaus.size()>0?selTaus[0].pt():-1,  weight);
@@ -1842,26 +1936,26 @@ int main(int argc, char* argv[])
                        mon.fillHisto("taueta"          ,  chTagsMain,   selTaus.size()>0?selTaus[0].eta():-10, weight);
                       
                       if(selLeptons.size()>=4){
-                         mon.fillHisto("eventflow",   chTagsMain,                 4, weight);
+                         mon.fillHisto("eventflow",   chTagsMain,                 7, weight);
                          if(passLepVetoMain){
-                           mon.fillHisto("eventflow", chTagsMain,                 5, weight);
+                           mon.fillHisto("eventflow", chTagsMain,                 8, weight);
                            mon.fillHisto("nbtags"    , chTags, nbtags,  weight);
                            mon.fillHisto("njets"     , chTags, njets,   weight);
                           
                            if(passBJetVetoMain){
-                             mon.fillHisto("eventflow"	,   chTagsMain,                 6, weight);
+                             mon.fillHisto("eventflow"	,   chTagsMain,                 9, weight);
                             
                              mon.fillHisto("dPhi_AZ"    , chTagsMain, deltaPhi(higgsCand.phi(), zll.phi()),    weight);
                              mon.fillHisto("dPhi_AMet"  , chTagsMain, deltaPhi(higgsCand.phi(), met.phi()),    weight);
                              mon.fillHisto("dPhi_ZMet"  , chTagsMain, deltaPhi(zll.phi(), met.phi()),    weight);
                              mon.fillHisto("met"      	, chTagsMain, met.pt()         , weight);
                             
-                             if(passDPhiCut){
-                               mon.fillHisto("eventflow",   chTagsMain,                 7, weight);
+                             if(true){//(passDPhiCut){
+                               mon.fillHisto("eventflow",   chTagsMain,                 10, weight);
                                if(passHiggsLoose){
                                  mon.fillHisto("sumpt",   chTagsMain, selLeptons[higgsCandL1].pt()+selLeptons[higgsCandL2].pt(), weight);
                                  if(passHiggsMain){
-                                   mon.fillHisto("eventflow"   ,chTagsMain,                 8, weight);
+                                   mon.fillHisto("eventflow"   ,chTagsMain,                 11, weight);
                                    mon.fillHisto("yields"          ,chTagsMain,                HiggsShortId, weight);
 
 				   mon.fillHisto("hmass_svfit", chTagsMain,higgsCandMass_SVFit,weight);
