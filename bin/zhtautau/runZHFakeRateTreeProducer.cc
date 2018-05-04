@@ -77,6 +77,19 @@
 #include <Math/VectorUtil.h>
 #include <bits/stdc++.h>
 
+namespace uncertainties{
+
+  enum class type { CENTRAL = 0, TauUP = 1, TauDOWN, LepUP, LepDOWN, JesUP, JesDOWN};
+  std::map<type,TString> uncTypeToString = { {type::CENTRAL,""}, {type::TauUP,"_tes_up"}, {type::TauDOWN,"_tes_down"},
+                                             {type::LepUP,"_les_up"}, {type::LepDOWN,"_les_down"},
+                                             {type::JesUP,"_scale_jup"},{type::JesDOWN,"_scale_jdown"}};
+
+  std::map<type,float>   uncTypeToValue  = { {type::CENTRAL,1.}, {type::TauUP,1.03}, {type::TauDOWN,0.97},
+                                             {type::LepUP,1.01}, {type::LepDOWN,0.99},
+                                             {type::JesUP,1.},{type::JesDOWN,1.}};
+
+};
+
 using namespace std;
 //***********************************************************************************************//
 LorentzVector getClassicSVFit(pat::MET met, patUtils::GenericLepton firstLepton, patUtils::GenericLepton secondLepton)
@@ -116,21 +129,21 @@ LorentzVector getClassicSVFit(pat::MET met, patUtils::GenericLepton firstLepton,
     measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToElecDecay, firstLepton.pt(), firstLepton.eta(),
 								    firstLepton.phi(), classic_svFit::electronMass) );
     measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToHadDecay, secondLepton.pt(), secondLepton.eta(),
-								    secondLepton.phi(), secondLepton.mass(), secondLepton.tau.decayMode()) );
+								    secondLepton.phi(), TMath::Min(1.5, secondLepton.mass()), secondLepton.tau.decayMode()) );
   }
   else if( dlid == 13*15 ){
     //std::cout<< " MuTau Pair --- > "<< firstLepton.pdgId() << "  " << secondLepton.pdgId() << std::endl;
     measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToMuDecay, firstLepton.pt(), firstLepton.eta(),
 								    firstLepton.phi(), classic_svFit::muonMass) );
     measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToHadDecay, secondLepton.pt(), secondLepton.eta(),
-								    secondLepton.phi(), secondLepton.mass(), secondLepton.tau.decayMode()) );
+								    secondLepton.phi(), TMath::Min(1.5, secondLepton.mass()), secondLepton.tau.decayMode()) );
   }
   else if ( dlid == 15*15 ){
     //std::cout<< " TauTau Pair --- > "<< firstLepton.pdgId() << "  " << secondLepton.pdgId() << std::endl;
     measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToHadDecay, firstLepton.pt(), firstLepton.eta(),
-								    firstLepton.phi(), firstLepton.mass(), firstLepton.tau.decayMode()) );
+								    firstLepton.phi(), TMath::Min(1.5, firstLepton.mass()), firstLepton.tau.decayMode()) );
     measuredTauLeptons.push_back(classic_svFit::MeasuredTauLepton(classic_svFit::MeasuredTauLepton::kTauToHadDecay, secondLepton.pt(), secondLepton.eta(),
-								    secondLepton.phi(), secondLepton.mass(), secondLepton.tau.decayMode()) );
+								    secondLepton.phi(), TMath::Min(1.5, secondLepton.mass()), secondLepton.tau.decayMode()) );
   }
   else if (dlid == 13*11 ){
     //std::cout<< " EMu Pair  --->"<< firstLepton.pdgId() << "  " << secondLepton.pdgId() << std::endl;
@@ -164,7 +177,7 @@ LorentzVector getClassicSVFit(pat::MET met, patUtils::GenericLepton firstLepton,
   // svFitAlgo->enableHadTauTF();
 #endif
   //svFitAlgo.addLogM_fixed(false);
-  svFitAlgo->addLogM_fixed(true, 6.);
+  svFitAlgo->addLogM_fixed(true, 2.);
   //svFitAlgo.addLogM_dynamic(true, "(m/1000.)*15.");
   //svFitAlgo.setMaxObjFunctionCalls(100000); // CV: default is 100000 evaluations of integrand per event
   //svFitAlgo.setLikelihoodFileName("testClassicSVfit.root");
@@ -227,6 +240,35 @@ pat::JetCollection  skimJetsCollection (const std::vector<patUtils::GenericLepto
     else jetCollection.push_back(jet);
   }
   return jetCollection;
+}
+
+//**********************************************************************************************//
+template<typename Flavour, typename Collection = std::vector<Flavour> >
+Collection getScaleVariations( Collection& selLeptons,float factor)
+//**********************************************************************************************//
+{
+  Collection selLeptonsNew;
+  for(size_t ilep=0; ilep<selLeptons.size(); ilep++){
+      Flavour selLeptonNew = selLeptons[ilep];
+      selLeptonNew.setP4(selLeptons[ilep].p4() * factor);
+      selLeptonsNew.push_back(selLeptonNew);
+  }
+  std::sort(selLeptonsNew.begin(), selLeptonsNew.end(), utils::sort_CandidatesByPt);
+  return selLeptonsNew;
+}
+
+//**********************************************************************************************//
+pat::JetCollection getJetVariations( pat::JetCollection& selJets,TString factor)
+//**********************************************************************************************//
+{
+  pat::JetCollection selJetsNew;
+  for(size_t ijet=0; ijet<selJets.size(); ijet++){
+      pat::Jet varJet = selJets[ijet];
+      varJet.setP4(varJet.p4() * varJet.userFloat(factor) );
+      selJetsNew.push_back(varJet);
+  }
+  std::sort(selJetsNew.begin(), selJetsNew.end(), utils::sort_CandidatesByPt);
+  return selJetsNew;
 }
 
 //**************************************************************************************************************************//
@@ -419,6 +461,7 @@ int main(int argc, char* argv[])
   unsigned int  treeRunId;
   float         treeNumEvents;
   bitset<4>     treeTriggerFiredBits;
+  bitset<7>     treeUncertantiesBits;
   int           treeDoubleTriggerMatch;
   int           treeLepIsMatched;
   int           treeZId;
@@ -434,9 +477,13 @@ int main(int argc, char* argv[])
   LorentzVector treeLep1Candidate;
   int           treeLep1GenMatch;
   int           treeLep1PdgId;
+  unsigned char treeLep1ID;
+  float         treeLep1Iso;
   LorentzVector treeLep2Candidate;
   int           treeLep2GenMatch;
   int           treeLep2PdgId;
+  unsigned char treeLep2ID;
+  float         treeLep2Iso;
   LorentzVector treeLep3Candidate;
   int           treeLep3GenMatch;
   int           treeLep3PdgId;
@@ -453,6 +500,11 @@ int main(int argc, char* argv[])
   int           treeLep4PdgId;
   unsigned char treeLep4ID;
   float         treeLep4Iso;
+  LorentzVector treeMET;
+  float         treeMETCov00;
+  float         treeMETCov01;
+  float         treeMETCov10;
+  float         treeMETCov11;
   LorentzVector treeDiTauSVfitCandidate;
 
   TFile *ofile=TFile::Open("out.root", "recreate");
@@ -465,6 +517,7 @@ int main(int argc, char* argv[])
   tree->Branch("runId"  , &treeRunId   , string("runId/i"   ).c_str());
   tree->Branch("numEvents" , &treeNumEvents  , string("numEvents/F"  ).c_str());
   tree->Branch("triggerFiredBits",     &treeTriggerFiredBits    , string("triggerFiredBits/b" ).c_str());
+  tree->Branch("uncertantiesBits",     &treeUncertantiesBits    , string("uncertantiesBits/b" ).c_str());
   tree->Branch("doubleTriggerMatch",     &treeDoubleTriggerMatch    , string("doubleTriggerMatch/I" ).c_str());
   tree->Branch("lepIsMatched" , &treeLepIsMatched , string("lepIsMatched/I").c_str());
   tree->Branch("zId",     &treeZId     , string("zId/I" ).c_str());
@@ -482,10 +535,14 @@ int main(int argc, char* argv[])
   tree->Branch("lep1Candidate",     &treeLep1Candidate );
   tree->Branch("lep1GenMatch",     &treeLep1GenMatch     , string("lep1GenMatch/I" ).c_str());
   tree->Branch("lep1PdgId",     &treeLep1PdgId     , string("lep1PdgId/I" ).c_str());
+  tree->Branch("lep1ID", &treeLep1ID , string("lep1ID/b" ).c_str());
+  tree->Branch("lep1Iso", &treeLep1Iso , string("lep1Iso/F" ).c_str());
   /* Lep 2 */
   tree->Branch("lep2Candidate",     &treeLep2Candidate );
   tree->Branch("lep2GenMatch",     &treeLep2GenMatch     , string("lep2GenMatch/I" ).c_str());
   tree->Branch("lep2PdgId",     &treeLep2PdgId     , string("lep2PdgId/I" ).c_str());
+  tree->Branch("lep2ID", &treeLep2ID , string("lep2ID/b" ).c_str());
+  tree->Branch("lep2Iso", &treeLep2Iso , string("lep2Iso/F" ).c_str());
   /* Lep 3 */
   tree->Branch("lep3Candidate",     &treeLep3Candidate );
   tree->Branch("lep3GenMatch",     &treeLep3GenMatch     , string("lep3GenMatch/I" ).c_str());
@@ -505,6 +562,11 @@ int main(int argc, char* argv[])
   tree->Branch("lep4ID", &treeLep4ID , string("lep4ID/b" ).c_str());
   tree->Branch("lep4Iso", &treeLep4Iso , string("lep4Iso/F" ).c_str());
   /* di-tau system */
+  tree->Branch("met",     &treeMET );
+  tree->Branch("METCov00", &treeMETCov00 , string("METCov00/F" ).c_str());
+  tree->Branch("METCov01", &treeMETCov01 , string("METCov01/F" ).c_str());
+  tree->Branch("METCov10", &treeMETCov10 , string("METCov10/F" ).c_str());
+  tree->Branch("METCov11", &treeMETCov11 , string("METCov11/F" ).c_str());
   tree->Branch("diTauSVfitCandidate",     &treeDiTauSVfitCandidate );
 
   //##############################################
@@ -636,6 +698,15 @@ int main(int argc, char* argv[])
     int treeStep(ev.size()/50);
     for(ev.toBegin(); !ev.atEnd(); ++ev){ iev++;
       if(iev%treeStep==0){printf(".");fflush(stdout);}
+
+      //loop Uncertanties
+      for (auto uncPair: uncertainties::uncTypeToValue){
+
+
+
+      auto uncType = uncPair.first;
+      auto uncValue = uncPair.second;
+
       float weight = xsecWeight;
       eventWeights = new ntupleutils::Weights();
       eventWeights->SetXSecWeight(xsecWeight);
@@ -657,6 +728,7 @@ int main(int argc, char* argv[])
       treeDoubleTriggerMatch=0;
       treeLepIsMatched=0;
       treeTriggerFiredBits.reset();
+      treeUncertantiesBits.reset();
   		treeZId=0;
       treeWeight = 0;
       treeWeightNoLepSF = 0;
@@ -671,9 +743,13 @@ int main(int argc, char* argv[])
       treeLep1Candidate = null_p4;
       treeLep1GenMatch = -1;
       treeLep1PdgId = 0;
+      treeLep1ID = 0;
+      treeLep1Iso = 0;
       treeLep2Candidate = null_p4;
       treeLep2GenMatch = -1;
       treeLep2PdgId = 0;
+      treeLep2ID = 0;
+      treeLep2Iso = 0;
       treeLep3Candidate = null_p4;
       treeLep3GenMatch = -1;
       treeLep3PdgId = 0;
@@ -690,7 +766,10 @@ int main(int argc, char* argv[])
       treeLep4PdgId = 0;
       treeLep4ID = 0;
       treeLep4Iso = 0;
+      treeMET = null_p4;
       treeDiTauSVfitCandidate = null_p4;
+
+      treeUncertantiesBits.set(static_cast<int>(uncType));
 
       reco::GenParticleCollection gen;
       GenEventInfoProduct eventInfo;
@@ -768,33 +847,37 @@ int main(int argc, char* argv[])
 
     bool passTrigger        = mumuTrigger||muTrigger||eeTrigger||eTrigger;//||emuTrigger;
 
-    if(  mumuTrigger){treeTriggerFiredBits.set(0);mon.fillHisto("trigger", "raw", 0 , weight);}
-    if(    muTrigger){treeTriggerFiredBits.set(1);mon.fillHisto("trigger", "raw", 1 , weight);}
-    if(    eeTrigger){treeTriggerFiredBits.set(2);mon.fillHisto("trigger", "raw", 2 , weight);}
-    if(     eTrigger){treeTriggerFiredBits.set(3);mon.fillHisto("trigger", "raw", 3 , weight);}
-    if(   emuTrigger)mon.fillHisto("trigger", "raw", 4 , weight);
+    // if(  mumuTrigger){treeTriggerFiredBits.set(0)}
+    // if(    muTrigger){treeTriggerFiredBits.set(1)}
+    // if(    eeTrigger){treeTriggerFiredBits.set(2)}
+    // if(     eTrigger){treeTriggerFiredBits.set(3)}
+    // if(   emuTrigger)mon.fillHisto("trigger", "raw", 4 , weight);
 
-    if(!isMC && passTrigger){ //avoid double counting of events from different PD
-      treeTriggerFiredBits.reset();
-      if(filterOnlyMUMU)     { passTrigger = mumuTrigger;}
-      if(filterOnlyMU)       { passTrigger = muTrigger     && !mumuTrigger;}
-      if(filterOnlyEE)       { passTrigger = eeTrigger     && !muTrigger  && !mumuTrigger;}
-      if(filterOnlyE)        { passTrigger = eTrigger      && !eeTrigger  && !muTrigger && !mumuTrigger; }
-      if(filterOnlyEMU)      { passTrigger = emuTrigger    && !eTrigger   && !eeTrigger && !muTrigger && !mumuTrigger; }
+    if(passTrigger){ //avoid double counting of events from different PD
 
-      if(filterOnlyMUMU && passTrigger) treeTriggerFiredBits.set(0);
-      if(filterOnlyMU && passTrigger)   treeTriggerFiredBits.set(1);
-      if(filterOnlyEE && passTrigger)   treeTriggerFiredBits.set(2);
-      if(filterOnlyE && passTrigger)    treeTriggerFiredBits.set(3);
+      if(isMC){
+        treeTriggerFiredBits.reset();
+        if(mumuTrigger)                                            { passTrigger = mumuTrigger; treeTriggerFiredBits.set(0);}
+        if(muTrigger && !mumuTrigger)                              { passTrigger = muTrigger;   treeTriggerFiredBits.set(1);}
+        if(eeTrigger && !muTrigger  && !mumuTrigger)               { passTrigger = eeTrigger;   treeTriggerFiredBits.set(2);}
+        if(eTrigger  && !eeTrigger  && !muTrigger && !mumuTrigger) { passTrigger = eTrigger;    treeTriggerFiredBits.set(3);}
+      }
+
+
+      if (!isMC){
+        treeTriggerFiredBits.reset();
+        if(filterOnlyMUMU)     { passTrigger = mumuTrigger;}
+        if(filterOnlyMU)       { passTrigger = muTrigger     && !mumuTrigger;}
+        if(filterOnlyEE)       { passTrigger = eeTrigger     && !muTrigger  && !mumuTrigger;}
+        if(filterOnlyE)        { passTrigger = eTrigger      && !eeTrigger  && !muTrigger && !mumuTrigger; }
+        if(filterOnlyEMU)      { passTrigger = emuTrigger    && !eTrigger   && !eeTrigger && !muTrigger && !mumuTrigger; }
+
+        if(filterOnlyMUMU && passTrigger) treeTriggerFiredBits.set(0);
+        if(filterOnlyMU && passTrigger)   treeTriggerFiredBits.set(1);
+        if(filterOnlyEE && passTrigger)   treeTriggerFiredBits.set(2);
+        if(filterOnlyE && passTrigger)    treeTriggerFiredBits.set(3);
+      }
   }
-
-    if(passTrigger){
-      if(  mumuTrigger)mon.fillHisto("trigger", "cleaned", 0 , weight);
-      if(    muTrigger)mon.fillHisto("trigger", "cleaned", 1 , weight);
-      if(    eeTrigger)mon.fillHisto("trigger", "cleaned", 2 , weight);
-      if(     eTrigger)mon.fillHisto("trigger", "cleaned", 3 , weight);
-      if(   emuTrigger)mon.fillHisto("trigger", "cleaned", 4 , weight);
-    }
 
     //ONLY RUN ON THE EVENTS THAT PASS OUR TRIGGERS
     if(!passTrigger)continue;
@@ -921,10 +1004,62 @@ int main(int argc, char* argv[])
     // LEPTON ANALYSIS
     //
 
+    pat::MuonCollection initialMuons;
+    pat::ElectronCollection initialElectrons;
+    pat::TauCollection initialTaus;
+    pat::JetCollection initialJets;
+
+    //add scale/resolution uncertainties and propagate to the MET
+    utils::cmssw::updateJEC(jets,jesCor,totalJESUnc,rho,vtx.size(),isMC);
+
+    if ( uncType == uncertainties::type::CENTRAL){
+      initialMuons     = muons;
+      initialElectrons = electrons;
+      initialTaus      = taus;
+      initialJets      = jets;
+    }
+    if ( uncType == uncertainties::type::TauUP || uncType == uncertainties::type::TauDOWN ){
+      initialMuons     = muons;
+      initialElectrons = electrons;
+      initialTaus = getScaleVariations<pat::Tau>(taus, uncValue );
+      initialJets      = jets;
+    }
+
+    if ( uncType == uncertainties::type::LepUP || uncType == uncertainties::type::LepDOWN ){
+      initialMuons     = getScaleVariations<pat::Muon>(muons, uncValue );
+      initialElectrons = getScaleVariations<pat::Electron>(electrons, uncValue );
+      initialTaus      = taus;
+      initialJets      = jets;
+      if (uncType == uncertainties::type::LepUP){
+        met.setP4( met.shiftedP4(pat::MET::METUncertainty::MuonEnUp          , metcor));
+        met.setP4( met.shiftedP4(pat::MET::METUncertainty::ElectronEnUp      , metcor));
+
+      }
+      if (uncType == uncertainties::type::LepDOWN){
+        met.setP4( met.shiftedP4(pat::MET::METUncertainty::MuonEnDown        , metcor));
+        met.setP4( met.shiftedP4(pat::MET::METUncertainty::ElectronEnDown    , metcor));
+      }
+    }
+
+    if ( uncType == uncertainties::type::JesUP  || uncType == uncertainties::type::JesDOWN ){
+      initialMuons     = muons;
+      initialElectrons = electrons;
+      initialTaus = taus;
+      initialJets = getJetVariations( jets, uncertainties::uncTypeToString[uncType] );
+      if ( uncType == uncertainties::type::JesUP  )  met.setP4( met.shiftedP4(pat::MET::METUncertainty::JetEnUp, metcor));
+      if ( uncType == uncertainties::type::JesDOWN ) met.setP4( met.shiftedP4(pat::MET::METUncertainty::JetEnDown, metcor));
+    }
+
+    treeMET = met.p4();
+    treeMETCov00 = met.getSignificanceMatrix()(0,0);
+    treeMETCov01 = met.getSignificanceMatrix()(0,1);
+    treeMETCov10 = met.getSignificanceMatrix()(1,0);
+    treeMETCov11 = met.getSignificanceMatrix()(1,1);
+
     //start by merging electrons and muons
     std::vector<patUtils::GenericLepton> leptons;
-    for(size_t l=0;l<electrons.size();l++){leptons.push_back(patUtils::GenericLepton(electrons[l]));}
-    for(size_t l=0;l<muons    .size();l++){leptons.push_back(patUtils::GenericLepton(muons    [l]));}
+    for(size_t l=0;l<initialElectrons.size();l++){leptons.push_back(patUtils::GenericLepton(initialElectrons[l]));}
+    for(size_t l=0;l<initialMuons    .size();l++){leptons.push_back(patUtils::GenericLepton(initialMuons    [l]));}
     std::sort(leptons.begin(),   leptons.end(), utils::sort_CandidatesByPt);
 
     std::vector<patUtils::GenericLepton> selLeptons;
@@ -1062,8 +1197,8 @@ int main(int argc, char* argv[])
 
       pat::TauCollection selTaus;
       int ntaus(0);
-      for(size_t itau=0; itau<taus.size(); ++itau){
-        pat::Tau& tau = taus[itau];
+      for(size_t itau=0; itau<initialTaus.size(); ++itau){
+        pat::Tau& tau = initialTaus[itau];
         if(tau.pt()<20. || fabs(tau.eta()) >2.3) continue;
 
         bool overlapWithLepton(false);
@@ -1101,14 +1236,14 @@ int main(int argc, char* argv[])
       //
 
       //add scale/resolution uncertainties and propagate to the MET
-      utils::cmssw::updateJEC(jets,jesCor,totalJESUnc,rho,vtx.size(),isMC);
+      // utils::cmssw::updateJEC(jets,jesCor,totalJESUnc,rho,vtx.size(),isMC);
 
       //select the jets
       pat::JetCollection selJets;
       std::map<string, int   > nbtagsVar;
 
-      for(size_t ijet=0; ijet<jets.size(); ijet++){
-        pat::Jet jet = jets[ijet]; //copy the jet, such that we can update it
+      for(size_t ijet=0; ijet<initialJets.size(); ijet++){
+        pat::Jet jet = initialJets[ijet]; //copy the jet, such that we can update it
 
         if(jet.pt()<20 || fabs(jet.eta())>4.7 ) continue;
 
@@ -1186,6 +1321,7 @@ int main(int argc, char* argv[])
 
         //The "all" tags considered all cases, also events without a Z
         chTags.push_back("all");
+        chTags.push_back( uncertainties::uncTypeToString[uncType] );
 
         bool isDileptonCandidate = false;
         if(dilId!=-1){
@@ -1260,9 +1396,13 @@ int main(int argc, char* argv[])
         treeZId       = dilId;
         treeLep1Candidate = dilLep1->p4();
         treeLep1PdgId     = dilLep1->pdgId();
+        treeLep1ID        = leptonIDmap(*dilLep1, vtx[0]);
+        treeLep1Iso       = patUtils::relIso(*dilLep1,rho);
         if (isMC) treeLep1GenMatch = (int) ntupleutils::analysis::gen_truth::LeptonGenMatch(dilLep1->p4(), gen).first;
         treeLep2Candidate = dilLep2->p4();
         treeLep2PdgId     = dilLep2->pdgId();
+        treeLep2ID        = leptonIDmap(*dilLep2, vtx[0]);
+        treeLep2Iso       = patUtils::relIso(*dilLep2,rho);
         if (isMC) treeLep2GenMatch = (int) ntupleutils::analysis::gen_truth::LeptonGenMatch(dilLep2->p4(), gen).first;
         treeNbtag               = nbtagSkimmed;
         treeNlep                = selLeptons.size();
@@ -1574,6 +1714,7 @@ int main(int argc, char* argv[])
         if(tree) tree->Fill();
         delete eventWeights;
         delete lheSummary;
+      }// loop uncertainties
     }
     printf("\n");
     delete file;
