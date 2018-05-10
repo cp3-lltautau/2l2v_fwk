@@ -1631,7 +1631,7 @@ int main(int argc, char* argv[])
 	      }
 
 	      if(deltaR(selLeptons[thirdL],  selLeptons[dilLep1])>0.1 && deltaR(selLeptons[fourthL],  selLeptons[dilLep1])>0.1 && 
-		 deltaR(selLeptons[fourthL], selLeptons[dilLep2])>0.1 && deltaR(selLeptons[fourthL],  selLeptons[dilLep2])>0.1) { 
+		 deltaR(selLeptons[thirdL], selLeptons[dilLep2])>0.1 && deltaR(selLeptons[fourthL],  selLeptons[dilLep2])>0.1) { 
 
 		TString PartName = "FR_";
 		std::vector<TString> TagsFR;
