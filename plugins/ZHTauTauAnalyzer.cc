@@ -94,6 +94,8 @@
 #include "UserCode/llvv_fwk/interface/EwkCorrections.h"
 #include "UserCode/llvv_fwk/interface/ZZatNNLO.h"
 #include "UserCode/llvv_fwk/interface/FRWeights.h"
+#include "UserCode/llvv_fwk/interface/NTuple.h"
+#include "UserCode/llvv_fwk/interface/NTupleUtils.h"
 
 // root includes
 
@@ -193,6 +195,7 @@ class ZHTauTauAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> 
       /// file service
       edm::Service<TFileService> fs;
 
+      llttTree*  ntuple;
       SmartSelectionMonitor mon;
       // configure the process
 
@@ -303,6 +306,7 @@ class ZHTauTauAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> 
       edm::Handle < std::vector<PileupSummaryInfo> > puInfoH;
       edm::Handle                < LHEEventProduct > lheEPHandle;
 
+      // ntuple::SyncTuple syncTree;
       // edm::TriggerNames const& triggerNames;
       //
       // edm::TriggerNames const& getTriggerResults() const {return triggerNames;}
@@ -333,6 +337,7 @@ class ZHTauTauAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> 
 // constructors and destructor
 //
 ZHTauTauAnalyzer::ZHTauTauAnalyzer(const edm::ParameterSet& iConfig):
+  ntuple(new llttTree( &fs->file(), "llttTree" )),
   isMC(iConfig.getParameter<bool>("isMC")),
   xsec(iConfig.getParameter<double>("xsec")),
   mctruthmode(iConfig.getParameter<int>("mctruthmode")),
@@ -543,6 +548,8 @@ ZHTauTauAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   //  else muonSFs = patUtils::CutVersion::Moriond17Cut_GH;
   //     }
 
+  ntuple->fillEventInfo(iEvent.eventAuxiliary().event(), iEvent.eventAuxiliary().luminosityBlock(), iEvent.eventAuxiliary().run());
+
   reco::GenParticleCollection gen;
   GenEventInfoProduct eventInfo;
   int decayType = 0;
@@ -573,44 +580,34 @@ ZHTauTauAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
     weight *= puWeight;
 
     //Z and Higgs GEN Level flavour
-    if(isMC){
-
-      for( auto& genParticle : gen){
-	 if( abs( genParticle.pdgId() )  == 23 && genParticle.status() == 62){
-	   const reco::GenParticleRefVector& daughterRefs = genParticle.daughterRefVector();
-	   for(auto& daughter: daughterRefs) {
-	     const reco::GenParticle *lepton(daughter.get());
-	     int lpdgId = abs(lepton->pdgId());
-	     ZbosonType = 3;
-	     if( lpdgId == 13 ) ZbosonType = 0;
-	     if( lpdgId == 11 ) ZbosonType = 1;
-	     if( lpdgId == 15 ) ZbosonType = 2;
-	     //if( lpdgId == 13 || lpdgId == 11) cout<<"##GEN##  Z Lepton:  pt = "<<lepton->pt()<<"  eta = "<<lepton->eta()<<"  phi = "<<lepton->phi()<<endl;
-	   }
-	 }
-	 if( abs( genParticle.pdgId() )  == 25 && genParticle.status() == 62){
-
-	   const reco::GenParticleRefVector& daughterRefs = genParticle.daughterRefVector();
-	   decayType = 1;
-	   for(auto& daughter: daughterRefs) {
-	     const reco::GenParticle *tau(daughter.get());
-	     decayType *= tauDecayMode(tau);
-	     // GeneratorTau tauGEN = (*tau);
-	     // if (tauGEN.computeDecayMode(tau)==0) decayType *= 2; //electron decay
-	     // if (tauGEN.computeDecayMode(tau)==1) decayType *= 1; //muon decay
-	     // if (tauGEN.computeDecayMode(tau)>1) decayType *= 3;  //hadron decay
-	     // if (tauGEN.computeDecayMode(tau)==8) decayType = 0;
-	     //     cout<<"    - Daughter "<<daughter->pdgId()<<"    "<< tauGEN.computeDecayMode(tau) <<endl;
-	   }
-	 }
+    for( auto& genParticle : gen){
+	     if( abs( genParticle.pdgId() )  == 23 && genParticle.status() == 62){
+	        const reco::GenParticleRefVector& daughterRefs = genParticle.daughterRefVector();
+	         for(auto& daughter: daughterRefs) {
+	             const reco::GenParticle *lepton(daughter.get());
+	             int lpdgId = abs(lepton->pdgId());
+	             ZbosonType = 3;
+	             if( lpdgId == 13 ) ZbosonType = 0;
+	             if( lpdgId == 11 ) ZbosonType = 1;
+	             if( lpdgId == 15 ) ZbosonType = 2;
+	            }
+	         }
+	    if( abs( genParticle.pdgId() )  == 25 && genParticle.status() == 62){
+        const reco::GenParticleRefVector& daughterRefs = genParticle.daughterRefVector();
+        decayType = 1;
+        for(auto& daughter: daughterRefs) {
+          const reco::GenParticle *tau(daughter.get());
+          decayType *= tauDecayMode(tau);
+        }
       }
     }
+
 
     //GEN LEVEL FILTERING
     if(isMC && (mctruthmode==15 || mctruthmode==1113)){// && (string(dtag.Data()).find("Z#rightarrow")==0 || isMC_ZZ2l2nu))
       int prodId = 1;
       for( unsigned int k=0; k<gen.size(); ++k){
-	 if( gen[k].isHardProcess() && ( abs( gen[k].pdgId() ) == 11 || abs( gen[k].pdgId() ) == 13 || abs( gen[k].pdgId() )==15 ) ) prodId*=gen[k].pdgId();
+	       if( gen[k].isHardProcess() && ( abs( gen[k].pdgId() ) == 11 || abs( gen[k].pdgId() ) == 13 || abs( gen[k].pdgId() )==15 ) ) prodId*=gen[k].pdgId();
       }
        if(mctruthmode==15   && abs(prodId)!=225)return; //skip not tautau
        if(mctruthmode==1113 && abs(prodId)==225)return; //skip tautau
@@ -738,27 +735,6 @@ ZHTauTauAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   //
   //
 
-  //
-  // PHOTON ANALYSIS
-  //
-  pat::PhotonCollection selPhotons;
-  //int nPho55=0; int nPho100=0;
-  //for(size_t ipho=0; ipho<photons.size(); ipho++){
-  //   pat::Photon photon = photons[ipho];
-  //   mon.fillHisto("phopt", "trg", photon.pt(), weight);
-  //   mon.fillHisto("phoeta", "trg", photon.eta(), weight);
-
-  //   //calibrate photon energy
-  //   PhotonEnCorrector.calibrate(photon, ev.eventAuxiliary().run(), edm::StreamID::invalidStreamID());
-
-  //   if(photon.pt()<55)continue;
-  //   if(fabs(photon.superCluster()->eta())>1.4442 ) continue;
-  //   if(!patUtils::passId(photon, rho, patUtils::llvvPhotonId::Tight)) continue;
-
-  //   selPhotons.push_back(photon);
-  //   if(photon.pt()>55)nPho55++;
-  //   if(photon.pt()>100)nPho100++;
-  //}
 
   //
   // LEPTON ANALYSIS
@@ -782,13 +758,6 @@ ZHTauTauAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
     //no need for charge info any longer
     lid=abs(lid);
     TString lepStr( lid==13 ? "mu" : "e");
-
-    //veto nearby photon (loose electrons are many times photons...)
-    double minDRlg(9999.);
-    for(size_t ipho=0; ipho<selPhotons.size(); ipho++){
-      minDRlg=TMath::Min(minDRlg,deltaR(leptons[ilep].p4(),selPhotons[ipho].p4()));
-    }
-    if(minDRlg<0.1) continue;
 
     //veto leptons overlaping with other lep
     bool overlapWithLepton=false;
@@ -865,33 +834,22 @@ ZHTauTauAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
      //apply electron corrections
     if(abs(lid)==11  && passVeryLooseLepton){
-      //if(abs(lid)==11 && passIsoWPforFakeRate){
-      //std::cout<<"START ---- "<<std::endl;
        elDiff -= leptons[ilep].p4();
-       //const EcalRecHitCollection* recHits = (leptons[ilep].el.isEB()) ? recHitCollectionEBHandle.product() : recHitCollectionEEHandle.product();
        unsigned int gainSeed = patUtils::GainSeed(leptons[ilep].el, (leptons[ilep].el.isEB()) ? recHitCollectionEBHandle.product() : recHitCollectionEEHandle.product() );
 
        if(!isMC){
 
          double scale_corr=eScaler.ScaleCorrection(iEvent.eventAuxiliary().run(),leptons[ilep].el.isEB(),leptons[ilep].el.r9(), leptons[ilep].el.superCluster()->eta(), leptons[ilep].el.et(),gainSeed);
-         //At this point, the new data energy will be:
-         // E_new=E_old*(scale_corr);
          TLorentzVector p4(leptons[ilep].el.px(),leptons[ilep].el.py(),leptons[ilep].el.pz(),leptons[ilep].el.energy());
          leptons[ilep].el.setP4(LorentzVector(p4.Px()*scale_corr,p4.Py()*scale_corr,p4.Pz()*scale_corr,p4.E()*scale_corr ) );
          leptons[ilep] = patUtils::GenericLepton(leptons[ilep].el); //recreate the generic lepton to be sure that the p4 is ok
        }
        if(isMC){
-         //std::cout<<"Before  pt  ---- "<<leptons[ilep].el.p4()<<std::endl;
          double sigma=eScaler.getSmearingSigma(iEvent.eventAuxiliary().run(),leptons[ilep].el.isEB(),leptons[ilep].el.r9(), leptons[ilep].el.superCluster()->eta(), leptons[ilep].el.et(),gainSeed,0,0);
-         //Put the last two inputs at 0,0 for the nominal value of sigma
-         //Now smear the MC energy
-         //TRandom3 *rgen_ = new TRandom3(0);
          double smearValue = rgenEle_->Gaus(1, sigma) ;
-         //std::cout<<"smearing  ---- "<<smearValue<<std::endl;
          TLorentzVector p4(leptons[ilep].el.px(),leptons[ilep].el.py(),leptons[ilep].el.pz(),leptons[ilep].el.energy());
          leptons[ilep].el.setP4(LorentzVector(p4.Px()*smearValue,p4.Py()*smearValue,p4.Pz()*smearValue,p4.E()*smearValue ) );
-         //std::cout<<"After  pt  ---- "<<leptons[ilep].el.p4()<<std::endl;
-         // std::cout<<"\n";
+
          leptons[ilep] = patUtils::GenericLepton(leptons[ilep].el); //recreate the generic lepton to be sure that the p4 is ok
        }
         elDiff += leptons[ilep].p4();
@@ -1407,6 +1365,8 @@ ZHTauTauAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 	 if(selLeptons[higgsCandL1].pdgId() == 11) higgsEleCand =  higgsCandL1;
 	 // }
 
+   ntuple->setHiggsLegs(selLeptons[higgsCandL1],selLeptons[higgsCandL2], vtx[0]);
+
 	 double tauCrossTau_z  = selLeptons[higgsCandL1].px() * selLeptons[higgsCandL2].py() - selLeptons[higgsCandL1].py()*selLeptons[higgsCandL2].px();
 	 double metCrossTau1_z = met.px() * selLeptons[higgsCandL1].py() - met.py() * selLeptons[higgsCandL1].px();
 	 double metCrossTau2_z = met.px() * selLeptons[higgsCandL2].py() - met.py() * selLeptons[higgsCandL2].px();
@@ -1477,7 +1437,7 @@ ZHTauTauAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
         // cout<<"============================================================="<<endl;
         // cout<<"    Higgs mass = "<<higgsCand.M()<<"   Higgs pt = "<<higgsCand.Pt()<<endl;
         higgsCand_SVFitMass = getSVFit(met, selLeptons, higgsCandL1, higgsCandL2);  //compute svfit mass in a smart way
-        //  higgsCand_ClassicSVFit = getClassicSVFit(met, selLeptons, higgsCandL1, higgsCandL2);
+        ntuple->GetTuple().treeDiTauSVfitCandidate = getClassicSVFit(met, selLeptons, higgsCandL1, higgsCandL2);
 	 //  higgsCand_SVFit = higgsCand_ClassicSVFit;
 	 //  classiSVFit_mass = higgsCand_ClassicSVFit.mass();
         // cout<<"============================================================="<<endl;
@@ -1706,6 +1666,7 @@ ZHTauTauAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
       }//end of the loop on cutIndex
     }
   }//END SYSTEMATIC LOOP
+  ntuple->Fill();
 }
 
 
@@ -1715,6 +1676,8 @@ ZHTauTauAnalyzer::beginJob()
 {
 
   TH1F::SetDefaultSumw2(kTRUE);
+
+  // ntuple = new llttTree( &fs->file(), "llttTree" );
   //##############################################
   //########    INITIATING HISTOGRAMS     ########
   //##############################################
@@ -2092,6 +2055,7 @@ ZHTauTauAnalyzer::endJob()
 {
   fs->cd();
   mon.Write();
+  ntuple->Write();
 }
 
 
@@ -2288,7 +2252,7 @@ LorentzVector ZHTauTauAnalyzer::getClassicSVFit(pat::MET met, std::vector<patUti
   // svFitAlgo->enableHadTauTF();
 #endif
   //svFitAlgo.addLogM_fixed(false);
-  svFitAlgo->addLogM_fixed(true, 6.);
+  svFitAlgo->addLogM_fixed(true, 2.);
   //svFitAlgo.addLogM_dynamic(true, "(m/1000.)*15.");
   //svFitAlgo.setMaxObjFunctionCalls(100000); // CV: default is 100000 evaluations of integrand per event
   //svFitAlgo.setLikelihoodFileName("testClassicSVfit.root");

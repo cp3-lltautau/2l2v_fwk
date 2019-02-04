@@ -4,7 +4,8 @@ process = cms.Process("AnalysisProc")
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.FwkReport.reportEvery = 10000
 
-import PhysicsTools.PythonAnalysis.LumiList as LumiList
+#import PhysicsTools.PythonAnalysis.LumiList as LumiList
+import FWCore.PythonUtilities.LumiList as LumiList
 LumiList.LumiList().getVLuminosityBlockRange()
 
 process.source = cms.Source("PoolSource", fileNames =  cms.untracked.vstring('') )

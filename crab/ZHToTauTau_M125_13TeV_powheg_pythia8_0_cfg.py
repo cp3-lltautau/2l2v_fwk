@@ -4,7 +4,8 @@ process = cms.Process("AnalysisProc")
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.FwkReport.reportEvery = 10000
 
-import PhysicsTools.PythonAnalysis.LumiList as LumiList
+#import PhysicsTools.PythonAnalysis.LumiList as LumiList
+import FWCore.PythonUtilities.LumiList as LumiList
 LumiList.LumiList().getVLuminosityBlockRange()
 
 process.source = cms.Source("PoolSource", fileNames =  cms.untracked.vstring('') )
@@ -37,6 +38,14 @@ datapileup_latest = cms.vdouble(0, 238797, 837543, 2.30843e+06, 3.12475e+06, 4.4
 from os import path as path
 
 theLumiMask = path.expandvars("")
+
+
+process.summuryNtupler = cms.EDAnalyzer('BaseNTuplizer',
+    isMC = cms.bool(True),
+    genEventInfoProduct   = cms.InputTag("generator"),
+    PUInfo                = cms.InputTag("slimmedAddPileupInfo"),
+    lheEventProducts      = cms.InputTag("externalLHEProducer"),
+)
 
 process.syncNtupler = cms.EDAnalyzer('ZHTauTauAnalyzer',
 #runProcess = cms.PSet(
@@ -113,4 +122,6 @@ process.source = cms.Source ("PoolSource", fileNames = inputfile)
 
 process.TFileService = cms.Service("TFileService", fileName = process.syncNtupler.outfile )
 
-process.p = cms.Path(process.syncNtupler)
+process.p = cms.Path(process.summuryNtupler +
+                     process.syncNtupler
+                     )
